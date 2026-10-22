@@ -1,0 +1,38 @@
+```{r}
+library(here)
+library(tidyverse)
+```
+
+```{r}
+df <- read_csv(here("data/raw", "fraud_dataset_v2.csv"))
+```
+```{r}
+id_col <- names(df)[1]
+cols_eval <- names(df)[-1] # Todas menos la primera
+
+# Etiquetar la 1ra y 2da aparición
+df_pares <- df %>%
+  group_by(.data[[id_col]]) %>%
+  filter(n() == 2) %>%
+  mutate(.orden = row_number()) %>%
+  ungroup()
+
+t1 <- df_pares %>% filter(.orden == 1) %>% arrange(.data[[id_col]])
+t2 <- df_pares %>% filter(.orden == 2) %>% arrange(.data[[id_col]])
+
+# Cálculo vectorizado directo
+pcts <- sapply(cols_eval, function(col) {
+  v1 <- t1[[col]]
+  v2 <- t2[[col]]
+  mean((v1 == v2) | (is.na(v1) & is.na(v2)), na.rm = TRUE) * 100
+})
+
+resumen <- tibble(
+  columna = names(pcts),
+  pct_identico = pcts
+) %>%
+  arrange(desc(pct_identico))
+
+print(resumen, n = 30)
+```
+

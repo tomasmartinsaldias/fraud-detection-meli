@@ -1,0 +1,51 @@
+# ==============================================================================
+# Archivos de EDAs, análisis previos y material de clase (raíz y legacy)
+# ==============================================================================
+legacy/
+parcial/
+/eda_meli.Rmd
+/Modelado_baseline_nb.Rmd
+/Modelado_baseline_nb.nb.html
+/regresion_logistica.Rmd
+/grafico_clase.py
+/Introducción Problem Solving.pptx
+/Metodologia_Problem_Solving.html
+*.nb.html
+
+# ==============================================================================
+# R & RStudio
+# ==============================================================================
+.Rhistory
+.RData
+.RDataTmp
+.Ruserdata
+.Rproj.user/
+
+# ==============================================================================
+# Datos crudos y binarios pesados (evitar subir datasets a Git)
+# ==============================================================================
+data/raw/
+*.csv
+*.parquet
+*.zip
+*.tar.gz
+
+# ==============================================================================
+# Python & Entornos Virtuales
+# ==============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+venv/
+.venv/
+env/
+ENV/
+
+# ==============================================================================
+# IDEs & Sistema Operativo
+# ==============================================================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
