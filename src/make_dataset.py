@@ -104,10 +104,13 @@ def filter_population(
     """
     initial_rows = len(df)
     if drop_second_block:
-        logger.info("Aplicando filtro: --drop_second_block activado. Excluyendo Bloque 2...")
+        logger.info(
+            "Aplicando filtro de exclusión del Bloque 2 (filas 150.001 a 250.000). "
+            "Motivo: Índices reiniciados (0 a 99.999) con fraude=0 artificial detectados en EDA."
+        )
         df_filtered = df[~df["es_bloque_2"]].copy()
         discarded_count = initial_rows - len(df_filtered)
-        logger.info(f"Filas descartadas: {discarded_count:,}. Filas activas: {len(df_filtered):,}.")
+        logger.info(f"Filas descartadas: {discarded_count:,}. Filas limpias activas: {len(df_filtered):,}.")
         return df_filtered, discarded_count
 
     logger.info("Filtro no aplicado: conservando ambas poblaciones (250k filas activas).")
@@ -179,9 +182,37 @@ def apply_temporal_split(
     return df
 
 
+def clean_final_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Elimina columnas de índice residual (...1) y auxiliares de trazabilidad
+    (es_bloque_2, origen_bloque) que quedan obsoletas tras el descarte del Bloque 2.
+    Reorganiza 'transaction_id' como clave primaria al inicio.
+
+    Args:
+        df: DataFrame ordenado con split asignado.
+
+    Returns:
+        pd.DataFrame: DataFrame limpio sin columnas redundantes.
+    """
+    cols_to_drop = [
+        c for c in ["...1", "Unnamed: 0", "es_bloque_2", "origen_bloque"] if c in df.columns
+    ]
+    if cols_to_drop:
+        logger.info(f"Removiendo columnas auxiliares y de índice residual: {cols_to_drop}")
+        df = df.drop(columns=cols_to_drop)
+
+    if "transaction_id" in df.columns:
+        cols_order = ["transaction_id"] + [c for c in df.columns if c != "transaction_id"]
+        df = df[cols_order]
+
+    return df
+
+
 def save_processed_dataset(df: pd.DataFrame, output_path: Path) -> None:
     """
     Exporta el dataset procesado a formato Parquet preservando tipos nativos.
+    Utiliza escritura atómica con archivo temporal para prevenir bloqueos por memory-mapping
+    (WinError 1224 cuando está abierto por librerías como arrow en R).
 
     Args:
         df: DataFrame final procesado.
@@ -189,7 +220,13 @@ def save_processed_dataset(df: pd.DataFrame, output_path: Path) -> None:
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     logger.info(f"Guardando dataset procesado en: {output_path.resolve()}")
-    df.to_parquet(output_path, engine="pyarrow", index=False)
+    
+    # Escritura atómica segura
+    tmp_path = output_path.with_suffix(".parquet.tmp")
+    df.to_parquet(tmp_path, engine="pyarrow", index=False)
+    import os
+    os.replace(tmp_path, output_path)
+
     file_size_mb = output_path.stat().st_size / (1024 * 1024)
     logger.info(f"Dataset exportado exitosamente. Tamaño del archivo: {file_size_mb:.2f} MB.")
 
@@ -309,8 +346,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--drop_second_block",
         action="store_true",
+        default=True,
+        help="Descarta las 100k filas del segundo bloque (True por defecto tras corroborar en EDA índices duplicados y fraude=0 artificial).",
+    )
+    parser.add_argument(
+        "--keep_second_block",
+        action="store_true",
         default=False,
-        help="Si se activa, filtra y descarta las 100k filas del segundo bloque antes de particionar.",
+        help="Fuerza conservar las 250k filas originales desactivando el descarte del Bloque 2.",
     )
     parser.add_argument(
         "--val_date",
@@ -356,9 +399,10 @@ def main() -> None:
     # 2. Trazabilidad global e identificación de bloques
     trace_df = add_traceability_features(raw_df, block_1_size=150_000)
 
-    # 3. Capa de exclusión parametrizada
+    # 3. Capa de exclusión parametrizada (por defecto excluye bloque 2 salvo --keep_second_block)
+    should_drop = args.drop_second_block and not args.keep_second_block
     active_df, discarded_count = filter_population(
-        trace_df, drop_second_block=args.drop_second_block
+        trace_df, drop_second_block=should_drop
     )
 
     # 4. Partición temporal OOT (Out-Of-Time)
@@ -372,13 +416,16 @@ def main() -> None:
         test_ratio=args.test_ratio,
     )
 
-    # 5. Exportación a Parquet
-    save_processed_dataset(processed_df, args.output_path)
+    # 5. Limpieza de columnas residuales (...1, es_bloque_2, origen_bloque)
+    final_df = clean_final_columns(processed_df)
 
-    # 6. Diagnóstico y reporte por consola
+    # 6. Exportación a Parquet
+    save_processed_dataset(final_df, args.output_path)
+
+    # 7. Diagnóstico y reporte por consola
     print_diagnostic_report(
         raw_df_with_trace=trace_df,
-        processed_df=processed_df,
+        processed_df=final_df,
         discarded_rows=discarded_count,
     )
 
