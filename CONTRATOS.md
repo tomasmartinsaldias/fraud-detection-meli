@@ -19,6 +19,12 @@
 * **Formato de Intercambio Tabular:**  
   Todos los artefactos de datos compartidos se exportan y leen en formato `.parquet` con compresión `snappy`, preservando tipos nativos (`int`, `float`, `datetime`, `category`).
 
+* **Principio de Fuente Única de Verdad (Single Source of Truth) e Interoperabilidad R/Python:**  
+  Python es el **único entorno autorizado para procesar, transformar y persistir artefactos tabulares compartidos (`.parquet`)** en el repositorio. Queda terminantemente prohibido generar artefactos para modelado desde entornos paralelos en R.  
+  * **Pipeline y Escritura:** Todos los filtros de población, particiones temporales (`split`) e ingeniería de variables se computan y persisten exclusivamente mediante scripts de Python (`src/make_dataset.py`, `src/features/build_features.py`) exportando a formato `.parquet` en `data/`.
+  * **Consumo y Auditoría:** El uso de R o Quarto (`.Rmd`/`.qmd`) queda restringido a tareas de análisis exploratorio (EDA), auditoría estadística y visualización, consumiendo siempre los archivos `.parquet` procesados vía la librería `arrow` (`arrow::read_parquet()`).
+  * **Regla Anti-Duplicación:** Cualquier decisión analítica derivada del EDA en R (transformaciones, descartes o nuevas métricas) debe implementarse formalmente en el script correspondiente de Python antes de ser utilizada por el equipo.
+
 * **Política de Git:**  
   Los archivos binarios (`.parquet`, `.csv`) no se suben a Git (están en `.gitignore`). Cada integrante debe garantizar que su código sea determinista y reproducible desde `data/processed/dataset_base.parquet` ejecutando un comando de CLI reproducible con semilla `random_state=42`.
 
@@ -52,6 +58,8 @@ flowchart TD
 * **Script Generador:** `src/features/build_features.py`  
 * **Archivo de Salida:** `data/features/features_transaccionales.parquet`  
 * **Frecuencia de Entrega:** Versión preliminar (v1) e iteración final (v2).  
+* **Responsabilidad de Implementación Anti-Duplicación:**  
+  Toda hipótesis, descarte de registros o transformación validada durante el EDA en R debe implementarse formalmente en el pipeline de Python (`src/features/build_features.py`) antes de exportarse a `data/features/features_transaccionales.parquet`. R no genera datasets intermedios para el resto del equipo.  
 
 #### Esquema Obligatorio:
 | Columna | Tipo | Descripción | Restricción Anti-Leakage |
@@ -154,7 +162,7 @@ def build_full_dataset(
 | # | Criterio | Validación Obligatoria |
 | :-: | :--- | :--- |
 | **1** | **Anti-Leakage Estricto** | Todo escalador (`StandardScaler`, etc.), imputador o estimador debe ser fiteado **únicamente** en `train`. En `val` y `test` solo se ejecuta `.transform()`. |
-| **2** | **Merge Determinista & Sin NaNs** | El dataset integrado debe conservar exactamente las $N$ filas de `dataset_base.parquet` ($250.000$ o $150.000$ según exclusión del Bloque 2). No se admiten registros huérfanos ni multiplicados. |
+| **2** | **Merge Determinista & Sin NaNs** | El dataset integrado debe conservar exactamente las $150.000$ filas de `dataset_base.parquet` (tras la exclusión justificada del Bloque 2 validada en EDA). No se admiten registros huérfanos ni multiplicados. |
 | **3** | **Reproducibilidad Total** | Todos los scripts ejecutables deben aceptar `--seed` con valor por defecto `42`. |
 | **4** | **Compatibilidad de Esquemas** | Todo Parquet exportado en `data/features/` debe incluir `transaction_id` como primera columna de tipo `string`. |
 | **5** | **Documentación de Experimentos** | Métricas reportadas en `test` deben haber sido congeladas sin reajustes de hiperparámetros post-evaluación. |
