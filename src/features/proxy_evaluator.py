@@ -50,6 +50,13 @@ class FeatureProxyEvaluator:
     forma de data leakage.
     """
 
+    # Variables numéricas del baseline crudo
+    # NOTA METODOLÓGICA:
+    # - 'c' se excluye deliberadamente por colinealidad con 'r' (r = floor(c)) y 11.3% de NAs artificiales.
+    # - 'k' se excluye por ser ruido uniforme U(0,1) independiente del target probado en EDA.
+    # - 'i' es texto libre sin procesar (títulos de productos).
+    # - 'j' es categoría de alta cardinalidad (>9.000 categorías); su inclusión se evalúa como
+    #   feature candidata transformada (Target Encoding OOF / Frecuencia) mediante este evaluador.
     DEFAULT_BASE_NUMERIC_COLS = [
         "score", "monto", "a", "b", "d", "e", "f", "h", "l", "m", "n", "q", "r", "s"
     ]
@@ -79,9 +86,13 @@ class FeatureProxyEvaluator:
         self.split_col = split_col
         self.random_state = random_state
 
-        # Máscaras de partición OOT
+        # Máscaras de partición OOT con aislamiento estricto de test
         self.train_mask = self.df_base[self.split_col] == "train"
         self.val_mask = self.df_base[self.split_col] == "val"
+        self.test_mask = self.df_base[self.split_col] == "test"
+
+        assert not np.any(self.train_mask & self.test_mask), "Contaminación: train y test se solapan."
+        assert not np.any(self.val_mask & self.test_mask), "Contaminación: val y test se solapan."
 
         self.y_train = self.df_base.loc[self.train_mask, self.target_col].values
         self.y_val = self.df_base.loc[self.val_mask, self.target_col].values
@@ -110,6 +121,7 @@ class FeatureProxyEvaluator:
             learning_rate=0.05,
             subsample=0.8,
             colsample_bytree=0.8,
+            importance_type="gain",
             random_state=self.random_state,
             verbose=-1,
             n_jobs=-1,
@@ -167,15 +179,23 @@ class FeatureProxyEvaluator:
         """
         logger.info(f"Evaluando experimento '{experiment_name}' con {len(candidate_cols)} feature(s)...")
 
-        # Integrar features candidatas con dataset base por transaction_id si está presente
-        if "transaction_id" in candidate_features_df.columns:
-            merged_df = self.df_base.merge(
-                candidate_features_df[["transaction_id"] + candidate_cols],
-                on="transaction_id",
-                how="left",
+        # Exigencia estricta del contrato: merge determinista por transaction_id
+        if "transaction_id" not in candidate_features_df.columns:
+            raise ValueError(
+                "El DataFrame candidato DEBE contener la columna 'transaction_id' "
+                "para garantizar un merge determinista sin desalineaciones de índice."
             )
-        else:
-            merged_df = pd.concat([self.df_base, candidate_features_df[candidate_cols]], axis=1)
+
+        merged_df = self.df_base.merge(
+            candidate_features_df[["transaction_id"] + candidate_cols],
+            on="transaction_id",
+            how="left",
+        )
+        if len(merged_df) != len(self.df_base):
+            raise ValueError(
+                f"El merge alteró la cantidad de filas: esperado {len(self.df_base)}, "
+                f"obtenido {len(merged_df)}."
+            )
 
         full_features = self.base_features + candidate_cols
         cand_pr_auc, cand_roc_auc, importances = self._fit_and_score(
