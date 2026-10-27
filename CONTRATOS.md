@@ -4,6 +4,23 @@
 > **Equipo:** Tomás (Data Eng & Features), Franco (Detección de Anomalías), Ian (Modelado & Negocio)  
 > **Dataset Base:** `data/processed/dataset_base.parquet`
 
+## Preámbulo: Entorno Python y Ejecución de Scripts
+
+El repositorio incluye [`run.bat`](run.bat) como punto de entrada común para ejecutar los scripts de Python con el entorno del proyecto. Desde PowerShell, en la raíz del repositorio:
+
+```powershell
+.\run.bat src/make_dataset.py --help
+.\run.bat src/make_dataset.py --input_path data/raw/fraud_dataset_v2.csv
+```
+
+El lanzador selecciona la versión de Python declarada en [`.python-version`](.python-version) (actualmente **3.13**), crea el entorno virtual `.venv` si no existe, comprueba las versiones de las dependencias fijadas en [`requirements.txt`](requirements.txt) e instala o corrige las que falten o difieran. Luego ejecuta `pip check` para verificar su compatibilidad y, si la preparación termina correctamente, ejecuta el script solicitado con sus argumentos desde la raíz del repositorio, conservando su código de salida. No es necesario activar `.venv` manualmente.
+
+**Requisitos previos:** tener instalada la versión indicada de Python y el launcher de Windows `py`. La instalación de dependencias requiere acceso a internet. Si falta el intérprete o el entorno existente utiliza otra versión, la ejecución se detiene; el lanzador no instala Python ni reemplaza automáticamente un entorno incompatible.
+
+**Reutilización del entorno:** si `.venv` ya existe, `run.bat` utiliza directamente su intérprete y comprueba su versión, sin recrear ni activar nuevamente el entorno. Si las dependencias instaladas coinciden con `requirements.txt`, no ejecuta `pip install` ni descarga paquetes; únicamente realiza las comprobaciones locales de versiones y `pip check`. El lanzador no permanece encendido ni se activa automáticamente al ejecutar un script por otro medio.
+
+Para aplicar estas comprobaciones, todos los integrantes deben ejecutar los scripts mediante `run.bat`. Ejecutar directamente `python script.py` saltea el control del lanzador. En el IDE, seleccionar `.venv/Scripts/python.exe` como intérprete del proyecto.
+
 ---
 
 ## 1. Convenciones Globales del Repositorio
