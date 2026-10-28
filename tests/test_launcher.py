@@ -16,7 +16,7 @@ spec.loader.exec_module(launcher)
 class LauncherTests(unittest.TestCase):
     def setUp(self):
         self.patches = [
-            patch.object(launcher.sys, "version_info", SimpleNamespace(major=3, minor=13)),
+            patch.object(launcher.sys, "version_info", SimpleNamespace(major=3, minor=14)),
             patch.object(launcher.sys, "prefix", str(launcher.ENV)),
             patch.object(launcher.sys, "argv", ["run.py", "src/make_dataset.py", "--help"]),
         ]
@@ -54,7 +54,7 @@ class LauncherTests(unittest.TestCase):
                 self.assertEqual(run.call_args_list[1].args[0][-2:], ["pip", "check"])
 
     def test_wrong_python_stops_before_running_script(self):
-        with patch.object(launcher.sys, "version_info", SimpleNamespace(major=3, minor=14)), \
+        with patch.object(launcher.sys, "version_info", SimpleNamespace(major=3, minor=13)), \
              patch.object(launcher.subprocess, "call") as call:
             self.assertEqual(launcher.main(), 1)
             call.assert_not_called()

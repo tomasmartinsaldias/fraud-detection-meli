@@ -2,7 +2,7 @@
 
 ## Entorno Python en Windows
 
-La version acordada se declara en `.python-version` (actualmente 3.13).
+La version acordada se declara en `.python-version` (actualmente 3.14); se acepta cualquier revision 3.14.x.
 Instalar Python con el launcher `py` antes de comenzar. No hace falta activar
 manualmente un entorno virtual.
 
@@ -13,22 +13,21 @@ Desde PowerShell:
 .\run.bat src/make_dataset.py --input_path data/raw/fraud_dataset_v2.csv
 ```
 
-El lanzador selecciona Python 3.13, crea `.venv` si falta, comprueba las versiones
+El lanzador selecciona Python 3.14, crea `.venv` si falta, comprueba las versiones
 de `requirements.txt`, instala o corrige las dependencias si es necesario y
 ejecuta `pip check` antes de ejecutar el script. La primera instalacion requiere
 acceso a internet. Los argumentos se pasan al script y su codigo de salida se
 conserva. Los scripts se ejecutan desde la raiz del repositorio.
 
-Si `.venv` ya existe, el lanzador usa directamente su Python y verifica que sea
-la version acordada. No recrea ni activa nuevamente el entorno. Si todas las
+Si `.venv` ya existe, el lanzador verifica que su Python sea ejecutable y tenga
+la version acordada. Si no es compatible, lo conserva como `.venv-backup` (o
+un nombre numerado) y crea un entorno nuevo. Si todas las
 dependencias tienen las versiones requeridas, no ejecuta `pip install` ni
 descarga paquetes: solo compara las versiones locales y ejecuta `pip check`.
 El lanzador no queda encendido ni se activa automaticamente al ejecutar otros
 comandos: cada script debe iniciarse mediante `run.bat` para aplicar el control.
 
-Si falta Python 3.13, el launcher `py` informa el error. Si `.venv` fue creado con
-otra version, el lanzador lo rechaza: renombrar ese entorno y volver a ejecutar
-para crear uno nuevo. Al cambiar la version acordada, actualizar `.python-version`
+Si falta Python 3.14, el launcher `py` informa el error. Al cambiar la version acordada, actualizar `.python-version`
 y revisar la compatibilidad de las dependencias.
 
 Usar `run.bat` como punto de entrada para todos los scripts del proyecto.
