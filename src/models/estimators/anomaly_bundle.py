@@ -23,6 +23,7 @@ from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import SGDOneClassSVM
+from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import LocalOutlierFactor
 
 from src.models.estimators.preprocessing import (
@@ -109,6 +110,8 @@ class AnomalyPipelineBundle:
         "score_lof_euclidean",
         "score_ocsvm_rbf_nu_003",
         "score_ocsvm_rbf_nu_005",
+        "score_gmm_k3",
+        "score_gmm_k5",
     ]
 
     def __init__(
@@ -138,6 +141,8 @@ class AnomalyPipelineBundle:
         self.nystroem_: Optional[Nystroem] = None
         self.ocsvm_nu_003_: Optional[SGDOneClassSVM] = None
         self.ocsvm_nu_005_: Optional[SGDOneClassSVM] = None
+        self.gmm_k3_: Optional[GaussianMixture] = None
+        self.gmm_k5_: Optional[GaussianMixture] = None
 
         self.ref_sorted_scores_: Dict[str, np.ndarray] = {}
         self.lgbm_consolidator_: Optional[lgb.LGBMClassifier] = None
@@ -175,6 +180,10 @@ class AnomalyPipelineBundle:
         raw_ocsvm_003 = -self.ocsvm_nu_003_.decision_function(x_nystroem)
         raw_ocsvm_005 = -self.ocsvm_nu_005_.decision_function(x_nystroem)
 
+        # 5. Gaussian Mixture Models (k=3 y k=5)
+        raw_gmm_k3 = -self.gmm_k3_.score_samples(x_freq)
+        raw_gmm_k5 = -self.gmm_k5_.score_samples(x_freq)
+
         return {
             "pca_q": raw_pca_q,
             "pca_magnitud": raw_pca_mag,
@@ -185,6 +194,8 @@ class AnomalyPipelineBundle:
             "score_lof_euclidean": raw_lof_euc,
             "score_ocsvm_rbf_nu_003": raw_ocsvm_003,
             "score_ocsvm_rbf_nu_005": raw_ocsvm_005,
+            "score_gmm_k3": raw_gmm_k3,
+            "score_gmm_k5": raw_gmm_k5,
         }
 
     def fit(self, df_train: pd.DataFrame) -> "AnomalyPipelineBundle":
@@ -296,7 +307,26 @@ class AnomalyPipelineBundle:
         )
         self.ocsvm_nu_005_.fit(x_nystroem_legit)
 
-        # 6. Calcular scores en todo train y guardar distribuciones de referencia legítimas
+        # 6. GMM con k=3 y k=5 (full covariance)
+        logger.info("Ajustando Gaussian Mixture Model (k=3, full covariance)...")
+        self.gmm_k3_ = GaussianMixture(
+            n_components=3,
+            covariance_type="full",
+            max_iter=100,
+            random_state=self.seed,
+        )
+        self.gmm_k3_.fit(x_freq_legit)
+
+        logger.info("Ajustando Gaussian Mixture Model (k=5, full covariance)...")
+        self.gmm_k5_ = GaussianMixture(
+            n_components=5,
+            covariance_type="full",
+            max_iter=100,
+            random_state=self.seed,
+        )
+        self.gmm_k5_.fit(x_freq_legit)
+
+        # 7. Calcular scores en todo train y guardar distribuciones de referencia legítimas
         logger.info("Calculando distribuciones de referencia de percentiles en train...")
         x_freq_train = self.freq_preprocessor_.transform(df_train)
         x_hybrid_train = self.hybrid_preprocessor_.transform(df_train)

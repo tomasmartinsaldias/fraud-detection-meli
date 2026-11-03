@@ -32,6 +32,8 @@ class ProductionTests(unittest.TestCase):
             "score_lof_euclidean": [0.35, 0.65],
             "score_ocsvm_rbf_nu_003": [0.2, 0.8],
             "score_ocsvm_rbf_nu_005": [0.22, 0.78],
+            "score_gmm_k3": [0.18, 0.82],
+            "score_gmm_k5": [0.19, 0.81],
             "score_anomalia_consolidado": [0.05, 0.92],
         })
         validate_output_dataframe(df, expected_rows=2)
