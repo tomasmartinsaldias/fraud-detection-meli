@@ -16,6 +16,10 @@ from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
+from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.naive_bayes import MultinomialNB
 
 logging.basicConfig(
     level=logging.INFO,
@@ -200,6 +204,110 @@ def compute_h_interactions(df: pd.DataFrame) -> pd.DataFrame:
     return feats
 
 
+def compute_text_features(
+    df: pd.DataFrame,
+    max_features: int = 5000,
+    min_df: int = 30,
+    alpha: float = 2.0,
+    n_svd_components: int = 5,
+    random_state: int = 42,
+) -> pd.DataFrame:
+    """
+    Computa representaciones estructurales, semánticas y bayesianas de los títulos 'i'.
+
+    Restricciones Anti-Leakage y Estándares de Producción:
+    - Capa Estructural: char_len, word_count, avg_word_len, digit_ratio (row-level, sin parámetros aprendidos).
+    - Capa Semántica (LSA): TfidfVectorizer y TruncatedSVD ajustados estrictamente sobre split == 'train'.
+    - Score Bayesiano (score_texto_nb): Generado en train mediante TimeSeriesSplit cronológico (OOF estricto)
+      y proyectado sobre val/test con modelo ajustado sobre el 100% de train.
+    - Regularización anti-ruido: min_df=30 (purga palabras con <30 apariciones) y Laplace alpha=2.0.
+
+    Args:
+        df: DataFrame base con 'i', 'split', 'fecha' y 'fraude'.
+
+    Returns:
+        pd.DataFrame: DataFrame con las 10 features de texto calculadas.
+    """
+    logger.info("Calculando features de texto sobre columna 'i'...")
+    feats = pd.DataFrame(index=df.index)
+    i_str = df["i"].fillna("").astype(str)
+
+    # 1. Capa Estructural Objetiva
+    feats["char_len"] = i_str.str.len().astype(np.float64)
+    words = i_str.str.split()
+    feats["word_count"] = words.str.len().astype(np.float64)
+    feats["avg_word_len"] = (feats["char_len"] / np.maximum(feats["word_count"], 1.0)).astype(np.float64)
+    digits = i_str.str.count(r"\d")
+    feats["digit_ratio"] = (digits / np.maximum(feats["char_len"], 1.0)).astype(np.float64)
+
+    # 2. Capa Semántica LSA (TF-IDF + TruncatedSVD)
+    train_mask = df["split"] == "train"
+    vec_svd = TfidfVectorizer(
+        max_features=max_features,
+        ngram_range=(1, 2),
+        min_df=min_df,
+        sublinear_tf=True,
+        strip_accents="unicode",
+    )
+    X_train_tfidf = vec_svd.fit_transform(i_str[train_mask])
+
+    svd = TruncatedSVD(n_components=n_svd_components, random_state=random_state)
+    svd.fit(X_train_tfidf)
+
+    X_all_svd = svd.transform(vec_svd.transform(i_str))
+    for j in range(n_svd_components):
+        feats[f"text_svd_{j+1}"] = X_all_svd[:, j].astype(np.float64)
+
+    # 3. Score Probabilístico Bayesiano con OOF Temporal Estricto en Train
+    train_sub = df[train_mask].sort_values("fecha").copy()
+    X_train_text_sorted = train_sub["i"].fillna("").astype(str)
+    y_train_sorted = train_sub["fraude"].values
+
+    tscv = TimeSeriesSplit(n_splits=5)
+    oof_scores_temporal = np.full(len(train_sub), np.nan)
+
+    for fold, (tr_idx, v_idx) in enumerate(tscv.split(train_sub)):
+        vec_fold = TfidfVectorizer(
+            max_features=max_features,
+            ngram_range=(1, 2),
+            min_df=min_df,
+            sublinear_tf=True,
+            strip_accents="unicode",
+        )
+        X_tr = vec_fold.fit_transform(X_train_text_sorted.iloc[tr_idx])
+        nb_fold = MultinomialNB(alpha=alpha)
+        nb_fold.fit(X_tr, y_train_sorted[tr_idx])
+        oof_scores_temporal[v_idx] = nb_fold.predict_proba(
+            vec_fold.transform(X_train_text_sorted.iloc[v_idx])
+        )[:, 1]
+
+    # Imputar el primer bloque cronológico con el prior global de train
+    oof_scores_temporal[np.isnan(oof_scores_temporal)] = y_train_sorted.mean()
+
+    # Mapear scores de train alineados al índice original de df
+    train_sub["score_texto_nb"] = oof_scores_temporal
+    score_series = pd.Series(index=df.index, dtype=np.float64)
+    score_series.loc[train_mask] = train_sub["score_texto_nb"]
+
+    # Fitear modelo en TODO train y predecir en val y test (maneja OOV naturalmente)
+    vec_full = TfidfVectorizer(
+        max_features=max_features,
+        ngram_range=(1, 2),
+        min_df=min_df,
+        sublinear_tf=True,
+        strip_accents="unicode",
+    )
+    X_train_full = vec_full.fit_transform(i_str[train_mask])
+    nb_full = MultinomialNB(alpha=alpha)
+    nb_full.fit(X_train_full, df.loc[train_mask, "fraude"].values)
+
+    test_val_preds = nb_full.predict_proba(vec_full.transform(i_str[~train_mask]))[:, 1]
+    score_series.loc[~train_mask] = test_val_preds
+
+    feats["score_texto_nb"] = score_series.astype(np.float64)
+    return feats
+
+
 def build_transactional_features(
     input_base_path: Path,
     output_features_path: Path,
@@ -246,6 +354,11 @@ def build_transactional_features(
     h_interactions = compute_h_interactions(df_base)
     for col in h_interactions.columns:
         df_features[col] = h_interactions[col]
+
+    # 6. Features de texto de la columna i (estructurales, semánticas y bayesianas)
+    text_features = compute_text_features(df_base)
+    for col in text_features.columns:
+        df_features[col] = text_features[col]
 
     # Validaciones de integridad según Contrato A
     assert len(df_features) == len(df_base), "Error: Se alteró el número de filas."
