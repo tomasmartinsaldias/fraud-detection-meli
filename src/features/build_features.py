@@ -168,6 +168,38 @@ def compute_ef_interactions(df: pd.DataFrame) -> pd.DataFrame:
     return feats
 
 
+def compute_h_interactions(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calcula transformaciones no lineales e indicadores de la variable entera h.
+
+    Selección y tratamiento alineado a estándares de producción:
+    - ratio_monto_h: Ticket normalizado por h + 1.0. Tensión entre el importe y la madurez (+1375 gain).
+    - is_h_cero: Indicador booleano que aísla el segmento de alto riesgo (h == 0 tiene 9.59% de fraude).
+    - log_h: Compresión logarítmica de escala.
+
+    Args:
+        df: DataFrame base con 'monto' y 'h'.
+
+    Returns:
+        pd.DataFrame: DataFrame con las 3 features calculadas.
+    """
+    logger.info("Calculando transformaciones e interacciones de h...")
+    feats = pd.DataFrame(index=df.index)
+
+    h_val = df["h"].fillna(0)
+
+    # 1. ratio_monto_h: Tensión ticket / escala de h (denominador >= 1.0)
+    feats["ratio_monto_h"] = (df["monto"] / (h_val + 1.0)).astype(np.float64)
+
+    # 2. is_h_cero: Flag de inicio de ciclo / sin historial (tasa de fraude 9.6%)
+    feats["is_h_cero"] = (h_val == 0).astype(np.int8)
+
+    # 3. log_h: Compresión logarítmica
+    feats["log_h"] = np.log1p(np.maximum(h_val, 0)).astype(np.float64)
+
+    return feats
+
+
 def build_transactional_features(
     input_base_path: Path,
     output_features_path: Path,
@@ -209,6 +241,11 @@ def build_transactional_features(
     ef_interactions = compute_ef_interactions(df_base)
     for col in ef_interactions.columns:
         df_features[col] = ef_interactions[col]
+
+    # 5. Features de interacción matemática de h
+    h_interactions = compute_h_interactions(df_base)
+    for col in h_interactions.columns:
+        df_features[col] = h_interactions[col]
 
     # Validaciones de integridad según Contrato A
     assert len(df_features) == len(df_base), "Error: Se alteró el número de filas."
