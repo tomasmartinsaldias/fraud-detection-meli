@@ -126,6 +126,48 @@ def compute_dm_interactions(df: pd.DataFrame) -> pd.DataFrame:
     return feats
 
 
+def compute_ef_interactions(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calcula transformaciones no lineales e indicadores de las variables e y f.
+
+    Selección y tratamiento alineado a estándares de producción:
+    - ratio_monto_f: Ticket normalizado por max(f, 0) + 1.0. Domina el outlier extremo
+      (145.274) y penaliza transacciones sin historial (+4600 gain).
+    - ratio_monto_e: Ticket normalizado por e + 0.01 (+760 gain).
+    - log_f: Compresión logarítmica para mitigar la asimetría pesada de f.
+    - is_f_cero_neg: Indicador booleano que aísla el segmento crítico con 12% de fraude.
+    - is_e_cero: Indicador booleano de masa puntual en cero (44% de la muestra).
+
+    Args:
+        df: DataFrame base con 'monto', 'e' y 'f'.
+
+    Returns:
+        pd.DataFrame: DataFrame con las 5 features calculadas.
+    """
+    logger.info("Calculando transformaciones e interacciones de e y f...")
+    feats = pd.DataFrame(index=df.index)
+
+    f_clean = np.maximum(df["f"].fillna(0), 0)
+    e_clean = np.maximum(df["e"].fillna(0), 0)
+
+    # 1. ratio_monto_f: Tensión entre monto e historial acumulado f (denominador >= 1.0)
+    feats["ratio_monto_f"] = (df["monto"] / (f_clean + 1.0)).astype(np.float64)
+
+    # 2. ratio_monto_e: Tensión entre monto y escala e (denominador >= 0.01)
+    feats["ratio_monto_e"] = (df["monto"] / (e_clean + 0.01)).astype(np.float64)
+
+    # 3. log_f: Compresión logarítmica de la cola extrema
+    feats["log_f"] = np.log1p(f_clean).astype(np.float64)
+
+    # 4. is_f_cero_neg: Flag de zona de riesgo (f <= 0 o nulo)
+    feats["is_f_cero_neg"] = ((df["f"].isna()) | (df["f"] <= 0)).astype(np.int8)
+
+    # 5. is_e_cero: Flag de masa puntual en cero
+    feats["is_e_cero"] = (df["e"] == 0).astype(np.int8)
+
+    return feats
+
+
 def build_transactional_features(
     input_base_path: Path,
     output_features_path: Path,
@@ -162,6 +204,11 @@ def build_transactional_features(
     dm_interactions = compute_dm_interactions(df_base)
     for col in dm_interactions.columns:
         df_features[col] = dm_interactions[col]
+
+    # 4. Features de interacción matemática de e y f
+    ef_interactions = compute_ef_interactions(df_base)
+    for col in ef_interactions.columns:
+        df_features[col] = ef_interactions[col]
 
     # Validaciones de integridad según Contrato A
     assert len(df_features) == len(df_base), "Error: Se alteró el número de filas."

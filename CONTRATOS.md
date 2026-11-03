@@ -72,9 +72,14 @@ flowchart TD
 | `ratio_d_m` | `float64` | Proporción relativa `d / (m + 1.0)` | Sin leakage. Gain: ~2.506 |
 | `ratio_monto_m` | `float64` | Normalización del ticket respecto a `m` (`monto / (m + 1.0)`) | Sin leakage. Gain: ~3.141 |
 | `diff_m_d` | `float64` | Discrepancia directa `m - d` | Sin leakage. Gain: ~4.464 |
+| `ratio_monto_f` | `float64` | Ticket normalizado `monto / (max(f, 0) + 1.0)` | Domina outlier 145k. Gain: ~4.540 |
+| `ratio_monto_e` | `float64` | Ticket normalizado `monto / (e + 0.01)` | Sin leakage. Gain: ~795 |
+| `log_f` | `float64` | Compresión logarítmica `log1p(max(f, 0))` | Mitiga asimetría pesada. Gain: ~300 |
+| `is_f_cero_neg` | `int8` | Flag booleano `f <= 0` (segmento crítico 12% fraude) | Sin leakage |
+| `is_e_cero` | `int8` | Flag booleano `e == 0` (masa puntual 44%) | Sin leakage |
 
 > [!NOTE]
-> **Performance Conjunta:** El set de 7 features genera un **$\Delta\text{PR-AUC} = +0.0073$** (PR-AUC: `0.4376`, ROC-AUC: `0.8860`) sobre el split de validación OOT (`val`), con un aumento acumulado de más de 17.500 puntos de *Gain Importance*.
+> **Performance del Pool Candidato:** El pool ampliado de features candidato contiene 12 variables analíticas que alimentarán el proceso final de *Forward Stepwise Feature Selection*. Destacan `ratio_monto_f` (Gain: ~4.540) y `diff_m_d` (Gain: ~4.460) como los principales motores de split.
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.
