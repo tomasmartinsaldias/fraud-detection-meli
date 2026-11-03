@@ -39,6 +39,10 @@ EXPECTED_OUTPUT_COLUMNS = [
     "score_iforest_diagonal",
     "score_lof_manhattan",
     "score_lof_euclidean",
+    "score_ocsvm_rbf_nu_003",
+    "score_ocsvm_rbf_nu_005",
+    "score_gmm_k3",
+    "score_gmm_k5",
     "score_anomalia_consolidado",
 ]
 
