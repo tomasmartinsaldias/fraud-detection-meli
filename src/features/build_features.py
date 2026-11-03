@@ -84,20 +84,14 @@ def compute_profile_interactions(df: pd.DataFrame) -> pd.DataFrame:
 
     log_c = np.log1p(df["c"].clip(lower=0)).astype(np.float64)
 
-    # 1. log_c: Escala logarítmica para estabilizar la cola pesada de c
-    feats["log_c"] = log_c
-
-    # 2. ratio_monto_c: Proporción del monto actual sobre la escala de c
-    feats["ratio_monto_c"] = (df["monto"] / (df["c"] + 1.0)).astype(np.float64)
-
-    # 3. extremo_c: Flag de riesgo en forma de U (decil inferior < 1800 o superior > 450.000)
-    feats["extremo_c"] = ((df["c"] < 1800) | (df["c"] > 450000)).astype(int)
-
-    # 4. ratio_monto_b: Tensión entre el ticket y el factor continuo b
+    # 1. ratio_monto_b: Tensión entre el ticket monetario y la tasa continua b
     feats["ratio_monto_b"] = (df["monto"] / (df["b"] + 0.001)).astype(np.float64)
 
-    # 5. prod_b_log_c: Interacción multiplicativa entre el factor b y log(c + 1)
+    # 2. prod_b_log_c: Interacción multiplicativa no lineal entre el factor b y log(c + 1)
     feats["prod_b_log_c"] = (df["b"] * log_c).astype(np.float64)
+
+    # 3. ratio_monto_c: Proporción del monto actual sobre la escala de c
+    feats["ratio_monto_c"] = (df["monto"] / (df["c"] + 1.0)).astype(np.float64)
 
     return feats
 
