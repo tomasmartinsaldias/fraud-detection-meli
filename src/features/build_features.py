@@ -447,12 +447,15 @@ def compute_additional_candidates(df: pd.DataFrame) -> pd.DataFrame:
     - is_o_missing: Flag indicador de ausencia en variable o (72% missing).
     - es_madrugada: Flag binario de ventana nocturna (hora entre 0 y 5).
     - dia_semana: Índice numérico del día de la semana (0=Lunes, 6=Domingo).
+    - log_monto: Compresión logarítmica log1p de monto.
+    - monto_centavos: Extracción de la parte decimal / centavos (0 a 99).
+    - is_monto_alto: Flag booleano de ticket extremo perteneciente al percentil 99 superior (> 422).
 
     Args:
         df: DataFrame base con las columnas requeridas.
 
     Returns:
-        pd.DataFrame: DataFrame con las 9 features candidatas adicionales.
+        pd.DataFrame: DataFrame con las 12 features candidatas adicionales.
     """
     logger.info("Calculando features candidatas complementarias (l, m, q, score, n, o, p y calendario)...")
     feats = pd.DataFrame(index=df.index)
@@ -477,6 +480,12 @@ def compute_additional_candidates(df: pd.DataFrame) -> pd.DataFrame:
     fecha = pd.to_datetime(df["fecha"])
     feats["es_madrugada"] = ((fecha.dt.hour >= 0) & (fecha.dt.hour <= 5)).astype(np.int8)
     feats["dia_semana"] = fecha.dt.weekday.astype(np.float64)
+
+    # 5. Transformaciones intrínsecas de monto
+    monto_arr = np.maximum(df["monto"].to_numpy(), 0.0)
+    feats["log_monto"] = np.log1p(monto_arr).astype(np.float64)
+    feats["monto_centavos"] = np.round((monto_arr - np.floor(monto_arr)) * 100.0).astype(np.float64)
+    feats["is_monto_alto"] = (monto_arr > 422.0).astype(np.int8)
 
     return feats
 

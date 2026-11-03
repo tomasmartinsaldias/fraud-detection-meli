@@ -101,9 +101,12 @@ flowchart TD
 | `is_o_missing` | `int8` | Flag indicador de ausencia en variable $o$ (72% missing) | Sin leakage |
 | `es_madrugada` | `int8` | Flag binario de ventana nocturna ($hora \in [0, 5]$) | Sin leakage |
 | `dia_semana` | `float64` | Día de la semana numérico ($0.0 \dots 6.0$) | Sin leakage |
+| `log_monto` | `float64` | Compresión logarítmica $\log(1 + \max(monto, 0))$ (mitiga asimetría de 9.57) | Sin leakage. Gain: ~1.102 |
+| `monto_centavos` | `float64` | Parte decimal / centavos ($0 \dots 99$, captura patrones de precios psicológicos) | Sin leakage. Gain: ~659 |
+| `is_monto_alto` | `int8` | Flag booleano de ticket extremo pertenecientes al percentil 99 superior ($monto > 422$) | Sin leakage. Gain: ~93 |
 
 > [!NOTE]
-> **Performance del Gran Pool Candidato:** El pool completo contiene **45 variables analíticas** preparadas para el proceso final de *Feature Selection*. Cubre interacciones de perfil, transacción, minería de texto sobre `i`, catálogo `j`, ciclo temporal continuo y de calendario, y métricas de exposición de riesgo. Baseline Crudo: `0.4303` $\rightarrow$ Pool de Selección: `~0.4503` - `0.4547`. Destacan `te_j_bayes`, `ratio_monto_f`, `diff_m_d`, `ratio_d_m`, `hora_cont`, `cos_hora` y `score_texto_nb`.
+> **Performance del Gran Pool Candidato:** El pool completo contiene **48 variables analíticas** preparadas para el proceso final de *Feature Selection*. Cubre interacciones de perfil, transacción, minería de texto sobre `i`, catálogo `j`, ciclo temporal continuo, calendario, y métricas de anatomía y distribución de `monto`. Baseline Crudo: `0.4303` $\rightarrow$ Pool de Selección: `~0.4503` - `0.4547`. Destacan `te_j_bayes`, `ratio_monto_f`, `diff_m_d`, `ratio_d_m`, `hora_cont`, `cos_hora`, `log_monto` y `score_texto_nb`.
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.
