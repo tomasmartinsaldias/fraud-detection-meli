@@ -86,9 +86,12 @@ flowchart TD
 | `digit_ratio` | `float64` | Proporción de números/dígitos en el título | Sin leakage |
 | `text_svd_1` a `text_svd_10` | `float64` | 10 componentes continuos de LSA (TF-IDF + TruncatedSVD optimizado por regla del codo) | Ajustados estrictamente sobre `train` |
 | `score_texto_nb` | `float64` | Probabilidad bayesiana OOF temporal (Naive Bayes, $\alpha=2.0, min\_df=30$) | `TimeSeriesSplit` estricto en `train`. Gain: ~3.400 |
+| `te_j_bayes` | `float64` | Target Encoding bayesiano sobre categoría `j` ($m=10$, KFold 5 OOF con jitter gaussiano $\sigma=0.01$) | Regularizado contra memorización. Gain: ~7.115 |
+| `freq_j` | `float64` | Log-frecuencia observada de la categoría `j` en train (`log1p(count)`) | Priors de train, fallback 0. Gain: ~926 |
+| `ratio_monto_j_bayes` | `float64` | Ticket normalizado respecto a la mediana bayesiana de la categoría `j` ($m=20$) | Sin leakage. Gain: ~643 |
 
 > [!NOTE]
-> **Performance del Pool Candidato:** El pool ampliado contiene **30 variables analíticas** (15 transaccionales + 15 de minería de texto sobre `i`) preparadas para el proceso final de *Forward Stepwise Feature Selection*. PR-AUC conjunto en `val`: **`0.4437`** (ROC-AUC: **`0.8859`**). Destacan `ratio_monto_f` (Gain: ~3.715), `score_texto_nb` (Gain: ~3.400), `ratio_monto_m` (Gain: ~3.390) y `ratio_d_m` (Gain: ~2.728).
+> **Performance del Pool Candidato:** El pool ampliado contiene **33 variables analíticas** (15 transaccionales + 15 de minería de texto sobre `i` + 3 de catálogo `j`) preparadas para el proceso final de *Forward Stepwise Feature Selection*. PR-AUC conjunto en `val`: **`0.4450`** (ROC-AUC: **`0.8869`** vs Baseline Crudo: `0.4303` / `0.8857`). Destacan `te_j_bayes` (Gain: ~7.115), `ratio_monto_f` (Gain: ~3.707), `diff_m_d` (Gain: ~3.477), `ratio_d_m` (Gain: ~2.017) y `score_texto_nb` (Gain: ~1.635).
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.

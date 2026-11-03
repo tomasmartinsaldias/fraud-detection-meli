@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import KFold, TimeSeriesSplit
 from sklearn.naive_bayes import MultinomialNB
 
 logging.basicConfig(
@@ -309,6 +309,97 @@ def compute_text_features(
     return feats
 
 
+def compute_category_features(
+    df: pd.DataFrame,
+    m_te: float = 10.0,
+    noise_std: float = 0.01,
+    m_monto: float = 20.0,
+    random_state: int = 42,
+) -> pd.DataFrame:
+    """
+    Calcula variables analíticas sobre la columna categórica de alta cardinalidad 'j' (categorías de producto).
+
+    Selección optimizada por el Modelo Proxy:
+    - te_j_bayes: Target Encoding bayesiano con K-Fold OOF (k=5) y regularización m=10, con jitter gaussiano
+      para prevenir memorización espuria en hojas de árboles de decisión (+0.0118 PR-AUC, Gain ~7900).
+    - freq_j: Log-frecuencia observada de la categoría en train (log(1 + count)).
+    - ratio_monto_j_bayes: Tensión del monto actual sobre la mediana bayesiana esperada para la categoría j.
+
+    Restricción Anti-Leakage:
+    - Todas las frecuencias, medianas y distribuciones de target se calculan EXCLUSIVAMENTE sobre split == 'train'.
+    - El Target Encoding en train se calcula de forma Out-Of-Fold (OOF).
+    - Para val y test, se aplican las estadísticas completas de train con fallback al prior global ante categorías no vistas.
+
+    Args:
+        df: DataFrame completo con 'j', 'monto', 'fraude' y 'split'.
+        m_te: Peso del prior global en el target encoding bayesiano.
+        noise_std: Desviación estándar del ruido gaussiano añadido a los OOF de train.
+        m_monto: Peso bayesiano para el cálculo de la mediana esperada del monto en j.
+        random_state: Semilla determinista para reproducibilidad estricta.
+
+    Returns:
+        pd.DataFrame: DataFrame con las 3 features de categoría ('te_j_bayes', 'freq_j', 'ratio_monto_j_bayes').
+    """
+    logger.info("Calculando features analíticas de categoría 'j'...")
+    feats = pd.DataFrame(index=df.index)
+
+    train_mask = df["split"] == "train"
+    train_indices = df[train_mask].index.values
+    non_train_indices = df[~train_mask].index.values
+
+    global_fraud_rate = float(df.loc[train_mask, "fraude"].mean())
+    global_monto_median = float(df.loc[train_mask, "monto"].median())
+
+    # 1. te_j_bayes: Target Encoding Bayesiano con 5-Fold OOF y Jitter en train
+    cv = KFold(n_splits=5, shuffle=True, random_state=random_state)
+    te_series = pd.Series(index=df.index, dtype=np.float64)
+    rng = np.random.RandomState(random_state)
+
+    for tr_idx, va_idx in cv.split(train_indices):
+        tr_df = df.iloc[train_indices[tr_idx]]
+        va_df = df.iloc[train_indices[va_idx]]
+
+        stats = tr_df.groupby("j")["fraude"].agg(["count", "mean"])
+        smoothed = (stats["count"] * stats["mean"] + m_te * global_fraud_rate) / (stats["count"] + m_te)
+        mapping = smoothed.to_dict()
+
+        vals = va_df["j"].map(mapping).fillna(global_fraud_rate).values
+        if noise_std > 0:
+            vals = vals + rng.normal(0.0, noise_std, size=len(vals))
+            vals = np.clip(vals, 0.0, 1.0)
+        te_series.iloc[train_indices[va_idx]] = vals
+
+    # Para val y test: aplicar estadísticas completas de train
+    full_stats = df.loc[train_mask].groupby("j")["fraude"].agg(["count", "mean"])
+    full_smoothed = (full_stats["count"] * full_stats["mean"] + m_te * global_fraud_rate) / (full_stats["count"] + m_te)
+    full_mapping = full_smoothed.to_dict()
+    te_series.iloc[non_train_indices] = (
+        df.loc[non_train_indices, "j"].map(full_mapping).fillna(global_fraud_rate).values
+    )
+    feats["te_j_bayes"] = te_series.astype(np.float64)
+
+    # 2. freq_j: Log-frecuencia en train
+    counts = df.loc[train_mask, "j"].value_counts().to_dict()
+    feats["freq_j"] = (
+        df["j"].map(counts).fillna(0).apply(lambda x: np.log1p(x)).astype(np.float64)
+    )
+
+    # 3. ratio_monto_j_bayes: Monto dividido mediana bayesiana de la categoría
+    j_stats = df[train_mask].groupby("j")["monto"].agg(["median", "count"])
+    j_stats["bayes_median"] = (
+        j_stats["count"] * j_stats["median"] + m_monto * global_monto_median
+    ) / (j_stats["count"] + m_monto)
+    bayes_median_dict = j_stats["bayes_median"].to_dict()
+
+    feats["ratio_monto_j_bayes"] = [
+        float(m / bayes_median_dict.get(j, global_monto_median))
+        for m, j in zip(df["monto"], df["j"])
+    ]
+    feats["ratio_monto_j_bayes"] = feats["ratio_monto_j_bayes"].astype(np.float64)
+
+    return feats
+
+
 def build_transactional_features(
     input_base_path: Path,
     output_features_path: Path,
@@ -360,6 +451,11 @@ def build_transactional_features(
     text_features = compute_text_features(df_base)
     for col in text_features.columns:
         df_features[col] = text_features[col]
+
+    # 7. Features analíticas de categoría j (Target Encoding bayesiano OOF, frecuencia y ratio de monto)
+    category_features = compute_category_features(df_base)
+    for col in category_features.columns:
+        df_features[col] = category_features[col]
 
     # Validaciones de integridad según Contrato A
     assert len(df_features) == len(df_base), "Error: Se alteró el número de filas."
