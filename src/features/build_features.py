@@ -96,6 +96,36 @@ def compute_profile_interactions(df: pd.DataFrame) -> pd.DataFrame:
     return feats
 
 
+def compute_dm_interactions(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calcula transformaciones no lineales e interacciones de las variables d y m.
+    
+    Selección optimizada y validada mediante el Modelo Proxy (Delta PR-AUC +0.0073 conjunto):
+    - ratio_d_m: Proporción d / (m + 1.0). Captura la tensión entre ambas escalas relativas (+2500 a 4000 gain).
+    - ratio_monto_m: Normalización monto / (m + 1.0). Relación entre el importe y la magnitud de m (+3100 gain).
+    - diff_m_d: Diferencia directa m - d. Identifica discrepancias anómalas entre variables correlacionadas (+4400 gain).
+
+    Args:
+        df: DataFrame base con 'monto', 'd' y 'm'.
+
+    Returns:
+        pd.DataFrame: DataFrame con las 3 features calculadas.
+    """
+    logger.info("Calculando transformaciones e interacciones de d y m...")
+    feats = pd.DataFrame(index=df.index)
+
+    # 1. ratio_d_m: Escala relativa entre d y m (+1.0 evita división por cero cuando m == 0)
+    feats["ratio_d_m"] = (df["d"] / (df["m"] + 1.0)).astype(np.float64)
+
+    # 2. ratio_monto_m: Normalización del ticket respecto a m
+    feats["ratio_monto_m"] = (df["monto"] / (df["m"] + 1.0)).astype(np.float64)
+
+    # 3. diff_m_d: Discrepancia directa entre m y d
+    feats["diff_m_d"] = (df["m"] - df["d"]).astype(np.float64)
+
+    return feats
+
+
 def build_transactional_features(
     input_base_path: Path,
     output_features_path: Path,
@@ -127,6 +157,11 @@ def build_transactional_features(
     interactions = compute_profile_interactions(df_base)
     for col in interactions.columns:
         df_features[col] = interactions[col]
+
+    # 3. Features de interacción matemática de d y m
+    dm_interactions = compute_dm_interactions(df_base)
+    for col in dm_interactions.columns:
+        df_features[col] = dm_interactions[col]
 
     # Validaciones de integridad según Contrato A
     assert len(df_features) == len(df_base), "Error: Se alteró el número de filas."

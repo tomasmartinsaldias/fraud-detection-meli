@@ -82,3 +82,86 @@ df <- read_parquet(here("data/processed", "dataset_base.parquet"))
 stopifnot(nrow(df) == 150000)
 ```
 
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Vector de la variable k (limpio de NA si los hubiera)
+k_vec <- df_limpio$k[!is.na(df_limpio$k)]
+
+# ==============================================================================
+# 1. PARÁMETROS EMPÍRICOS BÁSICOS VS. TEÓRICOS U(0, 1)
+# ==============================================================================
+# Para U(0, 1):
+#   Mínimo = 0, Máximo = 1
+#   Media = 0.5, Varianza = 1/12 ≈ 0.08333 (Desvío estándar ≈ 0.28867)
+# ==============================================================================
+
+metricas_empiricas <- tibble(
+  minimo      = min(k_vec),
+  q25         = quantile(k_vec, 0.25),
+  mediana     = median(k_vec),
+  media       = mean(k_vec),
+  q75         = quantile(k_vec, 0.75),
+  maximo      = max(k_vec),
+  desvio_std  = sd(k_vec),
+  n_valores   = length(k_vec)
+)
+
+print(metricas_empiricas)
+
+# ==============================================================================
+# 2. TEST DE BONDAD DE AJUSTE (KOLMOGOROV-SMIRNOV)
+# ==============================================================================
+# H0: La muestra proviene de una distribución U(0, 1).
+# Si p-valor < 0.05, se rechaza formalmente la hipótesis de uniformidad.
+# ==============================================================================
+
+ks_resultado <- ks.test(k_vec, "punif", min = 0, max = 1)
+print(ks_resultado)
+
+# ==============================================================================
+# 3. DIAGNÓSTICO VISUAL: HISTOGRAMA Y QQ-PLOT
+# ==============================================================================
+
+# Histograma con la densidad teórica esperada (línea horizontal en y = 1)
+p1 <- ggplot(data.frame(k = k_vec), aes(x = k)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 50, fill = "steelblue", color = "white", alpha = 0.7) +
+  geom_hline(yintercept = 1, color = "red", linetype = "dashed", linewidth = 1) +
+  labs(
+    title = "Densidad Empírica de k vs. Densidad Teórica U(0, 1)",
+    subtitle = "La línea roja discontinua representa la función de densidad f(x) = 1",
+    x = "k",
+    y = "Densidad"
+  ) +
+  theme_minimal()
+
+# QQ-Plot contra la distribución uniforme
+p2 <- ggplot(data.frame(k = k_vec), aes(sample = k)) +
+  stat_qq(distribution = qunif, dparams = list(min = 0, max = 1), alpha = 0.3, size = 0.8) +
+  stat_qq_line(distribution = qunif, dparams = list(min = 0, max = 1), color = "red", linewidth = 1) +
+  labs(
+    title = "Q-Q Plot de k contra U(0, 1)",
+    x = "Cuantiles Teóricos U(0, 1)",
+    y = "Cuantiles Empíricos"
+  ) +
+  theme_minimal()
+
+print(p1)
+print(p2)
+```
+```{r}
+# 1. Cantidad de valores únicos (si es menor a 150.000, hay empates/discretización)
+n_distinct(k_vec)
+
+# 2. Cantidad promedio de decimales observados
+nchar(sub("^0\\.", "", as.character(head(k_vec, 20))))
+
+# 3. ¿Tiene relación con el target (fraude)?
+cor(k_vec, df_limpio$fraude)
+```
+
+```{r}
+
+```
+
