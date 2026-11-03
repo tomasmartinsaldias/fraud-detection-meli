@@ -106,7 +106,8 @@ flowchart TD
 | `is_monto_alto` | `int8` | Flag booleano de ticket extremo pertenecientes al percentil 99 superior ($monto > 422$) | Sin leakage. Gain: ~93 |
 
 > [!NOTE]
-> **Performance del Gran Pool Candidato:** El pool completo contiene **48 variables analíticas** preparadas para el proceso final de *Feature Selection*. Cubre interacciones de perfil, transacción, minería de texto sobre `i`, catálogo `j`, ciclo temporal continuo, calendario, y métricas de anatomía y distribución de `monto`. Baseline Crudo: `0.4303` $\rightarrow$ Pool de Selección: `~0.4503` - `0.4547`. Destacan `te_j_bayes`, `ratio_monto_f`, `diff_m_d`, `ratio_d_m`, `hora_cont`, `cos_hora`, `log_monto` y `score_texto_nb`.
+> **Selección Final de Variables (Feature Selection RFE):** Mediante el módulo `src/features/select_features.py`, se ejecutó una eliminación recursiva backward optimizada sobre las 48 candidatas. El proceso purgó 13 variables ruidosas o redundantes (Gain = 0 o aporte negativo) y consolidó el dataset curado **`data/features/features_seleccionadas.parquet`** con **35 variables óptimas**.  
+> PR-AUC Baseline Crudo: `0.4288` $\rightarrow$ **PR-AUC Curado Final: `0.4509` (+0.0221)** en validación OOT, ejecutado en solo 23.67 segundos. Registro completo en `data/features/selected_features_report.json`.
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.

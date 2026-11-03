@@ -1,0 +1,175 @@
+{
+  "baseline_pr_auc": 0.42880820973479533,
+  "final_pr_auc": 0.4508831532585897,
+  "delta_pr_auc": 0.022074943523794355,
+  "initial_candidate_count": 48,
+  "selected_feature_count": 35,
+  "selected_features": [
+    "ratio_monto_ag_bayes",
+    "ratio_monto_b",
+    "prod_b_log_c",
+    "ratio_monto_c",
+    "ratio_d_m",
+    "ratio_monto_m",
+    "diff_m_d",
+    "ratio_monto_f",
+    "ratio_monto_e",
+    "ratio_monto_h",
+    "char_len",
+    "avg_word_len",
+    "digit_ratio",
+    "text_svd_1",
+    "text_svd_2",
+    "text_svd_3",
+    "text_svd_4",
+    "text_svd_5",
+    "text_svd_6",
+    "text_svd_7",
+    "text_svd_8",
+    "text_svd_9",
+    "score_texto_nb",
+    "te_j_bayes",
+    "freq_j",
+    "ratio_monto_j_bayes",
+    "hora_cont",
+    "cos_hora",
+    "sin_hora",
+    "ratio_monto_l",
+    "score_x_monto",
+    "ratio_monto_q",
+    "is_o_missing",
+    "es_madrugada",
+    "monto_centavos"
+  ],
+  "feature_gains": {
+    "ratio_monto_ag_bayes": 523.9043617248535,
+    "ratio_monto_b": 294.62806928157806,
+    "prod_b_log_c": 628.346845626831,
+    "ratio_monto_c": 1002.9627418518066,
+    "ratio_d_m": 2683.8523948192596,
+    "ratio_monto_m": 1562.6069993972778,
+    "diff_m_d": 910.8744522333145,
+    "ratio_monto_f": 2827.5792277157307,
+    "ratio_monto_e": 260.3991196155548,
+    "ratio_monto_h": 501.1171028614044,
+    "char_len": 348.0080997943878,
+    "avg_word_len": 188.89559078216553,
+    "digit_ratio": 291.5537827014923,
+    "text_svd_1": 276.596187710762,
+    "text_svd_2": 195.52401876449585,
+    "text_svd_3": 225.8685564994812,
+    "text_svd_4": 354.3676393032074,
+    "text_svd_5": 308.5968302488327,
+    "text_svd_6": 260.307461977005,
+    "text_svd_7": 265.05118492245674,
+    "text_svd_8": 394.0259094238281,
+    "text_svd_9": 196.06261014938354,
+    "score_texto_nb": 1501.90050432086,
+    "te_j_bayes": 5835.642666250467,
+    "freq_j": 711.7579122781754,
+    "ratio_monto_j_bayes": 642.8194675445557,
+    "hora_cont": 2084.392246723175,
+    "cos_hora": 1542.2472230196,
+    "sin_hora": 527.6609486341476,
+    "ratio_monto_l": 3365.4438253305852,
+    "score_x_monto": 438.0292778611183,
+    "ratio_monto_q": 559.5644103884697,
+    "is_o_missing": 15710.708864988002,
+    "es_madrugada": 117.23010063171387,
+    "monto_centavos": 267.8321796655655
+  },
+  "history": [
+    {
+      "step": 1,
+      "removed_feature": "log_f",
+      "gain_before_removal": 0.0,
+      "pr_auc": 0.44886711856645384,
+      "delta": 0.0
+    },
+    {
+      "step": 2,
+      "removed_feature": "is_f_cero_neg",
+      "gain_before_removal": 0.0,
+      "pr_auc": 0.44886711856645384,
+      "delta": 0.0
+    },
+    {
+      "step": 3,
+      "removed_feature": "is_e_cero",
+      "gain_before_removal": 0.0,
+      "pr_auc": 0.44886711856645384,
+      "delta": 0.0
+    },
+    {
+      "step": 4,
+      "removed_feature": "is_h_cero",
+      "gain_before_removal": 0.0,
+      "pr_auc": 0.44886711856645384,
+      "delta": 0.0
+    },
+    {
+      "step": 5,
+      "removed_feature": "log_h",
+      "gain_before_removal": 0.0,
+      "pr_auc": 0.44886711856645384,
+      "delta": 0.0
+    },
+    {
+      "step": 6,
+      "removed_feature": "log_l",
+      "gain_before_removal": 0.0,
+      "pr_auc": 0.44886711856645384,
+      "delta": 0.0
+    },
+    {
+      "step": 7,
+      "removed_feature": "log_m",
+      "gain_before_removal": 0.0,
+      "pr_auc": 0.44886711856645384,
+      "delta": 0.0
+    },
+    {
+      "step": 8,
+      "removed_feature": "log_monto",
+      "gain_before_removal": 0.0,
+      "pr_auc": 0.44886711856645384,
+      "delta": 0.0
+    },
+    {
+      "step": 9,
+      "removed_feature": "is_monto_alto",
+      "gain_before_removal": 0.0,
+      "pr_auc": 0.44886711856645384,
+      "delta": 0.0
+    },
+    {
+      "step": 10,
+      "removed_feature": "flag_alto_riesgo_nop",
+      "gain_before_removal": 10.639733999967575,
+      "pr_auc": 0.4498343171025882,
+      "delta": 0.0009671985361343616
+    },
+    {
+      "step": 11,
+      "removed_feature": "word_count",
+      "gain_before_removal": 111.02124750614166,
+      "pr_auc": 0.45063305494574574,
+      "delta": 0.0007987378431575376
+    },
+    {
+      "step": 12,
+      "removed_feature": "text_svd_10",
+      "gain_before_removal": 126.6120879650116,
+      "pr_auc": 0.4504869967135645,
+      "delta": -0.00014605823218122316
+    },
+    {
+      "step": 13,
+      "removed_feature": "dia_semana",
+      "gain_before_removal": 101.76982116699219,
+      "pr_auc": 0.4508831532585897,
+      "delta": 0.00025009831284394934
+    }
+  ],
+  "elapsed_seconds": 23.67
+}
