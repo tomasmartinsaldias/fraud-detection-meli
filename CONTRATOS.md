@@ -89,9 +89,12 @@ flowchart TD
 | `te_j_bayes` | `float64` | Target Encoding bayesiano sobre categoría `j` ($m=10$, KFold 5 OOF con jitter gaussiano $\sigma=0.01$) | Regularizado contra memorización. Gain: ~7.115 |
 | `freq_j` | `float64` | Log-frecuencia observada de la categoría `j` en train (`log1p(count)`) | Priors de train, fallback 0. Gain: ~926 |
 | `ratio_monto_j_bayes` | `float64` | Ticket normalizado respecto a la mediana bayesiana de la categoría `j` ($m=20$) | Sin leakage. Gain: ~643 |
+| `hora_cont` | `float64` | Tiempo continuo fraccional del día ($hora + min/60 + seg/3600$) | Sin leakage. Gain: ~2.227 |
+| `cos_hora` | `float64` | Proyección cíclica $\cos(2\pi \cdot hora\_cont / 24)$ (detector noche vs día continuo) | Sin leakage. Gain: ~1.305 |
+| `sin_hora` | `float64` | Proyección cíclica $\sin(2\pi \cdot hora\_cont / 24)$ (gradiente continuo mañana vs tarde) | Sin leakage. Gain: ~610 |
 
 > [!NOTE]
-> **Performance del Pool Candidato:** El pool ampliado contiene **33 variables analíticas** (15 transaccionales + 15 de minería de texto sobre `i` + 3 de catálogo `j`) preparadas para el proceso final de *Forward Stepwise Feature Selection*. PR-AUC conjunto en `val`: **`0.4450`** (ROC-AUC: **`0.8869`** vs Baseline Crudo: `0.4303` / `0.8857`). Destacan `te_j_bayes` (Gain: ~7.115), `ratio_monto_f` (Gain: ~3.707), `diff_m_d` (Gain: ~3.477), `ratio_d_m` (Gain: ~2.017) y `score_texto_nb` (Gain: ~1.635).
+> **Performance del Pool Candidato:** El pool ampliado contiene **36 variables analíticas** (15 transaccionales + 15 de minería de texto sobre `i` + 3 de catálogo `j` + 3 temporales continuas de `fecha`) preparadas para el proceso final de *Forward Stepwise Feature Selection*. PR-AUC conjunto en `val`: **`0.4547`** (ROC-AUC: **`0.8884`** vs Baseline Crudo: `0.4303` / `0.8857`, $\Delta\text{PR-AUC} = +0.0244$). Destacan `te_j_bayes` (Gain: ~6.619), `ratio_monto_f` (Gain: ~3.774), `ratio_d_m` (Gain: ~2.775), `hora_cont` (Gain: ~2.227), `ratio_monto_m` (Gain: ~2.074), `score_texto_nb` (Gain: ~1.517) y `cos_hora` (Gain: ~1.305).
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.
