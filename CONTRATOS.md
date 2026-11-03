@@ -84,11 +84,11 @@ flowchart TD
 | `word_count` | `float64` | Cantidad de palabras en el título `i` | Sin leakage |
 | `avg_word_len` | `float64` | Longitud promedio de palabra (`char_len / word_count`) | Sin leakage |
 | `digit_ratio` | `float64` | Proporción de números/dígitos en el título | Sin leakage |
-| `text_svd_1` a `text_svd_5` | `float64` | 5 componentes continuos de LSA (TF-IDF + TruncatedSVD) | Ajustados estrictamente sobre `train` |
-| `score_texto_nb` | `float64` | Probabilidad bayesiana OOF temporal (Naive Bayes, $\alpha=2.0, min\_df=30$) | `TimeSeriesSplit` estricto en `train`. Gain: ~3.234 |
+| `text_svd_1` a `text_svd_10` | `float64` | 10 componentes continuos de LSA (TF-IDF + TruncatedSVD optimizado por regla del codo) | Ajustados estrictamente sobre `train` |
+| `score_texto_nb` | `float64` | Probabilidad bayesiana OOF temporal (Naive Bayes, $\alpha=2.0, min\_df=30$) | `TimeSeriesSplit` estricto en `train`. Gain: ~3.400 |
 
 > [!NOTE]
-> **Performance del Pool Candidato:** El pool ampliado contiene **25 variables analíticas** (15 transaccionales + 10 de minería de texto sobre `i`) preparadas para el proceso final de *Forward Stepwise Feature Selection*. PR-AUC conjunto en `val`: **`0.4422`** (ROC-AUC: **`0.8866`**). Destacan `ratio_monto_f` (Gain: ~3.660), `score_texto_nb` (Gain: ~3.234) y `ratio_d_m` (Gain: ~2.690).
+> **Performance del Pool Candidato:** El pool ampliado contiene **30 variables analíticas** (15 transaccionales + 15 de minería de texto sobre `i`) preparadas para el proceso final de *Forward Stepwise Feature Selection*. PR-AUC conjunto en `val`: **`0.4437`** (ROC-AUC: **`0.8859`**). Destacan `ratio_monto_f` (Gain: ~3.715), `score_texto_nb` (Gain: ~3.400), `ratio_monto_m` (Gain: ~3.390) y `ratio_d_m` (Gain: ~2.728).
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.
