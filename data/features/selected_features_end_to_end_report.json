@@ -1,0 +1,55 @@
+{
+  "method": "Forward Stepwise Global End-to-End (Competencia 65 variables)",
+  "final_pr_auc": 0.459962455533535,
+  "selected_count": 14,
+  "selected_features": [
+    "score",
+    "o",
+    "g",
+    "ratio_monto_m",
+    "es_madrugada",
+    "ratio_monto_ag_bayes",
+    "n",
+    "te_j_bayes",
+    "b",
+    "e",
+    "ratio_d_m",
+    "text_svd_7",
+    "p",
+    "text_svd_10"
+  ],
+  "base_features": [
+    "score",
+    "o",
+    "g",
+    "n",
+    "b",
+    "e",
+    "p"
+  ],
+  "eng_features": [
+    "ratio_monto_m",
+    "es_madrugada",
+    "ratio_monto_ag_bayes",
+    "te_j_bayes",
+    "ratio_d_m",
+    "text_svd_7",
+    "text_svd_10"
+  ],
+  "feature_gains": {
+    "score": 46508.310661792755,
+    "o": 55052.18776035309,
+    "g": 7232.038190841675,
+    "ratio_monto_m": 5067.652896106243,
+    "es_madrugada": 1451.7386555671692,
+    "ratio_monto_ag_bayes": 3435.9363634586334,
+    "n": 2561.247152328491,
+    "te_j_bayes": 7017.315177440643,
+    "b": 4010.483788371086,
+    "e": 1869.3342909812927,
+    "ratio_d_m": 4192.964152574539,
+    "text_svd_7": 1888.0238511562347,
+    "p": 60.269020318984985,
+    "text_svd_10": 1693.018720626831
+  }
+}
