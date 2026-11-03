@@ -1,0 +1,50 @@
+{
+  "method": "Forward Stepwise Selection",
+  "params": {
+    "n_estimators": 120,
+    "learning_rate": 0.06,
+    "num_leaves": 31,
+    "max_depth": 6,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "n_jobs": -1,
+    "random_state": 42,
+    "importance_type": "gain",
+    "verbose": -1
+  },
+  "baseline_pr_auc": 0.432624661651038,
+  "final_pr_auc": 0.4556217228499273,
+  "delta_pr_auc": 0.02299706119888928,
+  "selected_count": 3,
+  "selected_features": [
+    "es_madrugada",
+    "te_j_bayes",
+    "log_m"
+  ],
+  "feature_gains": {
+    "es_madrugada": 1450.2387346823234,
+    "te_j_bayes": 7345.534635088639,
+    "log_m": 703.3467149734497
+  },
+  "history": [
+    {
+      "step": 1,
+      "added_feature": "es_madrugada",
+      "pr_auc": 0.44255402329458204,
+      "delta": 0.009929361643544021
+    },
+    {
+      "step": 2,
+      "added_feature": "te_j_bayes",
+      "pr_auc": 0.45376903003066155,
+      "delta": 0.011215006736079502
+    },
+    {
+      "step": 3,
+      "added_feature": "log_m",
+      "pr_auc": 0.4556217228499273,
+      "delta": 0.0018526928192657555
+    }
+  ],
+  "elapsed_seconds": 76.01
+}

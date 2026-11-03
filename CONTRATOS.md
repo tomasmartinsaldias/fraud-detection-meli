@@ -106,8 +106,18 @@ flowchart TD
 | `is_monto_alto` | `int8` | Flag booleano de ticket extremo pertenecientes al percentil 99 superior ($monto > 422$) | Sin leakage. Gain: ~93 |
 
 > [!NOTE]
-> **Selección Final de Variables (Feature Selection RFE):** Mediante el módulo `src/features/select_features.py`, se ejecutó una eliminación recursiva backward optimizada sobre las 48 candidatas. El proceso purgó 13 variables ruidosas o redundantes (Gain = 0 o aporte negativo) y consolidó el dataset curado **`data/features/features_seleccionadas.parquet`** con **35 variables óptimas**.  
-> PR-AUC Baseline Crudo: `0.4288` $\rightarrow$ **PR-AUC Curado Final: `0.4509` (+0.0221)** en validación OOT, ejecutado en solo 23.67 segundos. Registro completo en `data/features/selected_features_report.json`.
+> **Selección Final de Variables (Dual Feature Selection Benchmark):**  
+> Mediante los módulos `src/features/select_features.py` y `src/features/run_dual_selection.py`, se evaluaron las 48 candidatas bajo dos estrategias complementarias con hiperparámetros optimizados para árboles profundos (`n_estimators=120`, `learning_rate=0.06`, `num_leaves=31`, `max_depth=6`, `subsample=0.8`, `colsample=0.8`):
+> 1. **Forward Stepwise Selection (`data/features/features_seleccionadas_forward.parquet`):**  
+>    Identifica el núcleo predictivo mínimo (parsimonioso): **`['es_madrugada', 'te_j_bayes', 'log_m']`**.  
+>    PR-AUC: `0.4326` (baseline crudo) $\rightarrow$ **`0.4556` (+0.0230)** en validación OOT (76 seg).  
+> 2. **Backward RFE (`data/features/features_seleccionadas_backward.parquet`):**  
+>    Pool robusto multivariado de **47 variables** retenidas (eliminando ruido marginal).  
+>    PR-AUC: **`0.4553` (+0.0227)** en validación OOT (6 seg).  
+> 3. **Curaduría Balanceada (`data/features/features_seleccionadas.parquet`):**  
+>    Dataset de **35 variables** depuradas bajo evaluación determinística (purgando 13 variables de ganancia nula o ruidosa).  
+>    PR-AUC: **`0.4509` (+0.0221)** en validación OOT.  
+> Los reportes reproducibles completos se encuentran en `data/features/dual_selection_report.json`, `selected_features_forward_report.json` y `selected_features_backward_report.json`.
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.

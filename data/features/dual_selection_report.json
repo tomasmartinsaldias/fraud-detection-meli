@@ -1,0 +1,88 @@
+{
+  "params_busqueda": {
+    "n_estimators": 120,
+    "learning_rate": 0.06,
+    "num_leaves": 31,
+    "max_depth": 6,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "n_jobs": -1,
+    "random_state": 42,
+    "importance_type": "gain",
+    "verbose": -1
+  },
+  "forward": {
+    "pr_auc": 0.4556217228499273,
+    "delta_pr_auc": 0.02299706119888928,
+    "count": 3,
+    "features": [
+      "es_madrugada",
+      "te_j_bayes",
+      "log_m"
+    ],
+    "elapsed_seconds": 76.01
+  },
+  "backward": {
+    "pr_auc": 0.45528555233424356,
+    "delta_pr_auc": 0.022660890683205537,
+    "count": 47,
+    "features": [
+      "ratio_monto_ag_bayes",
+      "ratio_monto_b",
+      "prod_b_log_c",
+      "ratio_monto_c",
+      "ratio_d_m",
+      "ratio_monto_m",
+      "diff_m_d",
+      "ratio_monto_f",
+      "ratio_monto_e",
+      "log_f",
+      "is_f_cero_neg",
+      "is_e_cero",
+      "ratio_monto_h",
+      "is_h_cero",
+      "log_h",
+      "char_len",
+      "word_count",
+      "avg_word_len",
+      "digit_ratio",
+      "text_svd_1",
+      "text_svd_2",
+      "text_svd_3",
+      "text_svd_4",
+      "text_svd_5",
+      "text_svd_6",
+      "text_svd_7",
+      "text_svd_8",
+      "text_svd_9",
+      "text_svd_10",
+      "score_texto_nb",
+      "te_j_bayes",
+      "freq_j",
+      "ratio_monto_j_bayes",
+      "hora_cont",
+      "cos_hora",
+      "sin_hora",
+      "log_l",
+      "log_m",
+      "ratio_monto_l",
+      "score_x_monto",
+      "ratio_monto_q",
+      "flag_alto_riesgo_nop",
+      "is_o_missing",
+      "es_madrugada",
+      "dia_semana",
+      "log_monto",
+      "monto_centavos"
+    ],
+    "elapsed_seconds": 6.06
+  },
+  "intersection": {
+    "count": 3,
+    "features": [
+      "es_madrugada",
+      "log_m",
+      "te_j_bayes"
+    ]
+  }
+}
