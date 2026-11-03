@@ -92,9 +92,18 @@ flowchart TD
 | `hora_cont` | `float64` | Tiempo continuo fraccional del día ($hora + min/60 + seg/3600$) | Sin leakage. Gain: ~2.227 |
 | `cos_hora` | `float64` | Proyección cíclica $\cos(2\pi \cdot hora\_cont / 24)$ (detector noche vs día continuo) | Sin leakage. Gain: ~1.305 |
 | `sin_hora` | `float64` | Proyección cíclica $\sin(2\pi \cdot hora\_cont / 24)$ (gradiente continuo mañana vs tarde) | Sin leakage. Gain: ~610 |
+| `log_l` | `float64` | Compresión logarítmica $\log(1 + \max(l, 0))$ | Sin leakage |
+| `log_m` | `float64` | Compresión logarítmica $\log(1 + \max(m, 0))$ | Sin leakage |
+| `ratio_monto_l` | `float64` | Tensión ticket monetario sobre antigüedad $l$ ($monto / (l + 1)$) | Sin leakage |
+| `score_x_monto` | `float64` | Métrica de exposición de riesgo ($score \times monto$) | Sin leakage |
+| `ratio_monto_q` | `float64` | Ticket normalizado por tasa $q$ ($monto / (q + 0.01)$) | Sin leakage |
+| `flag_alto_riesgo_nop` | `int8` | Flag booleano de coincidencia de segmentos de alto riesgo ($n=0, o=\text{'N'}, p=\text{'N'}$) | Sin leakage |
+| `is_o_missing` | `int8` | Flag indicador de ausencia en variable $o$ (72% missing) | Sin leakage |
+| `es_madrugada` | `int8` | Flag binario de ventana nocturna ($hora \in [0, 5]$) | Sin leakage |
+| `dia_semana` | `float64` | Día de la semana numérico ($0.0 \dots 6.0$) | Sin leakage |
 
 > [!NOTE]
-> **Performance del Pool Candidato:** El pool ampliado contiene **36 variables analíticas** (15 transaccionales + 15 de minería de texto sobre `i` + 3 de catálogo `j` + 3 temporales continuas de `fecha`) preparadas para el proceso final de *Forward Stepwise Feature Selection*. PR-AUC conjunto en `val`: **`0.4547`** (ROC-AUC: **`0.8884`** vs Baseline Crudo: `0.4303` / `0.8857`, $\Delta\text{PR-AUC} = +0.0244$). Destacan `te_j_bayes` (Gain: ~6.619), `ratio_monto_f` (Gain: ~3.774), `ratio_d_m` (Gain: ~2.775), `hora_cont` (Gain: ~2.227), `ratio_monto_m` (Gain: ~2.074), `score_texto_nb` (Gain: ~1.517) y `cos_hora` (Gain: ~1.305).
+> **Performance del Gran Pool Candidato:** El pool completo contiene **45 variables analíticas** preparadas para el proceso final de *Feature Selection*. Cubre interacciones de perfil, transacción, minería de texto sobre `i`, catálogo `j`, ciclo temporal continuo y de calendario, y métricas de exposición de riesgo. Baseline Crudo: `0.4303` $\rightarrow$ Pool de Selección: `~0.4503` - `0.4547`. Destacan `te_j_bayes`, `ratio_monto_f`, `diff_m_d`, `ratio_d_m`, `hora_cont`, `cos_hora` y `score_texto_nb`.
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.

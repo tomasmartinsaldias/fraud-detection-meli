@@ -435,6 +435,52 @@ def compute_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     return feats
 
 
+def compute_additional_candidates(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calcula variables candidatas complementarias para que el pool de selección sea exhaustivo:
+    - log_l: Compresión logarítmica log1p de l.
+    - log_m: Compresión logarítmica log1p de m.
+    - ratio_monto_l: Monto normalizado por l (monto / (l + 1)).
+    - score_x_monto: Interacción multiplicativa de exposición de riesgo (score * monto).
+    - ratio_monto_q: Ticket normalizado por q (monto / (q + 0.01)).
+    - flag_alto_riesgo_nop: Flag booleano de coincidencia de segmentos de alto riesgo (n=0, o='N', p='N').
+    - is_o_missing: Flag indicador de ausencia en variable o (72% missing).
+    - es_madrugada: Flag binario de ventana nocturna (hora entre 0 y 5).
+    - dia_semana: Índice numérico del día de la semana (0=Lunes, 6=Domingo).
+
+    Args:
+        df: DataFrame base con las columnas requeridas.
+
+    Returns:
+        pd.DataFrame: DataFrame con las 9 features candidatas adicionales.
+    """
+    logger.info("Calculando features candidatas complementarias (l, m, q, score, n, o, p y calendario)...")
+    feats = pd.DataFrame(index=df.index)
+
+    # 1. Transformaciones logarítmicas de l y m
+    feats["log_l"] = np.log1p(df["l"].clip(lower=0)).astype(np.float64)
+    feats["log_m"] = np.log1p(df["m"].clip(lower=0)).astype(np.float64)
+
+    # 2. Interacciones de l, score y q
+    feats["ratio_monto_l"] = (df["monto"] / (df["l"] + 1.0)).astype(np.float64)
+    feats["score_x_monto"] = (df["score"] * df["monto"]).astype(np.float64)
+    feats["ratio_monto_q"] = (df["monto"] / (df["q"].clip(lower=0) + 0.01)).astype(np.float64)
+
+    # 3. Interacciones y flags categóricos de n, o, p
+    o_str = df["o"].fillna("MISSING").astype(str)
+    feats["flag_alto_riesgo_nop"] = (
+        (df["n"] == 0) & (o_str == "N") & (df["p"] == "N")
+    ).astype(np.int8)
+    feats["is_o_missing"] = df["o"].isna().astype(np.int8)
+
+    # 4. Variables de calendario
+    fecha = pd.to_datetime(df["fecha"])
+    feats["es_madrugada"] = ((fecha.dt.hour >= 0) & (fecha.dt.hour <= 5)).astype(np.int8)
+    feats["dia_semana"] = fecha.dt.weekday.astype(np.float64)
+
+    return feats
+
+
 def build_transactional_features(
     input_base_path: Path,
     output_features_path: Path,
@@ -496,6 +542,11 @@ def build_transactional_features(
     temporal_features = compute_temporal_features(df_base)
     for col in temporal_features.columns:
         df_features[col] = temporal_features[col]
+
+    # 9. Features candidatas complementarias (l, m, q, score, n, o, p y calendario)
+    additional_candidates = compute_additional_candidates(df_base)
+    for col in additional_candidates.columns:
+        df_features[col] = additional_candidates[col]
 
     # Validaciones de integridad según Contrato A
     assert len(df_features) == len(df_base), "Error: Se alteró el número de filas."
