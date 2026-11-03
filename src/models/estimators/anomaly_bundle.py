@@ -21,6 +21,8 @@ import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
+from sklearn.kernel_approximation import Nystroem
+from sklearn.linear_model import SGDOneClassSVM
 from sklearn.neighbors import LocalOutlierFactor
 
 from src.models.estimators.preprocessing import (
@@ -105,6 +107,8 @@ class AnomalyPipelineBundle:
         "score_iforest_diagonal",
         "score_lof_manhattan",
         "score_lof_euclidean",
+        "score_ocsvm_rbf_nu_003",
+        "score_ocsvm_rbf_nu_005",
     ]
 
     def __init__(
@@ -113,12 +117,14 @@ class AnomalyPipelineBundle:
         iforest_n_estimators: int = 150,
         iforest_max_samples: int = 256,
         lof_sample_size: int = 20000,
+        ocsvm_n_components: int = 300,
         seed: int = 42,
     ) -> None:
         self.pca_variance = pca_variance
         self.iforest_n_estimators = iforest_n_estimators
         self.iforest_max_samples = iforest_max_samples
         self.lof_sample_size = lof_sample_size
+        self.ocsvm_n_components = ocsvm_n_components
         self.seed = seed
 
         self.freq_preprocessor_: Optional[FrequencyPreprocessor] = None
@@ -129,6 +135,9 @@ class AnomalyPipelineBundle:
         self.iforest_diag_: Optional[RotatedHyperplaneIsolationForest] = None
         self.lof_manhattan_: Optional[LocalOutlierFactor] = None
         self.lof_euclidean_: Optional[LocalOutlierFactor] = None
+        self.nystroem_: Optional[Nystroem] = None
+        self.ocsvm_nu_003_: Optional[SGDOneClassSVM] = None
+        self.ocsvm_nu_005_: Optional[SGDOneClassSVM] = None
 
         self.ref_sorted_scores_: Dict[str, np.ndarray] = {}
         self.lgbm_consolidator_: Optional[lgb.LGBMClassifier] = None
@@ -161,6 +170,11 @@ class AnomalyPipelineBundle:
         raw_lof_man = -self.lof_manhattan_.score_samples(x_freq)
         raw_lof_euc = -self.lof_euclidean_.score_samples(x_freq)
 
+        # 4. OCSVM Nystroem Kernel RBF (nu=0.03 y nu=0.05)
+        x_nystroem = self.nystroem_.transform(x_freq)
+        raw_ocsvm_003 = -self.ocsvm_nu_003_.decision_function(x_nystroem)
+        raw_ocsvm_005 = -self.ocsvm_nu_005_.decision_function(x_nystroem)
+
         return {
             "pca_q": raw_pca_q,
             "pca_magnitud": raw_pca_mag,
@@ -169,6 +183,8 @@ class AnomalyPipelineBundle:
             "score_iforest_diagonal": raw_if_diag,
             "score_lof_manhattan": raw_lof_man,
             "score_lof_euclidean": raw_lof_euc,
+            "score_ocsvm_rbf_nu_003": raw_ocsvm_003,
+            "score_ocsvm_rbf_nu_005": raw_ocsvm_005,
         }
 
     def fit(self, df_train: pd.DataFrame) -> "AnomalyPipelineBundle":
@@ -248,7 +264,39 @@ class AnomalyPipelineBundle:
         )
         self.lof_euclidean_.fit(x_lof_ref)
 
-        # 5. Calcular scores en todo train y guardar distribuciones de referencia legítimas
+        # 5. OCSVM con Nystroem Kernel RBF (nu=0.03 y nu=0.05)
+        logger.info(f"Ajustando Nystroem ({self.ocsvm_n_components} componentes RBF)...")
+        self.nystroem_ = Nystroem(
+            kernel="rbf",
+            gamma=None,
+            n_components=self.ocsvm_n_components,
+            random_state=self.seed,
+            n_jobs=-1,
+        )
+        self.nystroem_.fit(x_freq_legit)
+        x_nystroem_legit = self.nystroem_.transform(x_freq_legit)
+
+        logger.info("Ajustando SGDOneClassSVM (nu=0.03, precision)...")
+        self.ocsvm_nu_003_ = SGDOneClassSVM(
+            nu=0.03,
+            fit_intercept=True,
+            max_iter=1000,
+            tol=1e-3,
+            random_state=self.seed,
+        )
+        self.ocsvm_nu_003_.fit(x_nystroem_legit)
+
+        logger.info("Ajustando SGDOneClassSVM (nu=0.05, recall)...")
+        self.ocsvm_nu_005_ = SGDOneClassSVM(
+            nu=0.05,
+            fit_intercept=True,
+            max_iter=1000,
+            tol=1e-3,
+            random_state=self.seed,
+        )
+        self.ocsvm_nu_005_.fit(x_nystroem_legit)
+
+        # 6. Calcular scores en todo train y guardar distribuciones de referencia legítimas
         logger.info("Calculando distribuciones de referencia de percentiles en train...")
         x_freq_train = self.freq_preprocessor_.transform(df_train)
         x_hybrid_train = self.hybrid_preprocessor_.transform(df_train)
