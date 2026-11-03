@@ -106,18 +106,19 @@ flowchart TD
 | `is_monto_alto` | `int8` | Flag booleano de ticket extremo pertenecientes al percentil 99 superior ($monto > 422$) | Sin leakage. Gain: ~93 |
 
 > [!NOTE]
-> **Selección Final de Variables (Dual Feature Selection Benchmark):**  
-> Mediante los módulos `src/features/select_features.py` y `src/features/run_dual_selection.py`, se evaluaron las 48 candidatas bajo dos estrategias complementarias con hiperparámetros optimizados para árboles profundos (`n_estimators=120`, `learning_rate=0.06`, `num_leaves=31`, `max_depth=6`, `subsample=0.8`, `colsample=0.8`):
-> 1. **Forward Stepwise Selection (`data/features/features_seleccionadas_forward.parquet`):**  
->    Identifica el núcleo predictivo mínimo (parsimonioso): **`['es_madrugada', 'te_j_bayes', 'log_m']`**.  
->    PR-AUC: `0.4326` (baseline crudo) $\rightarrow$ **`0.4556` (+0.0230)** en validación OOT (76 seg).  
+> **Selección Final de Variables (Feature Selection Benchmark):**  
+> Mediante los módulos `src/features/select_features.py` y `src/features/run_forward_selection.py`, se evaluaron las 48 candidatas bajo estrategias complementarias con hiperparámetros optimizados para árboles profundos (`n_estimators=120`, `learning_rate=0.06`, `num_leaves=31`, `max_depth=6`, `subsample=0.8`):
+> 1. **Forward Stepwise Definitivo (`data/features/features_seleccionadas_forward.parquet`):**  
+>    Determinístico (`colsample_bytree=1.0`), umbral $\varepsilon=0.0003$ y paciencia de 2 rondas. Identifica el **núcleo de oro de 7 variables multidisciplinarias**:  
+>    `['es_madrugada', 'te_j_bayes', 'ratio_monto_l', 'diff_m_d', 'score_x_monto', 'text_svd_7', 'avg_word_len']`.  
+>    PR-AUC: `0.4287` (baseline crudo) $\rightarrow$ **`0.4584` (+0.0297)** en validación OOT (163 seg).  
 > 2. **Backward RFE (`data/features/features_seleccionadas_backward.parquet`):**  
->    Pool robusto multivariado de **47 variables** retenidas (eliminando ruido marginal).  
->    PR-AUC: **`0.4553` (+0.0227)** en validación OOT (6 seg).  
+>    Pool multivariado de **47 variables** retenidas tras podar redundancias obvias.  
+>    PR-AUC: **`0.4553` (+0.0227)** en validación OOT.  
 > 3. **Curaduría Balanceada (`data/features/features_seleccionadas.parquet`):**  
->    Dataset de **35 variables** depuradas bajo evaluación determinística (purgando 13 variables de ganancia nula o ruidosa).  
+>    Dataset de **35 variables** depuradas bajo evaluación determinística (purgando 13 variables ruidosas).  
 >    PR-AUC: **`0.4509` (+0.0221)** en validación OOT.  
-> Los reportes reproducibles completos se encuentran en `data/features/dual_selection_report.json`, `selected_features_forward_report.json` y `selected_features_backward_report.json`.
+> Los reportes reproducibles completos se encuentran en `data/features/selected_features_forward_report.json`, `selected_features_backward_report.json` y `dual_selection_report.json`.
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.
