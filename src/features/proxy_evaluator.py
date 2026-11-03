@@ -53,18 +53,18 @@ class FeatureProxyEvaluator:
     # Variables numéricas del baseline crudo
     # NOTA METODOLÓGICA:
     # - 'c' se conserva con sus NAs naturales continuos.
-    # - 'is_na_c' es el indicador binario explícito de ausencia en c.
+    # - 'is_na_bc' es el indicador binario de ausencia conjunta de perfil (caída del 8-13 marzo).
     # - 'r' se descarta por ser una mala imputación de c con la media (260445) que corrompe entidades.
     # - 'k' se excluye por ser ruido uniforme U(0,1) independiente del target probado en EDA.
     # - 'i' es texto libre sin procesar (títulos de productos).
     # - 'j' es categoría de alta cardinalidad (>9.000 categorías); su inclusión se evalúa como
     #   feature candidata transformada (Target Encoding OOF / Frecuencia) mediante este evaluador.
-    # - 'a', 'n', 'p', 'o', 'g', 'is_na_c' se tratan como categóricas nativas.
+    # - 'a', 'n', 'p', 'o', 'g', 'is_na_bc' se tratan como categóricas nativas.
     # - 's' se excluye por ser duplicada exacta de 'p' (p=='Y' <=> s==100).
     DEFAULT_BASE_NUMERIC_COLS = [
         "score", "monto", "b", "c", "d", "e", "f", "h", "l", "m", "q"
     ]
-    DEFAULT_BASE_CATEGORICAL_COLS = ["a", "g", "n", "o", "p", "is_na_c"]
+    DEFAULT_BASE_CATEGORICAL_COLS = ["a", "g", "n", "o", "p", "is_na_bc"]
 
     def __init__(
         self,

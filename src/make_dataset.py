@@ -187,7 +187,7 @@ def clean_final_columns(df: pd.DataFrame) -> pd.DataFrame:
     Elimina columnas de índice residual (...1), auxiliares de trazabilidad
     (es_bloque_2, origen_bloque), variables de duplicación exacta (s == 100 <=> p == 'Y')
     y variables con imputaciones artificiales destructivas (r es c imputada con la media 260445).
-    Crea la bandera explícita 'is_na_c' para preservar la señal de ausencia original.
+    Crea la bandera explícita 'is_na_bc' para capturar la ausencia conjunta de b y c (caída de servicio).
     Reorganiza 'transaction_id' como clave primaria al inicio.
 
     Args:
@@ -196,9 +196,9 @@ def clean_final_columns(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame limpio sin columnas redundantes ni artefactos.
     """
-    # 1. Crear bandera explícita de valor faltante en c
+    # 1. Crear bandera explícita de valor faltante en b y c
     if "c" in df.columns:
-        df["is_na_c"] = df["c"].isna().astype(int)
+        df["is_na_bc"] = df["c"].isna().astype(int)
 
     # 2. Descartar columnas redundantes o corrompidas por preprocesamiento externo
     cols_to_drop = [
