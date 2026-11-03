@@ -57,7 +57,7 @@ def compute_score_metrics(y_true: np.ndarray, scores: np.ndarray, score_name: st
     prec_t = precision[:-1]
     rec_t = recall[:-1]
     denom = prec_t + rec_t
-    f1_scores = np.where(denom > 0, 2.0 * (prec_t * rec_t) / denom, 0.0)
+    f1_scores = np.divide(2.0 * (prec_t * rec_t), denom, out=np.zeros_like(denom), where=denom > 0)
 
     best_idx = int(np.argmax(f1_scores))
     return MetricRow(
