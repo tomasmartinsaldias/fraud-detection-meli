@@ -170,13 +170,33 @@ flowchart TD
 
 **Criterio de comparación:** reportar la mejor PR-AUC de validación y el costo/tiempo de búsqueda para TPE + pruning y CMA-ES. Seleccionar la configuración final únicamente con `val`; luego reentrenar según el procedimiento definido y evaluar una sola vez en `test`.
 
+#### Opciones de Features Entregadas por Contrato A para Ian:
+Contrato A pone a disposición de Ian 3 variantes de features según la arquitectura de modelado elegida:
+1. **Opción Blindada End-to-End (Recomendada):** `data/features/features_seleccionadas_end_to_end.parquet`
+   - **12 variables estructurales:** 6 base (`score, o, g, n, b, e`) + 6 ingenierizadas (`ratio_monto_m, es_madrugada, ratio_monto_ag_bayes, te_j_bayes, ratio_d_m, text_svd_7`).
+   - Podada deliberadamente en el Paso 12 para evitar el sobreajuste a la ventana temporal de `val` detectado en la cola del forward stepwise (`p` y `text_svd_10` fueron descartadas por no aportar generalización temporal en `TimeSeriesSplit`).
+   - Métrica en validación: **`PR-AUC = 0.4586`** (+0.0299 vs baseline crudo).
+2. **Opción Ensamble Incremental:** `data/features/features_seleccionadas_forward.parquet`
+   - Las 17 variables crudas base + 7 variables ingenierizadas de alto uplift (`es_madrugada, te_j_bayes, ratio_monto_l, diff_m_d, score_x_monto, text_svd_7, avg_word_len`).
+   - Métrica en validación: **`PR-AUC = 0.4584`**.
+3. **Opción Pool Completo:** `data/features/features_transaccionales.parquet`
+   - Las 48 features ingenierizadas completas para modelos que apliquen regularización intrínseca (L1/L2, `subsample`, `colsample_bytree`).
+
+> [!CAUTION]
+> **Alerta Metodológica sobre Validación Leakage:**  
+> Se realizaron auditorías con `TimeSeriesSplit` interno dentro de `train` para verificar la estabilidad de las features. Se instruye a Ian no sobre-optimizar hiperparámetros con cientos de trials que puedan memorizar la partición OOT de `val`. El conjunto `test` debe permanecer estrictamente sellado hasta la corrida de inferencia final.
+
 #### Código de Integración Estándar (`src/models/train.py`):
 ```python
 import pandas as pd
 
 def build_full_dataset(
     base_path="data/processed/dataset_base.parquet",
-    feat_path="data/features/features_transaccionales.parquet",
+    # Ian puede alternar entre las opciones entregadas:
+    # 1. Blindada: "data/features/features_seleccionadas_end_to_end.parquet" (12 vars)
+    # 2. Incremental: "data/features/features_seleccionadas_forward.parquet" (7 vars)
+    # 3. Pool Completo: "data/features/features_transaccionales.parquet" (48 vars)
+    feat_path="data/features/features_seleccionadas_end_to_end.parquet",
     anom_path="data/features/scores_anomalias.parquet",
 ) -> pd.DataFrame:
     df_base = pd.read_parquet(base_path)
@@ -184,11 +204,17 @@ def build_full_dataset(
     df_anom = pd.read_parquet(anom_path)
 
     # Merge determinista 1:1 por transaction_id
-    df_full = (
-        df_base
-        .merge(df_feat, on="transaction_id", how="left")
-        .merge(df_anom, on="transaction_id", how="left")
-    )
+    # Nota: Si se usa la opción Blindada (end_to_end), esta ya incluye las variables base seleccionadas,
+    # por lo que el merge selecciona únicamente las columnas de df_feat más las necesarias de df_base (fraude, split, fecha).
+    if "score" in df_feat.columns:
+        # Opción End-to-End
+        meta_cols = ["transaction_id", "fraude", "split", "fecha"]
+        df_full = df_base[meta_cols].merge(df_feat, on="transaction_id", how="left")
+    else:
+        # Opción Incremental o Pool Completo
+        df_full = df_base.merge(df_feat, on="transaction_id", how="left")
+
+    df_full = df_full.merge(df_anom, on="transaction_id", how="left")
 
     # Aserción de integridad
     assert len(df_full) == len(df_base), "Error: El merge alteró la cantidad de filas."
