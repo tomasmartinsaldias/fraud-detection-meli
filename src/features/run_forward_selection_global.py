@@ -1,14 +1,16 @@
 """
-Forward Stepwise Selection Global (End-to-End desde Foja Cero).
+Forward Stepwise Selection Global End-to-End (Competencia abierta 65 variables).
 
-Pone a competir a las 65 variables juntas (17 crudas base + 48 ingenierizadas)
-arrancando desde el conjunto vacío (sin features preseleccionadas).
-
-Criterio:
+Ejecuta selección hacia adelante poniendo a competir las 65 variables (17 base + 48 ingenierizadas)
+arrancando desde la variable continua de máxima señal ('score'), con:
 - colsample_bytree: 1.0 (Determinístico)
-- min_delta (epsilon): 0.0003
+- min_delta: 0.0003
 - patience: 2 rondas
-- n_estimators: 120, lr: 0.06, num_leaves: 31, max_depth: 6, subsample: 0.8
+- Poda estructural en Paso 12 (descartando ruido de cola para mitigar Validation Overfitting)
+
+Genera:
+- data/features/features_seleccionadas_end_to_end.parquet (12 variables blindadas)
+- data/features/selected_features_end_to_end_report.json
 """
 
 from __future__ import annotations
@@ -30,7 +32,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-logger = logging.getLogger("global_forward")
+logger = logging.getLogger("forward_global")
 
 PARAMS_FORWARD = {
     "n_estimators": 120,
@@ -94,33 +96,46 @@ def fit_eval(
     return pr_auc, importances
 
 
-def run_global_forward():
+def run_global_forward(max_steps: int = 12):
     full_df, base_cols, eng_cols, all_cand_cols, y_train, y_val, train_mask, val_mask = load_data()
 
     logger.info("================================================================")
-    logger.info(" INICIANDO FORWARD STEPWISE GLOBAL DESDE CERO (FOJA CERO)")
-    logger.info(f" Pool Total: {len(all_cand_cols)} variables ({len(base_cols)} crudas + {len(eng_cols)} ingenierizadas)")
+    logger.info(" INICIANDO FORWARD STEPWISE GLOBAL BLINDADO (65 VARIABLES)")
+    logger.info(f" Pool: {len(base_cols)} base + {len(eng_cols)} ingenierizadas | Max Steps: {max_steps}")
     logger.info(" colsample_bytree = 1.0 | min_delta = 0.0003 | patience = 2")
     logger.info("================================================================")
 
     t0 = time.time()
     
-    # Evaluar baseline con todas las 17 crudas juntas como referencia
+    # Baseline 17 crudas juntas como referencia
     base_all_pr, _ = fit_eval(full_df, base_cols, y_train, y_val, train_mask, val_mask)
     logger.info(f"Referencia (17 crudas base juntas): PR-AUC = {base_all_pr:.4f}")
 
-    current_best_pr = 0.0
-    best_selected: List[str] = []
-    
-    selected: List[str] = []
-    remaining = list(all_cand_cols)
+    # Semilla en la variable continua univariada más potente
+    seed_col = "score"
+    selected = [seed_col]
+    remaining = [c for c in all_cand_cols if c != seed_col]
+
+    seed_pr, _ = fit_eval(full_df, selected, y_train, y_val, train_mask, val_mask)
+    logger.info(f"Paso  1: + {seed_col:24s} [BASE CRUDA   ] -> PR-AUC: {seed_pr:.4f} [SEMILLA INICIAL]")
+
+    current_best_pr = seed_pr
+    best_selected = list(selected)
     patience_counter = 0
     patience_limit = 2
     min_delta = 0.0003
-    history = []
-    step = 1
+    history = [{
+        "step": 1,
+        "feature": seed_col,
+        "type": "BASE CRUDA",
+        "score": seed_pr,
+        "delta_vs_best": 0.0,
+        "patience": 0,
+        "accepted": True,
+    }]
+    step = 2
 
-    while remaining and patience_counter < patience_limit:
+    while remaining and patience_counter < patience_limit and step <= max_steps:
         best_cand = None
         best_cand_score = -1.0
 
@@ -139,10 +154,7 @@ def run_global_forward():
         selected.append(best_cand)
         remaining.remove(best_cand)
 
-        # En el paso 1, cualquier score positivo es mejora sobre el conjunto vacío
-        is_improvement = (step == 1) or (delta_vs_best >= min_delta)
-
-        if is_improvement:
+        if delta_vs_best >= min_delta:
             current_best_pr = best_cand_score
             best_selected = list(selected)
             patience_counter = 0
@@ -164,13 +176,12 @@ def run_global_forward():
             "score": best_cand_score,
             "delta_vs_best": delta_vs_best,
             "patience": patience_counter,
-            "accepted": is_improvement,
+            "accepted": (delta_vs_best >= min_delta),
         })
         step += 1
 
     logger.info("----------------------------------------------------------------")
-    logger.info(f"Búsqueda finalizada tras {step-1} pasos.")
-    logger.info(f"Mejor subconjunto retiene {len(best_selected)} variables: {best_selected}")
+    logger.info(f"Búsqueda finalizada. Subconjunto blindado retiene {len(best_selected)} variables.")
 
     final_pr, final_imp = fit_eval(
         full_df, best_selected, y_train, y_val, train_mask, val_mask
@@ -181,27 +192,25 @@ def run_global_forward():
     discarded_base = [c for c in base_cols if c not in best_selected]
     selected_eng = [c for c in best_selected if c in eng_cols]
 
-    logger.info(f"Forward completado en {elapsed:.1f}s. PR-AUC Final: {final_pr:.4f}")
-    logger.info(f"Variables Base retenidas: {len(surviving_base)} de {len(base_cols)}: {surviving_base}")
-    logger.info(f"Variables Base descartadas: {len(discarded_base)} de {len(base_cols)}: {discarded_base}")
-    logger.info(f"Variables Ingenierizadas seleccionadas: {len(selected_eng)}: {selected_eng}")
+    logger.info(f"Completado en {elapsed:.1f}s. PR-AUC Final: {final_pr:.4f} (+{final_pr - base_all_pr:.4f} vs 17 base)")
+    logger.info(f"Base Retenidas ({len(surviving_base)}): {surviving_base}")
+    logger.info(f"Ingenierizadas Seleccionadas ({len(selected_eng)}): {selected_eng}")
 
-    # Exportar dataset
+    # Exportar dataset definitivo end-to-end
     out_cols = ["transaction_id"] + best_selected
     df_out = full_df[out_cols].copy()
-    out_path = Path("data/features/features_seleccionadas_global.parquet")
+    out_path = Path("data/features/features_seleccionadas_end_to_end.parquet")
     tmp_path = out_path.with_suffix(".parquet.tmp")
     df_out.to_parquet(tmp_path, index=False)
     os.replace(tmp_path, out_path)
-    logger.info(f"Guardado dataset global: {out_path} ({df_out.shape})")
+    logger.info(f"Guardado dataset blindado: {out_path} ({df_out.shape})")
 
     report = {
-        "method": "Forward Stepwise Selection Global (Desde Foja Cero)",
+        "method": "Forward Stepwise Global End-to-End Blindado",
         "params": PARAMS_FORWARD,
-        "min_delta": min_delta,
-        "patience": patience_limit,
+        "max_steps": max_steps,
         "reference_17_base_pr_auc": base_all_pr,
-        "final_pr_auc": final_pr,
+        "final_pr_auc_val": final_pr,
         "delta_vs_reference_17_base": final_pr - base_all_pr,
         "total_selected_count": len(best_selected),
         "surviving_base_count": len(surviving_base),
@@ -216,19 +225,18 @@ def run_global_forward():
         "elapsed_seconds": round(elapsed, 2),
     }
 
-    report_path = Path("data/features/selected_features_global_report.json")
+    report_path = Path("data/features/selected_features_end_to_end_report.json")
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
     logger.info(f"Reporte guardado en {report_path}")
 
     # Tabla resumen en consola
     print("\n" + "=" * 80)
-    print("RESUMEN FORWARD STEPWISE GLOBAL (END-TO-END DESDE CERO)")
+    print("RESUMEN FORWARD STEPWISE GLOBAL BLINDADO (END-TO-END)")
     print("=" * 80)
-    print(f"Referencia (17 base crudas obligadas): {base_all_pr:.4f}")
-    print(f"PR-AUC Final ({len(best_selected)} vars totales):            {final_pr:.4f} ({final_pr - base_all_pr:+.4f})")
-    print(f"Base Retenidas: {len(surviving_base)}/{len(base_cols)} | Descartadas: {len(discarded_base)}/{len(base_cols)}")
-    print(f"Ingenierizadas Seleccionadas: {len(selected_eng)}")
+    print(f"Referencia (17 base crudas): {base_all_pr:.4f}")
+    print(f"PR-AUC Final ({len(best_selected)} vars blindadas):       {final_pr:.4f} ({final_pr - base_all_pr:+.4f})")
+    print(f"Base Retenidas: {len(surviving_base)}/17 | Ingenierizadas Seleccionadas: {len(selected_eng)}")
     print(f"Tiempo total: {elapsed:.1f} segundos")
     print("-" * 80)
     print(f"{'Orden':<6} | {'Variable':<24} | {'Tipo':<15} | {'Gain LightGBM':>15}")
@@ -240,4 +248,4 @@ def run_global_forward():
 
 
 if __name__ == "__main__":
-    run_global_forward()
+    run_global_forward(max_steps=12)

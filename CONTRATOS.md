@@ -106,20 +106,15 @@ flowchart TD
 | `is_monto_alto` | `int8` | Flag booleano de ticket extremo pertenecientes al percentil 99 superior ($monto > 422$) | Sin leakage. Gain: ~93 |
 
 > [!NOTE]
-> **Selección Final de Variables (Feature Selection Benchmark):**  
-> Mediante los módulos `src/features/select_features.py`, `src/features/run_forward_selection.py` y `src/features/run_forward_selection_global.py`, se evaluaron las variables bajo estrategias complementarias con hiperparámetros optimizados para árboles profundos (`n_estimators=120`, `learning_rate=0.06`, `num_leaves=31`, `max_depth=6`, `subsample=0.8`):
-> 1. **Forward Stepwise Global End-to-End Blindado (`data/features/features_seleccionadas_end_to_end.parquet`):**  
->    Competencia abierta de las 65 variables podada en el paso 12 (descartando `p` y `text_svd_10` por sobreajuste a varianza local).  
+> **Selección Final de Variables (Entregables Curados para Modelado):**  
+> Mediante los módulos `src/features/run_forward_selection_global.py` y `src/features/run_forward_selection.py`, se consolidaron dos datasets optimizados listos para su uso directo en Contrato C:
+> 1. **Forward Stepwise Global Blindado (`data/features/features_seleccionadas_end_to_end.parquet` - RECOMENDADO):**  
+>    Competencia abierta de las 65 variables podada en el paso 12 (descartando `p` y `text_svd_10` por sobreajuste a varianza local tras auditoría con `TimeSeriesSplit`).  
 >    Retiene **6 base** (`score, o, g, n, b, e`) y **6 ingenierizadas** (`ratio_monto_m, es_madrugada, ratio_monto_ag_bayes, te_j_bayes, ratio_d_m, text_svd_7`).  
->    **PR-AUC: `0.4586` (+0.0299)** con solo 12 variables blindadas ante leakage temporal.
+>    **PR-AUC: `0.4586` (+0.0299)** con solo 12 variables blindadas ante leakage temporal. Reporte: `selected_features_end_to_end_report.json`.
 > 2. **Forward Stepwise Incremental (`data/features/features_seleccionadas_forward.parquet`):**  
->    17 crudas base retenidas + núcleo de oro de 7 variables ingenierizadas (`es_madrugada, te_j_bayes, ratio_monto_l, diff_m_d, score_x_monto, text_svd_7, avg_word_len`).  
->    PR-AUC: `0.4287` $\rightarrow$ **`0.4584` (+0.0297)** en validación OOT (CV temporal: `0.4564`).  
-> 3. **Backward RFE (`data/features/features_seleccionadas_backward.parquet`):**  
->    Pool multivariado de **47 variables** retenidas tras podar redundancias obvias. PR-AUC: **`0.4553`**.  
-> 4. **Curaduría Balanceada (`data/features/features_seleccionadas.parquet`):**  
->    Dataset de **35 variables** depuradas bajo evaluación determinística. PR-AUC: **`0.4509`**.  
-> Los reportes reproducibles se encuentran en `data/features/selected_features_end_to_end_report.json`, `selected_features_forward_report.json`, `selected_features_backward_report.json` y `dual_selection_report.json`.
+>    Las 17 variables crudas base retenidas + núcleo de oro de 7 variables ingenierizadas (`es_madrugada, te_j_bayes, ratio_monto_l, diff_m_d, score_x_monto, text_svd_7, avg_word_len`).  
+>    **PR-AUC: `0.4584` (+0.0297)** en validación OOT (CV temporal: `0.4564`). Reporte: `selected_features_forward_report.json`.
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.
