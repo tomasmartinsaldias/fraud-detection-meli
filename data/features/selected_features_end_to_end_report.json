@@ -1,7 +1,7 @@
 {
-  "method": "Forward Stepwise Global End-to-End (Competencia 65 variables)",
-  "final_pr_auc": 0.459962455533535,
-  "selected_count": 14,
+  "method": "Forward Stepwise Global End-to-End Blindado (Paso 12 sin sobreajuste)",
+  "final_pr_auc_val": 0.4586313225961489,
+  "selected_count": 12,
   "selected_features": [
     "score",
     "o",
@@ -14,9 +14,7 @@
     "b",
     "e",
     "ratio_d_m",
-    "text_svd_7",
-    "p",
-    "text_svd_10"
+    "text_svd_7"
   ],
   "base_features": [
     "score",
@@ -24,8 +22,7 @@
     "g",
     "n",
     "b",
-    "e",
-    "p"
+    "e"
   ],
   "eng_features": [
     "ratio_monto_m",
@@ -33,23 +30,25 @@
     "ratio_monto_ag_bayes",
     "te_j_bayes",
     "ratio_d_m",
-    "text_svd_7",
-    "text_svd_10"
+    "text_svd_7"
   ],
   "feature_gains": {
-    "score": 46508.310661792755,
-    "o": 55052.18776035309,
-    "g": 7232.038190841675,
-    "ratio_monto_m": 5067.652896106243,
-    "es_madrugada": 1451.7386555671692,
-    "ratio_monto_ag_bayes": 3435.9363634586334,
-    "n": 2561.247152328491,
-    "te_j_bayes": 7017.315177440643,
-    "b": 4010.483788371086,
-    "e": 1869.3342909812927,
-    "ratio_d_m": 4192.964152574539,
-    "text_svd_7": 1888.0238511562347,
-    "p": 60.269020318984985,
-    "text_svd_10": 1693.018720626831
-  }
+    "score": 46462.33118436858,
+    "o": 55143.60628187496,
+    "g": 7232.255879044533,
+    "ratio_monto_m": 5234.378901481628,
+    "es_madrugada": 1461.1365782022476,
+    "ratio_monto_ag_bayes": 3624.209184885025,
+    "n": 2674.241731405258,
+    "te_j_bayes": 7138.638081431389,
+    "b": 4003.4430367946625,
+    "e": 1910.7137110233307,
+    "ratio_d_m": 4183.602464556694,
+    "text_svd_7": 1956.0698696374893
+  },
+  "pruned_tail_features": [
+    "p",
+    "text_svd_10"
+  ],
+  "pruning_rationale": "Descartadas por delta marginal (< 0.0020) y nula ganancia en validacion cruzada temporal interna."
 }

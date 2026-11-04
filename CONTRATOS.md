@@ -108,13 +108,13 @@ flowchart TD
 > [!NOTE]
 > **Selección Final de Variables (Feature Selection Benchmark):**  
 > Mediante los módulos `src/features/select_features.py`, `src/features/run_forward_selection.py` y `src/features/run_forward_selection_global.py`, se evaluaron las variables bajo estrategias complementarias con hiperparámetros optimizados para árboles profundos (`n_estimators=120`, `learning_rate=0.06`, `num_leaves=31`, `max_depth=6`, `subsample=0.8`):
-> 1. **Forward Stepwise Global End-to-End (`data/features/features_seleccionadas_end_to_end.parquet`):**  
->    Competencia abierta de las 65 variables (17 base + 48 ingenierizadas) arrancando desde `score`.  
->    Selecciona solo **7 base** (`score, o, g, n, b, e, p`) y **7 ingenierizadas** (`ratio_monto_m, es_madrugada, ratio_monto_ag_bayes, te_j_bayes, ratio_d_m, text_svd_7, text_svd_10`).  
->    **PR-AUC: `0.4600` (+0.0313 vs baseline de 17 crudas obligadas)** con solo 14 variables totales.
+> 1. **Forward Stepwise Global End-to-End Blindado (`data/features/features_seleccionadas_end_to_end.parquet`):**  
+>    Competencia abierta de las 65 variables podada en el paso 12 (descartando `p` y `text_svd_10` por sobreajuste a varianza local).  
+>    Retiene **6 base** (`score, o, g, n, b, e`) y **6 ingenierizadas** (`ratio_monto_m, es_madrugada, ratio_monto_ag_bayes, te_j_bayes, ratio_d_m, text_svd_7`).  
+>    **PR-AUC: `0.4586` (+0.0299)** con solo 12 variables blindadas ante leakage temporal.
 > 2. **Forward Stepwise Incremental (`data/features/features_seleccionadas_forward.parquet`):**  
 >    17 crudas base retenidas + núcleo de oro de 7 variables ingenierizadas (`es_madrugada, te_j_bayes, ratio_monto_l, diff_m_d, score_x_monto, text_svd_7, avg_word_len`).  
->    PR-AUC: `0.4287` $\rightarrow$ **`0.4584` (+0.0297)** en validación OOT.  
+>    PR-AUC: `0.4287` $\rightarrow$ **`0.4584` (+0.0297)** en validación OOT (CV temporal: `0.4564`).  
 > 3. **Backward RFE (`data/features/features_seleccionadas_backward.parquet`):**  
 >    Pool multivariado de **47 variables** retenidas tras podar redundancias obvias. PR-AUC: **`0.4553`**.  
 > 4. **Curaduría Balanceada (`data/features/features_seleccionadas.parquet`):**  
