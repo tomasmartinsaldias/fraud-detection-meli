@@ -78,14 +78,60 @@ flowchart TD
 * **Responsabilidad de Implementación Anti-Duplicación:**  
   Toda hipótesis, descarte de registros o transformación validada durante el EDA en R debe implementarse formalmente en el pipeline de Python (`src/features/build_features.py`) antes de exportarse a `data/features/features_transaccionales.parquet`. R no genera datasets intermedios para el resto del equipo.  
 
-#### Esquema Obligatorio:
-| Columna | Tipo | Descripción | Restricción Anti-Leakage |
+#### Esquema Oficial Producción (v2):
+| Columna | Tipo | Descripción | Restricción Anti-Leakage / Validación Proxy |
 | :--- | :--- | :--- | :--- |
-| `transaction_id` | `string` | ID universal (`tx_XXXXXX`) | Debe coincidir 1:1 con `dataset_base.parquet` |
-| `monto_ratio_hist_usuario` | `float64` | Ratio entre monto actual y promedio histórico | Solo transacciones anteriores a `fecha` |
-| `tx_count_ultimas_24h` | `int64` / `float64` | Frecuencia de transacciones en ventana rodante 24h | Aplicar `shift(1)` estricto |
-| `monto_std_7d` | `float64` | Desvío estándar de monto en ventana 7 días | `shift(1)` para excluir la tx actual |
-| *(Otras features agregadas)* | `float64` / `int` | Ratios, diferencias y target encodings temporales | Solo estimadas sobre `train` |
+| `transaction_id` | `string` | ID universal (`tx_XXXXXX`) | Clave primaria determinista (150.000 filas) |
+| `ratio_monto_ag_bayes` | `float64` | Ratio normalizado de monto por `(a, g)` con suavizado bayesiano | Priors y medias ajustados **estrictamente** sobre `train` |
+| `ratio_monto_b` | `float64` | Tensión ticket monetario / tasa continua `b` (`monto / (b + 0.001)`) | Sin leakage. Gain: ~1.884 |
+| `prod_b_log_c` | `float64` | Interacción no lineal `b * log1p(c)` | Sin leakage. Gain: ~1.318 |
+| `ratio_monto_c` | `float64` | Escala relativa `monto / (c + 1.0)` | Sin leakage. Gain: ~2.300 |
+| `ratio_d_m` | `float64` | Proporción relativa `d / (m + 1.0)` | Sin leakage. Gain: ~2.506 |
+| `ratio_monto_m` | `float64` | Normalización del ticket respecto a `m` (`monto / (m + 1.0)`) | Sin leakage. Gain: ~3.141 |
+| `diff_m_d` | `float64` | Discrepancia directa `m - d` | Sin leakage. Gain: ~4.464 |
+| `ratio_monto_f` | `float64` | Ticket normalizado `monto / (max(f, 0) + 1.0)` | Domina outlier 145k. Gain: ~4.540 |
+| `ratio_monto_e` | `float64` | Ticket normalizado `monto / (e + 0.01)` | Sin leakage. Gain: ~795 |
+| `log_f` | `float64` | Compresión logarítmica `log1p(max(f, 0))` | Mitiga asimetría pesada. Gain: ~300 |
+| `is_f_cero_neg` | `int8` | Flag booleano `f <= 0` (segmento crítico 12% fraude) | Sin leakage |
+| `is_e_cero` | `int8` | Flag booleano `e == 0` (masa puntual 44%) | Sin leakage |
+| `ratio_monto_h` | `float64` | Ticket normalizado `monto / (h + 1.0)` | Tensión ticket / madurez. Gain: ~1.375 |
+| `is_h_cero` | `int8` | Flag booleano `h == 0` (segmento crítico 9.6% fraude) | Sin leakage |
+| `log_h` | `float64` | Compresión logarítmica `log1p(h)` | Sin leakage |
+| `char_len` | `float64` | Longitud en caracteres del título `i` | Sin leakage |
+| `word_count` | `float64` | Cantidad de palabras en el título `i` | Sin leakage |
+| `avg_word_len` | `float64` | Longitud promedio de palabra (`char_len / word_count`) | Sin leakage |
+| `digit_ratio` | `float64` | Proporción de números/dígitos en el título | Sin leakage |
+| `text_svd_1` a `text_svd_10` | `float64` | 10 componentes continuos de LSA (TF-IDF + TruncatedSVD optimizado por regla del codo) | Ajustados estrictamente sobre `train` |
+| `score_texto_nb` | `float64` | Probabilidad bayesiana OOF temporal (Naive Bayes, $\alpha=2.0, min\_df=30$) | `TimeSeriesSplit` estricto en `train`. Gain: ~3.400 |
+| `te_j_bayes` | `float64` | Target Encoding bayesiano sobre categoría `j` ($m=10$, KFold 5 OOF con jitter gaussiano $\sigma=0.01$) | Regularizado contra memorización. Gain: ~7.115 |
+| `freq_j` | `float64` | Log-frecuencia observada de la categoría `j` en train (`log1p(count)`) | Priors de train, fallback 0. Gain: ~926 |
+| `ratio_monto_j_bayes` | `float64` | Ticket normalizado respecto a la mediana bayesiana de la categoría `j` ($m=20$) | Sin leakage. Gain: ~643 |
+| `hora_cont` | `float64` | Tiempo continuo fraccional del día ($hora + min/60 + seg/3600$) | Sin leakage. Gain: ~2.227 |
+| `cos_hora` | `float64` | Proyección cíclica $\cos(2\pi \cdot hora\_cont / 24)$ (detector noche vs día continuo) | Sin leakage. Gain: ~1.305 |
+| `sin_hora` | `float64` | Proyección cíclica $\sin(2\pi \cdot hora\_cont / 24)$ (gradiente continuo mañana vs tarde) | Sin leakage. Gain: ~610 |
+| `log_l` | `float64` | Compresión logarítmica $\log(1 + \max(l, 0))$ | Sin leakage |
+| `log_m` | `float64` | Compresión logarítmica $\log(1 + \max(m, 0))$ | Sin leakage |
+| `ratio_monto_l` | `float64` | Tensión ticket monetario sobre antigüedad $l$ ($monto / (l + 1)$) | Sin leakage |
+| `score_x_monto` | `float64` | Métrica de exposición de riesgo ($score \times monto$) | Sin leakage |
+| `ratio_monto_q` | `float64` | Ticket normalizado por tasa $q$ ($monto / (q + 0.01)$) | Sin leakage |
+| `flag_alto_riesgo_nop` | `int8` | Flag booleano de coincidencia de segmentos de alto riesgo ($n=0, o=\text{'N'}, p=\text{'N'}$) | Sin leakage |
+| `is_o_missing` | `int8` | Flag indicador de ausencia en variable $o$ (72% missing) | Sin leakage |
+| `es_madrugada` | `int8` | Flag binario de ventana nocturna ($hora \in [0, 5]$) | Sin leakage |
+| `dia_semana` | `float64` | Día de la semana numérico ($0.0 \dots 6.0$) | Sin leakage |
+| `log_monto` | `float64` | Compresión logarítmica $\log(1 + \max(monto, 0))$ (mitiga asimetría de 9.57) | Sin leakage. Gain: ~1.102 |
+| `monto_centavos` | `float64` | Parte decimal / centavos ($0 \dots 99$, captura patrones de precios psicológicos) | Sin leakage. Gain: ~659 |
+| `is_monto_alto` | `int8` | Flag booleano de ticket extremo pertenecientes al percentil 99 superior ($monto > 422$) | Sin leakage. Gain: ~93 |
+
+> [!NOTE]
+> **Selección Final de Variables (Entregables Curados para Modelado):**  
+> Mediante los módulos `src/features/run_forward_selection_global.py` y `src/features/run_forward_selection.py`, se consolidaron dos datasets optimizados listos para su uso directo en Contrato C:
+> 1. **Forward Stepwise Global Blindado (`data/features/features_seleccionadas_end_to_end.parquet` - RECOMENDADO):**  
+>    Competencia abierta de las 65 variables podada en el paso 12 (descartando `p` y `text_svd_10` por sobreajuste a varianza local tras auditoría con `TimeSeriesSplit`).  
+>    Retiene **6 base** (`score, o, g, n, b, e`) y **6 ingenierizadas** (`ratio_monto_m, es_madrugada, ratio_monto_ag_bayes, te_j_bayes, ratio_d_m, text_svd_7`).  
+>    **PR-AUC: `0.4586` (+0.0299)** con solo 12 variables blindadas ante leakage temporal. Reporte: `selected_features_end_to_end_report.json`.
+> 2. **Forward Stepwise Incremental (`data/features/features_seleccionadas_forward.parquet`):**  
+>    Las 17 variables crudas base retenidas + núcleo de oro de 7 variables ingenierizadas (`es_madrugada, te_j_bayes, ratio_monto_l, diff_m_d, score_x_monto, text_svd_7, avg_word_len`).  
+>    **PR-AUC: `0.4584` (+0.0297)** en validación OOT (CV temporal: `0.4564`). Reporte: `selected_features_forward_report.json`.
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.
@@ -136,13 +182,33 @@ flowchart TD
 
 **Criterio de comparación:** reportar la mejor PR-AUC de validación y el costo/tiempo de búsqueda para TPE + pruning y CMA-ES. Seleccionar la configuración final únicamente con `val`; luego reentrenar según el procedimiento definido y evaluar una sola vez en `test`.
 
+#### Opciones de Features Entregadas por Contrato A para Ian:
+Contrato A pone a disposición de Ian 3 variantes de features según la arquitectura de modelado elegida:
+1. **Opción Blindada End-to-End (Recomendada):** `data/features/features_seleccionadas_end_to_end.parquet`
+   - **12 variables estructurales:** 6 base (`score, o, g, n, b, e`) + 6 ingenierizadas (`ratio_monto_m, es_madrugada, ratio_monto_ag_bayes, te_j_bayes, ratio_d_m, text_svd_7`).
+   - Podada deliberadamente en el Paso 12 para evitar el sobreajuste a la ventana temporal de `val` detectado en la cola del forward stepwise (`p` y `text_svd_10` fueron descartadas por no aportar generalización temporal en `TimeSeriesSplit`).
+   - Métrica en validación: **`PR-AUC = 0.4586`** (+0.0299 vs baseline crudo).
+2. **Opción Ensamble Incremental:** `data/features/features_seleccionadas_forward.parquet`
+   - Las 17 variables crudas base + 7 variables ingenierizadas de alto uplift (`es_madrugada, te_j_bayes, ratio_monto_l, diff_m_d, score_x_monto, text_svd_7, avg_word_len`).
+   - Métrica en validación: **`PR-AUC = 0.4584`**.
+3. **Opción Pool Completo:** `data/features/features_transaccionales.parquet`
+   - Las 48 features ingenierizadas completas para modelos que apliquen regularización intrínseca (L1/L2, `subsample`, `colsample_bytree`).
+
+> [!CAUTION]
+> **Alerta Metodológica sobre Validación Leakage:**  
+> Se realizaron auditorías con `TimeSeriesSplit` interno dentro de `train` para verificar la estabilidad de las features. Se instruye a Ian no sobre-optimizar hiperparámetros con cientos de trials que puedan memorizar la partición OOT de `val`. El conjunto `test` debe permanecer estrictamente sellado hasta la corrida de inferencia final.
+
 #### Código de Integración Estándar (`src/models/train.py`):
 ```python
 import pandas as pd
 
 def build_full_dataset(
     base_path="data/processed/dataset_base.parquet",
-    feat_path="data/features/features_transaccionales.parquet",
+    # Ian puede alternar entre las opciones entregadas:
+    # 1. Blindada: "data/features/features_seleccionadas_end_to_end.parquet" (12 vars)
+    # 2. Incremental: "data/features/features_seleccionadas_forward.parquet" (7 vars)
+    # 3. Pool Completo: "data/features/features_transaccionales.parquet" (48 vars)
+    feat_path="data/features/features_seleccionadas_end_to_end.parquet",
     anom_path="data/features/scores_anomalias.parquet",
 ) -> pd.DataFrame:
     df_base = pd.read_parquet(base_path)
@@ -150,11 +216,17 @@ def build_full_dataset(
     df_anom = pd.read_parquet(anom_path)
 
     # Merge determinista 1:1 por transaction_id
-    df_full = (
-        df_base
-        .merge(df_feat, on="transaction_id", how="left")
-        .merge(df_anom, on="transaction_id", how="left")
-    )
+    # Nota: Si se usa la opción Blindada (end_to_end), esta ya incluye las variables base seleccionadas,
+    # por lo que el merge selecciona únicamente las columnas de df_feat más las necesarias de df_base (fraude, split, fecha).
+    if "score" in df_feat.columns:
+        # Opción End-to-End
+        meta_cols = ["transaction_id", "fraude", "split", "fecha"]
+        df_full = df_base[meta_cols].merge(df_feat, on="transaction_id", how="left")
+    else:
+        # Opción Incremental o Pool Completo
+        df_full = df_base.merge(df_feat, on="transaction_id", how="left")
+
+    df_full = df_full.merge(df_anom, on="transaction_id", how="left")
 
     # Aserción de integridad
     assert len(df_full) == len(df_base), "Error: El merge alteró la cantidad de filas."

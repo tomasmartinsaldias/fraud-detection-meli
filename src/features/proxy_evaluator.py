@@ -52,15 +52,19 @@ class FeatureProxyEvaluator:
 
     # Variables numéricas del baseline crudo
     # NOTA METODOLÓGICA:
-    # - 'c' se excluye deliberadamente por colinealidad con 'r' (r = floor(c)) y 11.3% de NAs artificiales.
+    # - 'c' se conserva con sus NAs naturales continuos.
+    # - 'is_na_bc' es el indicador binario de ausencia conjunta de perfil (caída del 8-13 marzo).
+    # - 'r' se descarta por ser una mala imputación de c con la media (260445) que corrompe entidades.
     # - 'k' se excluye por ser ruido uniforme U(0,1) independiente del target probado en EDA.
     # - 'i' es texto libre sin procesar (títulos de productos).
     # - 'j' es categoría de alta cardinalidad (>9.000 categorías); su inclusión se evalúa como
     #   feature candidata transformada (Target Encoding OOF / Frecuencia) mediante este evaluador.
+    # - 'a', 'n', 'p', 'o', 'g', 'is_na_bc' se tratan como categóricas nativas.
+    # - 's' se excluye por ser duplicada exacta de 'p' (p=='Y' <=> s==100).
     DEFAULT_BASE_NUMERIC_COLS = [
-        "score", "monto", "a", "b", "d", "e", "f", "h", "l", "m", "n", "q", "r", "s"
+        "score", "monto", "b", "c", "d", "e", "f", "h", "l", "m", "q"
     ]
-    DEFAULT_BASE_CATEGORICAL_COLS = ["g", "o", "p"]
+    DEFAULT_BASE_CATEGORICAL_COLS = ["a", "g", "n", "o", "p", "is_na_bc"]
 
     def __init__(
         self,
@@ -240,14 +244,14 @@ class FeatureProxyEvaluator:
         print("\n" + sep)
         print(f"       RESULTADO DEL MODELO PROXY: {rep.experiment_name.upper()}")
         print(sep)
-        print(f"  • PR-AUC Baseline:    {rep.baseline_pr_auc:.4f}")
-        print(f"  • PR-AUC Candidato:   {rep.candidate_pr_auc:.4f}")
+        print(f"  * PR-AUC Baseline:    {rep.baseline_pr_auc:.4f}")
+        print(f"  * PR-AUC Candidato:   {rep.candidate_pr_auc:.4f}")
         sign = "+" if rep.delta_pr_auc >= 0 else ""
-        print(f"  • Δ PR-AUC:           {sign}{rep.delta_pr_auc:.4f}")
-        print(f"  • ROC-AUC Baseline:   {rep.baseline_roc_auc:.4f}")
-        print(f"  • ROC-AUC Candidato:  {rep.candidate_roc_auc:.4f}")
-        print(f"  • Veredicto:          [{rep.verdict}]")
-        print("\n  • Importancia de features candidatas (split gain / splits count):")
+        print(f"  * Delta PR-AUC:       {sign}{rep.delta_pr_auc:.4f}")
+        print(f"  * ROC-AUC Baseline:   {rep.baseline_roc_auc:.4f}")
+        print(f"  * ROC-AUC Candidato:  {rep.candidate_roc_auc:.4f}")
+        print(f"  * Veredicto:          [{rep.verdict}]")
+        print("\n  * Importancia de features candidatas (split gain / splits count):")
         for feat, imp in rep.feature_importances.items():
             print(f"      - {feat:<28}: {imp:>8.1f}")
         print(sep + "\n")

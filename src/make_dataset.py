@@ -184,21 +184,28 @@ def apply_temporal_split(
 
 def clean_final_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Elimina columnas de índice residual (...1) y auxiliares de trazabilidad
-    (es_bloque_2, origen_bloque) que quedan obsoletas tras el descarte del Bloque 2.
+    Elimina columnas de índice residual (...1), auxiliares de trazabilidad
+    (es_bloque_2, origen_bloque), variables de duplicación exacta (s == 100 <=> p == 'Y')
+    y variables con imputaciones artificiales destructivas (r es c imputada con la media 260445).
+    Crea la bandera explícita 'is_na_bc' para capturar la ausencia conjunta de b y c (caída de servicio).
     Reorganiza 'transaction_id' como clave primaria al inicio.
 
     Args:
         df: DataFrame ordenado con split asignado.
 
     Returns:
-        pd.DataFrame: DataFrame limpio sin columnas redundantes.
+        pd.DataFrame: DataFrame limpio sin columnas redundantes ni artefactos.
     """
+    # 1. Crear bandera explícita de valor faltante en b y c
+    if "c" in df.columns:
+        df["is_na_bc"] = df["c"].isna().astype(int)
+
+    # 2. Descartar columnas redundantes o corrompidas por preprocesamiento externo
     cols_to_drop = [
-        c for c in ["...1", "Unnamed: 0", "es_bloque_2", "origen_bloque"] if c in df.columns
+        c for c in ["...1", "Unnamed: 0", "es_bloque_2", "origen_bloque", "s", "r"] if c in df.columns
     ]
     if cols_to_drop:
-        logger.info(f"Removiendo columnas auxiliares y de índice residual: {cols_to_drop}")
+        logger.info(f"Removiendo columnas auxiliares, índice residual, duplicados y variables corrompidas: {cols_to_drop}")
         df = df.drop(columns=cols_to_drop)
 
     if "transaction_id" in df.columns:

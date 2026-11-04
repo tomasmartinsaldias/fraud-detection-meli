@@ -1,0 +1,54 @@
+{
+  "method": "Forward Stepwise Global End-to-End Blindado (Paso 12 sin sobreajuste)",
+  "final_pr_auc_val": 0.4586313225961489,
+  "selected_count": 12,
+  "selected_features": [
+    "score",
+    "o",
+    "g",
+    "ratio_monto_m",
+    "es_madrugada",
+    "ratio_monto_ag_bayes",
+    "n",
+    "te_j_bayes",
+    "b",
+    "e",
+    "ratio_d_m",
+    "text_svd_7"
+  ],
+  "base_features": [
+    "score",
+    "o",
+    "g",
+    "n",
+    "b",
+    "e"
+  ],
+  "eng_features": [
+    "ratio_monto_m",
+    "es_madrugada",
+    "ratio_monto_ag_bayes",
+    "te_j_bayes",
+    "ratio_d_m",
+    "text_svd_7"
+  ],
+  "feature_gains": {
+    "score": 46462.33118436858,
+    "o": 55143.60628187496,
+    "g": 7232.255879044533,
+    "ratio_monto_m": 5234.378901481628,
+    "es_madrugada": 1461.1365782022476,
+    "ratio_monto_ag_bayes": 3624.209184885025,
+    "n": 2674.241731405258,
+    "te_j_bayes": 7138.638081431389,
+    "b": 4003.4430367946625,
+    "e": 1910.7137110233307,
+    "ratio_d_m": 4183.602464556694,
+    "text_svd_7": 1956.0698696374893
+  },
+  "pruned_tail_features": [
+    "p",
+    "text_svd_10"
+  ],
+  "pruning_rationale": "Descartadas por delta marginal (< 0.0020) y nula ganancia en validacion cruzada temporal interna."
+}
