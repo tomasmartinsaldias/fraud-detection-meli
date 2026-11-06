@@ -445,11 +445,13 @@ def compute_additional_candidates(df: pd.DataFrame) -> pd.DataFrame:
     - ratio_monto_q: Ticket normalizado por q (monto / (q + 0.01)).
     - flag_alto_riesgo_nop: Flag booleano de coincidencia de segmentos de alto riesgo (n=0, o='N', p='N').
     - is_o_missing: Flag indicador de ausencia en variable o (72% missing).
-    - es_madrugada: Flag binario de ventana nocturna (hora entre 0 y 5).
+    - es_madrugada: Flag binario de ventana nocturna optimizada (hora >= 23 o hora <= 5).
     - dia_semana: Índice numérico del día de la semana (0=Lunes, 6=Domingo).
     - log_monto: Compresión logarítmica log1p de monto.
     - monto_centavos: Extracción de la parte decimal / centavos (0 a 99).
     - is_monto_alto: Flag booleano de ticket extremo perteneciente al percentil 99 superior (> 422).
+    - log_delta_mismo_prod: Tiempo transcurrido en escala logarítmica log1p(delta_sec) desde la última venta del mismo producto i.
+    - burst_mismo_prod_24h: Flag binario de ráfaga del mismo producto en menos de 24 horas.
 
     Args:
         df: DataFrame base con las columnas requeridas.
@@ -478,7 +480,7 @@ def compute_additional_candidates(df: pd.DataFrame) -> pd.DataFrame:
 
     # 4. Variables de calendario
     fecha = pd.to_datetime(df["fecha"])
-    feats["es_madrugada"] = ((fecha.dt.hour >= 0) & (fecha.dt.hour <= 5)).astype(np.int8)
+    feats["es_madrugada"] = ((fecha.dt.hour >= 23) | (fecha.dt.hour <= 5)).astype(np.int8)
     feats["dia_semana"] = fecha.dt.weekday.astype(np.float64)
 
     # 5. Transformaciones intrínsecas de monto
@@ -486,6 +488,15 @@ def compute_additional_candidates(df: pd.DataFrame) -> pd.DataFrame:
     feats["log_monto"] = np.log1p(monto_arr).astype(np.float64)
     feats["monto_centavos"] = np.round((monto_arr - np.floor(monto_arr)) * 100.0).astype(np.float64)
     feats["is_monto_alto"] = (monto_arr > 422.0).astype(np.int8)
+
+    # 6. Variables de velocidad / ráfagas temporales sobre producto i (sin data leakage)
+    prev_fecha_i = df.groupby("i")["fecha"].shift(1)
+    delta_sec_i = (pd.to_datetime(df["fecha"]) - pd.to_datetime(prev_fecha_i)).dt.total_seconds()
+    dias_30_sec = 30.0 * 86400.0
+    feats["log_delta_mismo_prod"] = np.log1p(
+        delta_sec_i.fillna(dias_30_sec).clip(lower=0.0)
+    ).astype(np.float64)
+    feats["burst_mismo_prod_24h"] = (delta_sec_i <= 86400.0).fillna(False).astype(np.int8)
 
     return feats
 

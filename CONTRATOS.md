@@ -116,19 +116,21 @@ flowchart TD
 | `ratio_monto_q` | `float64` | Ticket normalizado por tasa $q$ ($monto / (q + 0.01)$) | Sin leakage |
 | `flag_alto_riesgo_nop` | `int8` | Flag booleano de coincidencia de segmentos de alto riesgo ($n=0, o=\text{'N'}, p=\text{'N'}$) | Sin leakage |
 | `is_o_missing` | `int8` | Flag indicador de ausencia en variable $o$ (72% missing) | Sin leakage |
-| `es_madrugada` | `int8` | Flag binario de ventana nocturna ($hora \in [0, 5]$) | Sin leakage |
+| `es_madrugada` | `int8` | Flag binario de ventana nocturna optimizada ($hora \ge 23 \lor hora \le 5$ UTC) | Sin leakage. Gain: ~1.899 |
 | `dia_semana` | `float64` | Día de la semana numérico ($0.0 \dots 6.0$) | Sin leakage |
 | `log_monto` | `float64` | Compresión logarítmica $\log(1 + \max(monto, 0))$ (mitiga asimetría de 9.57) | Sin leakage. Gain: ~1.102 |
 | `monto_centavos` | `float64` | Parte decimal / centavos ($0 \dots 99$, captura patrones de precios psicológicos) | Sin leakage. Gain: ~659 |
 | `is_monto_alto` | `int8` | Flag booleano de ticket extremo pertenecientes al percentil 99 superior ($monto > 422$) | Sin leakage. Gain: ~93 |
+| `log_delta_mismo_prod` | `float64` | Tiempo en escala logarítmica $\log(1 + \Delta t)$ desde última venta del mismo producto $i$ | Causal con shift(1). Imputación 30d |
+| `burst_mismo_prod_24h` | `int8` | Flag binario de ráfaga del mismo producto en ventana $\le 24$ horas | Causal con shift(1) |
 
 > [!NOTE]
 > **Selección Final de Variables (Entregables Curados para Modelado):**  
 > Mediante los módulos `src/features/run_forward_selection_global.py` y `src/features/run_forward_selection.py`, se consolidaron dos datasets optimizados listos para su uso directo en Contrato C:
 > 1. **Forward Stepwise Global Blindado (`data/features/features_seleccionadas_end_to_end.parquet` - RECOMENDADO):**  
->    Competencia abierta de las 65 variables podada en el paso 12 (descartando `p` y `text_svd_10` por sobreajuste a varianza local tras auditoría con `TimeSeriesSplit`).  
->    Retiene **6 base** (`score, o, g, n, b, e`) y **6 ingenierizadas** (`ratio_monto_m, es_madrugada, ratio_monto_ag_bayes, te_j_bayes, ratio_d_m, text_svd_7`).  
->    **PR-AUC: `0.4586` (+0.0299)** con solo 12 variables blindadas ante leakage temporal. Reporte: `selected_features_end_to_end_report.json`.
+>    Competencia abierta libre entre las 67 variables (17 base + 50 ingenierizadas) con parada temprana por paciencia (`min_delta = 0.0003`, `patience = 2`).  
+>    Retiene **4 base** (`score, o, g, a`) y **7 ingenierizadas** (`es_madrugada, ratio_d_m, ratio_monto_l, prod_b_log_c, score_texto_nb, ratio_monto_e, is_h_cero`).  
+>    **PR-AUC: `0.4622` (+0.0335 vs baseline de 17 crudas)** con solo 11 variables blindadas ante leakage temporal. Reporte: `selected_features_end_to_end_report.json`.
 > 2. **Forward Stepwise Incremental (`data/features/features_seleccionadas_forward.parquet`):**  
 >    Las 17 variables crudas base retenidas + núcleo de oro de 7 variables ingenierizadas (`es_madrugada, te_j_bayes, ratio_monto_l, diff_m_d, score_x_monto, text_svd_7, avg_word_len`).  
 >    **PR-AUC: `0.4584` (+0.0297)** en validación OOT (CV temporal: `0.4564`). Reporte: `selected_features_forward_report.json`.
@@ -185,14 +187,14 @@ flowchart TD
 #### Opciones de Features Entregadas por Contrato A para Ian:
 Contrato A pone a disposición de Ian 3 variantes de features según la arquitectura de modelado elegida:
 1. **Opción Blindada End-to-End (Recomendada):** `data/features/features_seleccionadas_end_to_end.parquet`
-   - **12 variables estructurales:** 6 base (`score, o, g, n, b, e`) + 6 ingenierizadas (`ratio_monto_m, es_madrugada, ratio_monto_ag_bayes, te_j_bayes, ratio_d_m, text_svd_7`).
-   - Podada deliberadamente en el Paso 12 para evitar el sobreajuste a la ventana temporal de `val` detectado en la cola del forward stepwise (`p` y `text_svd_10` fueron descartadas por no aportar generalización temporal en `TimeSeriesSplit`).
-   - Métrica en validación: **`PR-AUC = 0.4586`** (+0.0299 vs baseline crudo).
+   - **11 variables estructurales:** 4 base (`score, o, g, a`) + 7 ingenierizadas (`es_madrugada, ratio_d_m, ratio_monto_l, prod_b_log_c, score_texto_nb, ratio_monto_e, is_h_cero`).
+   - Métrica en validación: **`PR-AUC = 0.4622`** (+0.0335 vs baseline crudo de 17 variables).
+   - Optimización de ventana nocturna (`23:00 - 05:59 UTC`) permitió a `es_madrugada` entrar en Paso 4 (+0.0120 directo) y desbloquear un subconjunto más parsimonioso y potente.
 2. **Opción Ensamble Incremental:** `data/features/features_seleccionadas_forward.parquet`
    - Las 17 variables crudas base + 7 variables ingenierizadas de alto uplift (`es_madrugada, te_j_bayes, ratio_monto_l, diff_m_d, score_x_monto, text_svd_7, avg_word_len`).
    - Métrica en validación: **`PR-AUC = 0.4584`**.
 3. **Opción Pool Completo:** `data/features/features_transaccionales.parquet`
-   - Las 48 features ingenierizadas completas para modelos que apliquen regularización intrínseca (L1/L2, `subsample`, `colsample_bytree`).
+   - Las 50 features ingenierizadas completas para modelos que apliquen regularización intrínseca (L1/L2, `subsample`, `colsample_bytree`).
 
 > [!CAUTION]
 > **Alerta Metodológica sobre Validación Leakage:**  
