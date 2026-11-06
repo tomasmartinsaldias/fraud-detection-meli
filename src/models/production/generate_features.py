@@ -44,6 +44,7 @@ EXPECTED_OUTPUT_COLUMNS = [
     "score_gmm_k3",
     "score_gmm_k5",
     "score_anomalia_consolidado",
+    "anomalia_x_monto",
 ]
 
 
@@ -64,7 +65,10 @@ def validate_output_dataframe(out_df: pd.DataFrame, expected_rows: int) -> None:
         vals = out_df[col].to_numpy()
         if not np.all(np.isfinite(vals)):
             raise ValueError(f"La columna '{col}' contiene valores NaN o infinitos.")
-        if np.any(vals < 0.0) or np.any(vals > 1.0):
+        if np.any(vals < 0.0):
+            raise ValueError(f"La columna '{col}' tiene valores negativos no válidos.")
+        # Los percentiles deben acotarse en [0.0, 1.0], mientras que la interacción anomalia_x_monto es no-negativa
+        if col != "anomalia_x_monto" and np.any(vals > 1.0):
             raise ValueError(f"La columna '{col}' tiene valores fuera del rango normalizado [0.0, 1.0].")
 
 

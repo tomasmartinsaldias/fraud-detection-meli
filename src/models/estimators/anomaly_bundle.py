@@ -374,6 +374,12 @@ class AnomalyPipelineBundle:
         out_df = pd.DataFrame(out_data)
         X_lgb = out_df[self.INDIVIDUAL_SCORE_COLS]
         out_df["score_anomalia_consolidado"] = self.lgbm_consolidator_.predict_proba(X_lgb)[:, 1]
+
+        # Interacción oficial de exposición de riesgo anómalo
+        if "monto" in df.columns:
+            log_monto = np.log1p(np.maximum(df["monto"].to_numpy(dtype=float), 0.0))
+            out_df["anomalia_x_monto"] = out_df["score_iforest_perpendicular"] * log_monto
+
         return out_df
 
     def save(self, path: Path) -> None:

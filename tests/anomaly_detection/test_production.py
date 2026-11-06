@@ -35,6 +35,7 @@ class ProductionTests(unittest.TestCase):
             "score_gmm_k3": [0.18, 0.82],
             "score_gmm_k5": [0.19, 0.81],
             "score_anomalia_consolidado": [0.05, 0.92],
+            "anomalia_x_monto": [0.15, 2.76],
         })
         validate_output_dataframe(df, expected_rows=2)
 
