@@ -490,6 +490,58 @@ def compute_additional_candidates(df: pd.DataFrame) -> pd.DataFrame:
     return feats
 
 
+def compute_heuristic_risk_features(
+    df_base: pd.DataFrame,
+    df_features: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Calcula el Score Heurístico y Porcentaje de Violaciones de Fraude basado en las
+    5 reglas de asociación ortogonales de mayor impacto neto (WRAcc):
+    - ind1 (Perfil/Canal): s == 0 AND o == 'N'
+    - ind2 (Inmediatez/Historial): ratio_d_m >= 1.0 OR is_f_cero_neg == 1
+    - ind3 (Tensión Monetaria): ratio_monto_f > p75 AND is_o_missing == 0
+    - ind4 (Categoría Crítica): te_j_bayes > p75 AND is_o_missing == 0
+    - ind5 (Comportamiento/Contexto): es_madrugada == 1 OR score_texto_nb > p90
+
+    Restricción Anti-Leakage:
+    Los percentiles p75 y p90 se calculan EXCLUSIVAMENTE sobre split == 'train'.
+
+    Args:
+        df_base: DataFrame base oficial.
+        df_features: DataFrame con features previamente computadas.
+
+    Returns:
+        pd.DataFrame: DataFrame con 'score_heuristico_fraude_5' y 'pct_heuristico_fraude'.
+    """
+    logger.info("Calculando features de riesgo heurístico basadas en reglas CARs (WRAcc)...")
+    feats = pd.DataFrame(index=df_base.index)
+    train_mask = df_base["split"] == "train"
+
+    # Umbrales aprendidos estrictamente en train
+    th_mf = float(df_features.loc[train_mask, "ratio_monto_f"].quantile(0.75))
+    th_te = float(df_features.loc[train_mask, "te_j_bayes"].quantile(0.75))
+    th_nb = float(df_features.loc[train_mask, "score_texto_nb"].quantile(0.90))
+
+    ind1 = (df_base["s"] == 0) & (df_base["o"] == "N")
+    ind2 = (df_features["ratio_d_m"] >= 1.0) | (df_features["is_f_cero_neg"] == 1)
+    ind3 = (df_features["ratio_monto_f"] > th_mf) & (df_features["is_o_missing"] == 0)
+    ind4 = (df_features["te_j_bayes"] > th_te) & (df_features["is_o_missing"] == 0)
+    ind5 = (df_features["es_madrugada"] == 1) | (df_features["score_texto_nb"] > th_nb)
+
+    score_5 = (
+        ind1.astype(np.int8)
+        + ind2.astype(np.int8)
+        + ind3.astype(np.int8)
+        + ind4.astype(np.int8)
+        + ind5.astype(np.int8)
+    )
+
+    feats["score_heuristico_fraude_5"] = score_5.astype(np.int8)
+    feats["pct_heuristico_fraude"] = (score_5 / 5.0).astype(np.float64)
+
+    return feats
+
+
 def build_transactional_features(
     input_base_path: Path,
     output_features_path: Path,
@@ -556,6 +608,11 @@ def build_transactional_features(
     additional_candidates = compute_additional_candidates(df_base)
     for col in additional_candidates.columns:
         df_features[col] = additional_candidates[col]
+
+    # 10. Feature de riesgo heurístico basada en ensamble de reglas CARs (WRAcc)
+    heuristic_feats = compute_heuristic_risk_features(df_base, df_features)
+    for col in heuristic_feats.columns:
+        df_features[col] = heuristic_feats[col]
 
     # Validaciones de integridad según Contrato A
     assert len(df_features) == len(df_base), "Error: Se alteró el número de filas."

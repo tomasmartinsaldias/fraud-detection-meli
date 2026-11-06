@@ -16,7 +16,7 @@ from src.models.production.generate_features import (
     run_production_pipeline,
     validate_output_dataframe,
 )
-from tests.test_estimators import _make_dummy_df
+from tests.anomaly_detection.test_estimators import _make_dummy_df
 
 
 class ProductionTests(unittest.TestCase):
