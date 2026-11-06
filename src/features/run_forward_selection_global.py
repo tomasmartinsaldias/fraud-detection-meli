@@ -248,4 +248,4 @@ def run_global_forward(max_steps: int = 12):
 
 
 if __name__ == "__main__":
-    run_global_forward(max_steps=12)
+    run_global_forward(max_steps=15)
