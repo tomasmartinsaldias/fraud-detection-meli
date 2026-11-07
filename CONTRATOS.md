@@ -79,6 +79,11 @@ flowchart TD
   Toda hipótesis, descarte de registros o transformación validada durante el EDA en R debe implementarse formalmente en el pipeline de Python (`src/features/build_features.py`) antes de exportarse a `data/features/features_transaccionales.parquet`. R no genera datasets intermedios para el resto del equipo.  
 
 #### Esquema Oficial Producción (v2):
+
+> [!NOTE]
+> **Diccionario Exhaustivo de Características:**  
+> La explicación profunda, justificación de negocio, formulación matemática completa, análisis de asimetrías y métricas de gain empírico para cada una de las 50 variables ingenierizadas, variables crudas y scores de anomalías se encuentran documentadas en **[docs/DICCIONARIO_VARIABLES.md](docs/DICCIONARIO_VARIABLES.md)**.
+
 | Columna | Tipo | Descripción | Restricción Anti-Leakage / Validación Proxy |
 | :--- | :--- | :--- | :--- |
 | `transaction_id` | `string` | ID universal (`tx_XXXXXX`) | Clave primaria determinista (150.000 filas) |
@@ -125,15 +130,12 @@ flowchart TD
 | `burst_mismo_prod_24h` | `int8` | Flag binario de ráfaga del mismo producto en ventana $\le 24$ horas | Causal con shift(1) |
 
 > [!NOTE]
-> **Selección Final de Variables (Entregables Curados para Modelado):**  
-> Mediante los módulos `src/features/run_forward_selection_global.py` y `src/features/run_forward_selection.py`, se consolidaron dos datasets optimizados listos para su uso directo en Contrato C:
-> 1. **Forward Stepwise Global Blindado (`data/features/features_seleccionadas_end_to_end.parquet` - RECOMENDADO):**  
->    Competencia abierta libre entre las 67 variables (17 base + 50 ingenierizadas) con parada temprana por paciencia (`min_delta = 0.0003`, `patience = 2`).  
->    Retiene **4 base** (`score, o, g, a`) y **7 ingenierizadas** (`es_madrugada, ratio_d_m, ratio_monto_l, prod_b_log_c, score_texto_nb, ratio_monto_e, is_h_cero`).  
->    **PR-AUC: `0.4622` (+0.0335 vs baseline de 17 crudas)** con solo 11 variables blindadas ante leakage temporal. Reporte: `selected_features_end_to_end_report.json`.
-> 2. **Forward Stepwise Incremental (`data/features/features_seleccionadas_forward.parquet`):**  
->    Las 17 variables crudas base retenidas + núcleo de oro de 7 variables ingenierizadas (`es_madrugada, te_j_bayes, ratio_monto_l, diff_m_d, score_x_monto, text_svd_7, avg_word_len`).  
->    **PR-AUC: `0.4584` (+0.0297)** en validación OOT (CV temporal: `0.4564`). Reporte: `selected_features_forward_report.json`.
+> **Selección Final de Variables (Entregable Oficial Curado para Modelado):**  
+> Mediante el módulo `src/features/run_forward_selection_global.py`, se consolidó el dataset optimizado oficial para el modelado supervisado en Contrato C:
+> * **Forward Stepwise Global Blindado (`data/features/features_seleccionadas_end_to_end.parquet` - OFICIAL):**  
+>   Competencia abierta libre entre las 67 variables (17 base + 50 ingenierizadas) con parada temprana por paciencia (`min_delta = 0.0003`, `patience = 2`).  
+>   Retiene **4 base** (`score, o, g, a`) y **7 ingenierizadas** (`es_madrugada, ratio_d_m, ratio_monto_l, prod_b_log_c, score_texto_nb, ratio_monto_e, is_h_cero`).  
+>   **PR-AUC: `0.4622` (+0.0335 vs baseline de 17 crudas)** con solo 11 variables blindadas ante leakage temporal. Reporte auditable: `selected_features_end_to_end_report.json`.
 
 > [!WARNING]
 > **Restricción Estricta de Causalidad:** Toda feature que use agregaciones de tiempo (`rolling`, `expanding`, ventanas deslizantes) debe usar un desplazamiento temporal o `shift(1)` para no incluir información del evento que se está evaluando. Si se usan target encodings, los priors se calculan **únicamente** con datos de `split == 'train'`.
@@ -164,6 +166,14 @@ flowchart TD
 
 ---
 
+### Módulo Satélite Opcional: Reglas de Asociación Heurísticas CARs (Franco / Tomás)
+* **Script Generador:** `src/features/build_rule_features.py`  
+* **Archivo de Salida:** `data/features/features_reglas_asociacion.parquet`  
+* **Propósito:** Módulo desacoplado de 10 reglas de asociación (CARs) para interpretabilidad y auditoría sin alterar el pipeline transaccional central.  
+* **Integración en Modelado:** Opcional vía `df.merge(features_reglas, on='transaction_id')`. Documentado en detalle en `docs/DICCIONARIO_VARIABLES.md`.
+
+---
+
 ### Contrato C: Integrante 3 $\rightarrow$ Entrega Final (Ian)
 * **Rol:** Lead Data Scientist — Modelado Supervisado, Calibración & Negocio  
 * **Script de Integración & Entrenamiento:** `src/models/train.py`  
@@ -185,16 +195,15 @@ flowchart TD
 **Criterio de comparación:** reportar la mejor PR-AUC de validación y el costo/tiempo de búsqueda para TPE + pruning y CMA-ES. Seleccionar la configuración final únicamente con `val`; luego reentrenar según el procedimiento definido y evaluar una sola vez en `test`.
 
 #### Opciones de Features Entregadas por Contrato A para Ian:
-Contrato A pone a disposición de Ian 3 variantes de features según la arquitectura de modelado elegida:
-1. **Opción Blindada End-to-End (Recomendada):** `data/features/features_seleccionadas_end_to_end.parquet`
+Contrato A pone a disposición de Ian las siguientes fuentes según la arquitectura de modelado elegida:
+1. **Entregable Oficial Blindado End-to-End (RECOMENDADO):** `data/features/features_seleccionadas_end_to_end.parquet`
    - **11 variables estructurales:** 4 base (`score, o, g, a`) + 7 ingenierizadas (`es_madrugada, ratio_d_m, ratio_monto_l, prod_b_log_c, score_texto_nb, ratio_monto_e, is_h_cero`).
    - Métrica en validación: **`PR-AUC = 0.4622`** (+0.0335 vs baseline crudo de 17 variables).
-   - Optimización de ventana nocturna (`23:00 - 05:59 UTC`) permitió a `es_madrugada` entrar en Paso 4 (+0.0120 directo) y desbloquear un subconjunto más parsimonioso y potente.
-2. **Opción Ensamble Incremental:** `data/features/features_seleccionadas_forward.parquet`
-   - Las 17 variables crudas base + 7 variables ingenierizadas de alto uplift (`es_madrugada, te_j_bayes, ratio_monto_l, diff_m_d, score_x_monto, text_svd_7, avg_word_len`).
-   - Métrica en validación: **`PR-AUC = 0.4584`**.
-3. **Opción Pool Completo:** `data/features/features_transaccionales.parquet`
-   - Las 50 features ingenierizadas completas para modelos que apliquen regularización intrínseca (L1/L2, `subsample`, `colsample_bytree`).
+   - Optimización de ventana nocturna (`23:00 - 05:59 UTC`) permitió a `es_madrugada` entrar en Paso 4 (+0.0120 directo) y desbloquear un subconjunto óptimo y parsimonioso sin ruido residual.
+2. **Pool Completo Transaccional:** `data/features/features_transaccionales.parquet`
+   - Las 50 features ingenierizadas completas para modelos que apliquen regularización intrínseca (L1/L2, `subsample`, `colsample_bytree`) o búsqueda con Optuna.
+3. **Módulo Satélite de Reglas CARs:** `data/features/features_reglas_asociacion.parquet`
+   - Panel de 10 reglas booleanas y porcentaje de violaciones (`score_heuristico_fraude_10`, `pct_heuristico_fraude`) para análisis de interpretabilidad.
 
 > [!CAUTION]
 > **Alerta Metodológica sobre Validación Leakage:**  
@@ -206,10 +215,7 @@ import pandas as pd
 
 def build_full_dataset(
     base_path="data/processed/dataset_base.parquet",
-    # Ian puede alternar entre las opciones entregadas:
-    # 1. Blindada: "data/features/features_seleccionadas_end_to_end.parquet" (12 vars)
-    # 2. Incremental: "data/features/features_seleccionadas_forward.parquet" (7 vars)
-    # 3. Pool Completo: "data/features/features_transaccionales.parquet" (48 vars)
+    # Entregable oficial: "data/features/features_seleccionadas_end_to_end.parquet" (11 vars)
     feat_path="data/features/features_seleccionadas_end_to_end.parquet",
     anom_path="data/features/scores_anomalias.parquet",
 ) -> pd.DataFrame:
