@@ -95,13 +95,14 @@ class EstimatorsTests(unittest.TestCase):
             "score_gmm_k5",
             "score_anomalia_consolidado",
             "anomalia_x_monto",
+            "extended_iforest_x_monto",
         ]
         self.assertEqual(list(scores_df.columns), expected_cols)
         self.assertEqual(len(scores_df), len(df_val))
 
         for col in expected_cols[1:]:
             vals = scores_df[col].to_numpy()
-            if col == "anomalia_x_monto":
+            if col in ("anomalia_x_monto", "extended_iforest_x_monto"):
                 self.assertTrue(np.all(vals >= 0.0))
             else:
                 self.assertTrue(np.all(vals >= 0.0) and np.all(vals <= 1.0))
