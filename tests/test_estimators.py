@@ -40,6 +40,15 @@ def _make_dummy_df(n_rows: int = 120, seed: int = 42) -> pd.DataFrame:
 
 
 class EstimatorsTests(unittest.TestCase):
+    def test_cleaned_schema_without_legacy_r_s(self):
+        df = _make_dummy_df(100).drop(columns=['r', 's'])
+        for preprocessor, width in [(FrequencyPreprocessor(), 16), (HybridIForestPreprocessor(), 17)]:
+            preprocessor.fit(df.loc[df.fraude == 0])
+            self.assertEqual(preprocessor.transform(df).shape, (100, width))
+            self.assertTrue(np.isfinite(preprocessor.transform(df)).all())
+            with self.assertRaises(KeyError):
+                preprocessor.transform(df.drop(columns=['monto']))
+
     def test_hybrid_preprocessor_k_minus_1_columns(self):
         df = _make_dummy_df(100)
         legit = df.loc[df["fraude"] == 0]
