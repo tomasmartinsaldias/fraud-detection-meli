@@ -1,6 +1,44 @@
 # Modelado supervisado y negocio — Ian (integrante 3)
 
-Rama local: `feat/ian-modelado-supervisado`. No se realizan commits ni push.
+Rama: `feat/ian-modelado-supervisado` (commits locales, sin push).
+
+## Estado final del Contrato C (entrega oficial)
+
+**Corrida oficial: `models/supervised/oficial_v2`**, con las entregas de los compañeros
+tal como están: `features_seleccionadas_end_to_end.parquet` (Tomás, 11 variables) y
+`scores_anomalias.parquet` (Franco, 11 scores one-class). Se excluye
+`score_anomalia_consolidado` con `--exclude-anomaly-cols`: es un LightGBM **supervisado**
+ajustado sobre todo train, así que en train sus valores son in-sample y usarlo como
+feature filtraría la etiqueta. No se modificó ningún archivo de los compañeros.
+
+| Entregable del contrato | Dónde está |
+|---|---|
+| `src/models/train.py` con `build_full_dataset()` y `--seed` (42) | integración 1:1 por `transaction_id` con aserciones |
+| Baseline: regresión logística solo con crudas | `logistic_raw` |
+| Challenger: LightGBM transaccional y completo (+ anomalías) | `lgb_transactional_*`, `lgb_full_*` |
+| Optuna TPE + MedianPruner vs. CMA-ES, mismo presupuesto | `trials_*.json` (20 trials por sampler y grupo) |
+| Calibración Platt en val | bloque `val_calibration` |
+| PR-AUC y ROC-AUC en val y test: baseline vs. transaccional vs. completo | [RESULTADOS_OFICIAL.md](RESULTADOS_OFICIAL.md) |
+| Costo total y umbral óptimo τ\* | consigna 5×FP + 200×FN, τ\* elegido en val; sensibilidad FP=10/20 y C_FN=monto (solo val) |
+
+Ganador elegido **solo con val_search**: `lgb_full_cmaes` (PR-AUC val_search 0,4877).
+En test (una única evaluación de esta corrida): PR-AUC 0,4432, ROC-AUC 0,8859,
+precision 49,2 %, recall 43,6 %, 466 FP, 584 FN, umbral 0,22159.
+Costo **119.130** frente a **140.435** de la logística: **−15,2 %**.
+
+**Advertencia metodológica (segunda apertura de test).** Test ya se había evaluado con
+`ian_v1`. La decisión del equipo fue hacer una corrida con los artefactos oficiales y
+evaluarla una vez en test. La selección de oficial_v2 usó solo val, pero test ya no es
+completamente virgen: conocíamos los resultados de ian_v1. Por eso **no se elige entre
+ian_v1 y oficial_v2 mirando test**; oficial_v2 es la entrega porque cumple el contrato
+con los artefactos oficiales, y ian_v1 queda como antecedente. En test, la diferencia
+transaccional vs. completo es mínima (PR-AUC 0,4413 vs. 0,4432): los scores de
+anomalías aportan poco sobre las features de Tomás.
+
+**Pendiente para Franco:** `scores_anomalias.parquet` se generó con un parche local de
+compatibilidad (las columnas `r`/`s` que la ingesta oficial elimina). Ese parche se
+revirtió para no modificar su código, así que con `main` tal como está, regenerar los
+scores puede fallar. Lo tiene que resolver Franco en su módulo.
 
 ## Alcance y decisiones
 
@@ -110,15 +148,20 @@ calibración imperfecta, variación muestral y la restricción de FP.
 
 ## Comandos reproducibles
 
-El entorno oficial del repositorio es Python **3.14**, según `.python-version` y README.
-CONTRATOS.md aún menciona 3.13: esa referencia está desactualizada. Usar `run.bat`
-con Python 3.14 instalado para la ejecución oficial.
+`.python-version` dice **3.14** y CONTRATOS.md dice 3.13; en esta máquina solo está
+instalado 3.13, así que `run.bat` no arranca hasta que el equipo unifique la versión
+(no se modificó `.python-version`). Los comandos siguen escritos con `run.bat`.
 
 ```powershell
 # Preparación, una sola vez; ajustar la ubicación del ZIP.
 .\run.bat src/models/prepare_supervised.py --source-zip '..\Trabajo práctico integrador para cerrar la cursada-20261107.zip'
 
-# Desarrollo: no evalúa test.
+# Corrida OFICIAL (entrega): artefactos de Tomás y Franco. No evalúa test.
+.\run.bat src/models/train.py --features data/features/features_seleccionadas_end_to_end.parquet --anomalies data/features/scores_anomalias.parquet --exclude-anomaly-cols score_anomalia_consolidado --output models/supervised/oficial_v2 --seed 42 --trials 20 --fp-costs 5 10 20 --fn-cost 200 --max-fp 100
+.\run.bat src/models/train.py --evaluate-test --bundle models/supervised/oficial_v2/bundle.joblib
+.\run.bat src/models/report_supervised.py --run models/supervised/oficial_v2 --output docs/RESULTADOS_OFICIAL.md --figures figures_oficial --title "Resultados oficiales de modelado — Contrato C"
+
+# Corrida histórica ian_v1 (variantes de Ian). Desarrollo: no evalúa test.
 .\run.bat src/models/train.py --features data/features/ian_features_selected.parquet --anomalies data/features/ian_scores_anomalias.parquet --output models/supervised/ian_v1 --seed 42 --trials 20 --fp-costs 5 10 20 --fn-cost 200 --max-fp 100
 
 # Evaluación final explícita, solo una vez tras congelar modelo y política.
@@ -135,12 +178,10 @@ Para usar las entregas oficiales de los compañeros, pasar sus rutas a `--featur
 y `--anomalies`. Para correr solo con lo disponible, cada una acepta `none`, de forma
 explícita. No hay omisiones silenciosas. Cada corrida requiere un directorio nuevo.
 
-Durante esta sesión no había `py` ni Python 3.14 instalados en PATH. Se creó un
-`.venv` local con Python **3.12.14** del runtime auxiliar, usando las mismas versiones
-fijadas de dependencias. Los comandos de sesión usan `.venv\Scripts\python.exe`;
-esto es una excepción documentada para poder verificar y entrenar ahora, no un
-cambio de la versión acordada. `run.bat` conservará ese entorno como backup cuando
-se use con 3.14. Falta verificar específicamente el runtime 3.14.
+Las corridas se ejecutaron con el `.venv` local (Python **3.12.14**) y las versiones
+fijadas de `requirements.txt`; la versión queda registrada en `manifest.json`.
+La suite completa se verificó además en un entorno aparte con **Python 3.13.2**
+(dependencias de `requirements-dev.txt`): 30 passed y `pip check` sin problemas.
 
 ## Artefactos y trazabilidad
 
@@ -182,7 +223,7 @@ identifican transacciones legítimas como fraude confirmado solo por un score al
 - [LightGBM: callbacks y métricas de evaluación](https://lightgbm.readthedocs.io/en/v4.6.0/pythonapi/lightgbm.LGBMClassifier.html).
 - [Optuna: CMA-ES y limitaciones de parámetros categóricos](https://optuna.readthedocs.io/en/v4.3.0/reference/samplers/generated/optuna.samplers.CmaEsSampler.html).
 
-## Resultados de esta sesión
+## Primera corrida (ian_v1, antecedente)
 
 Corrida real completada: `models/supervised/ian_v1`. Se entrenaron 120 trials
 (68 podados), las referencias fijas, regresión logística y promedio de probabilidades.
@@ -207,28 +248,25 @@ Es evidencia de variación entre períodos y de que no hay garantía dura de cap
 fuera de muestra. Los tres escenarios conservan el mismo umbral porque domina esa
 restricción; al subir FP de 5 a 20 el costo final sube a 123.200.
 
-Suite completa: **25 passed, 1 skipped**, con 9 advertencias de los tests existentes
-por muestras pequeñas. El test omitido requiere el Parquet de reglas de asociación,
-que no está generado. `pip check` pasó y `git diff --check` no reportó problemas.
-La comprobación se realizó con Python 3.12.14; no se afirma validación en 3.14.
 
 Tablas, tiempos por sampler, sensibilidad, variables importantes y curvas están en
 [RESULTADOS_IAN.md](RESULTADOS_IAN.md). Los modelos binarios y datos permanecen locales.
 
 
-## Actualizacion: integracion oficial y ensambles
+## Actualización: integración oficial y ensambles
 
-Se completo la integracion de los scripts de Tomas y Franco. El CSV original esta
+Se completó la integración de los scripts de Tomás y Franco. El CSV original está
 en data/raw; las 50 variables, las once seleccionadas y los doce scores del bundle
-original ya estan generados. Fue necesario corregir la incompatibilidad r/s del
-preprocesador de Franco con la base limpia. Se preservaron las variantes Ian y
-la corrida ian_v1 para trazabilidad.
+original ya están generados. Para generarlos se usó un parche local de la
+incompatibilidad r/s del preprocesador de Franco; ese parche luego se revirtió para
+no modificar código de compañeros (ver «Pendiente para Franco»). Se preservaron las
+variantes Ian y la corrida ian_v1 para trazabilidad.
 
 Se compararon 24 candidatos, con 72 nuevos trials y ensambles de probabilidades.
-La recomendacion sigue siendo ian_v1: el candidato elegido antes de la comprobacion
-posterior aumento FP de 99 a 112, FN de 94 a 97 y costo de 19295 a 19960.
-No se volvio a evaluar test ni se entreno con sus etiquetas. Esta segunda corrida
-es exploratoria: no hay una nueva muestra independiente para confirmar mejoras.
+La recomendación sigue siendo ian_v1: el candidato elegido antes de la comprobación
+posterior aumentó FP de 99 a 112, FN de 94 a 97 y costo de 19295 a 19960.
+En esa comparación no se volvió a evaluar test ni se entrenó con sus etiquetas. Fue
+exploratoria: no hay una nueva muestra independiente para confirmar mejoras.
 
-Ver [COMPARACION_EQUIPO.md](COMPARACION_EQUIPO.md) para la comparacion, sensibilidad
-y limitaciones. Pruebas tras la integracion: 30 aprobadas, sin omisiones.
+Ver [COMPARACION_EQUIPO.md](COMPARACION_EQUIPO.md) para la comparación, sensibilidad
+y limitaciones. La entrega final posterior es oficial_v2 (ver inicio del documento).

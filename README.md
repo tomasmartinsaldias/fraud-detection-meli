@@ -41,10 +41,11 @@ dataset base oficial del equipo o generar el Parquet desde el CSV original.
 ## Modelado supervisado (integrante 3)
 
 El pipeline de Ian está en `src/models/train.py`. Incluye regresión logística,
-LightGBM con Optuna, calibración, ensamble y costos de la consigna (FP=5, FN=200).
-Consultar [metodología y comandos](docs/MODELADO_IAN.md) y
-[resultados de la corrida](docs/RESULTADOS_IAN.md).
+LightGBM con Optuna (TPE + pruning y CMA-ES), calibración Platt, ensamble y costos
+de la consigna (FP=5, FN=200), con umbral elegido en validación.
+Consultar [metodología y comandos](docs/MODELADO_IAN.md) y los
+[resultados oficiales](docs/RESULTADOS_OFICIAL.md) (features de Tomás + scores de Franco).
+La primera corrida está en [RESULTADOS_IAN.md](docs/RESULTADOS_IAN.md) y la comparación
+exploratoria del equipo en [COMPARACION_EQUIPO.md](docs/COMPARACION_EQUIPO.md).
 Los modelos y datos generados quedan locales, ignorados por Git.
-Las dependencias opcionales de pruebas están en `requirements-dev.txt`.
-
-La integracion oficial del equipo y los ensambles posteriores estan documentados en [COMPARACION_EQUIPO.md](docs/COMPARACION_EQUIPO.md). La recomendacion actual conserva ian_v1: el nuevo candidato no redujo costo ni falsas alarmas en la comprobacion de validacion.
+Las dependencias de pruebas están en `requirements-dev.txt`.

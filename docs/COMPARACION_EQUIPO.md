@@ -1,48 +1,48 @@
-# Comparacion del equipo y ensambles
+# Comparación del equipo y ensambles
 
-**Solo validacion. Test ya fue utilizado en la corrida anterior y no se consulta nuevamente.**
+**Solo validación. Test ya fue utilizado en la corrida anterior y no se consulta nuevamente.**
 
-## Recomendacion actual
+## Recomendación actual
 
 **Conservar el modelo anterior (ian_v1). El nuevo ensamble no se recomienda como reemplazo.**
 
-| Politica en las mismas 4501 transacciones de validacion | FP | FN | Costo |
+| Política en las mismas 4501 transacciones de validación | FP | FN | Costo |
 |---|---:|---:|---:|
 | Anterior, congelada | 99 | 94 | 19295 |
 | Ensamble candidato, congelado antes de comprobar | 112 | 97 | 19960 |
 
 El ensamble elegido combina 25% del LightGBM con variables seleccionadas y scores de Franco,
-y 75% del LightGBM con el pool causal de Tomas. Se eligio por costo en policy_fit,
-pero empeoro en el bloque posterior. No hay evidencia para prometer ahorro y menor friccion a la vez.
+y 75% del LightGBM con el pool causal de Tomás. Se eligió por costo en policy_fit,
+pero empeoró en el bloque posterior. No hay evidencia para prometer ahorro y menor fricción a la vez.
 El bundle nuevo se conserva como **candidato experimental**, no como modelo promovido.
 
-En busqueda, el mejor individual fue selected_plus_franco_tpe (PR-AUC 0.4876);
-el mejor ensamble por PR-AUC fue el promedio 50/50 (0.4941). La decision de negocio no
-coincide necesariamente con ese ranking. Entre familias de Franco, combinarlas rindio
+En búsqueda, el mejor individual fue selected_plus_franco_tpe (PR-AUC 0.4876);
+el mejor ensamble por PR-AUC fue el promedio 50/50 (0.4941). La decisión de negocio no
+coincide necesariamente con ese ranking. Entre familias de Franco, combinarlas rindió
 mejor (0.2545) que usarlas por separado; PCA fue la mejor familia individual (0.1989).
 
 Las 30 pruebas pasaron. Los resultados de test de ian_v1 permanecen intactos.
 
 ## Datos y reproducibilidad
 
-CSV extraido del ZIP del curso a data/raw/fraud_dataset_v2.csv. La base coincide con make_dataset.py.
+CSV extraído del ZIP del curso a data/raw/fraud_dataset_v2.csv. La base coincide con make_dataset.py.
 Se ejecutaron build_features.py y anomaly_detection.py. Se reconstruyeron las once variables
-del reporte de seleccion guardado, sin repetir la seleccion sobre val.
-Se corrigio el preprocesador de Franco: r/s son opcionales porque la ingesta oficial las elimina.
+del reporte de selección guardado, sin repetir la selección sobre val.
+Se corrigió el preprocesador de Franco: r/s son opcionales porque la ingesta oficial las elimina.
 Los scores usan el mismo bundle original (PCA, IF, LOF, OCSVM y GMM), con ese ajuste de esquema.
 El bundle original incluye score como predictor: no sirve como prueba de descubrimiento de fraude sin scoring.
 
 ## Protocolo
 
-Train: 105000 filas. Val_search: 13499; calibracion y ajuste de politica dividen las siguientes 4500;
-val_check: ultimas 4501. Los limites exactos y conteos se guardan en comparison.json.
-Hiperparametros y miembros del ensamble se eligen con val_search. Se prueban pesos prefijados.
+Train: 105000 filas. Val_search: 13499; calibración y ajuste de política dividen las siguientes 4500;
+val_check: ultimas 4501. Los límites exactos y conteos se guardan en comparison.json.
+Hiperparámetros y miembros del ensamble se eligen con val_search. Se prueban pesos prefijados.
 Platt se ajusta en su bloque. Umbrales, pesos finales y candidato de negocio
-se congelan con policy_fit antes de evaluar val_check. El limite propuesto es 100 FP por 4501 transacciones;
-se escala al volumen de policy_fit. Es una hipotesis de capacidad, no una garantia en otras muestras.
-Val ya participo en trabajos anteriores; esta comparacion es exploratoria y no sustituye un nuevo test.
+se congelan con policy_fit antes de evaluar val_check. El límite propuesto es 100 FP por 4501 transacciones;
+se escala al volumen de policy_fit. Es una hipótesis de capacidad, no una garantia en otras muestras.
+Val ya participo en trabajos anteriores; esta comparación es exploratoria y no sustituye un nuevo test.
 
-## Comparacion predictiva en val_search
+## Comparación predictiva en val_search
 
 | Modelo | PR-AUC | AP | ROC-AUC |
 |---|---:|---:|---:|
@@ -71,13 +71,13 @@ Val ya participo en trabajos anteriores; esta comparacion es exploratoria y no s
 | franco_ocsvm | 0.1125 | 0.1127 | 0.6962 |
 | franco_lof | 0.0885 | 0.0878 | 0.6372 |
 
-## Decision de negocio congelada antes de val_check
+## Decisión de negocio congelada antes de val_check
 
-Candidato elegido: **blend_top2_0.25**. Menor costo con el limite de FP en policy_fit; desempate por PR-AUC.
-Funcion: 5 x FP + 200 x FN. Precision mide cuantas alertas son fraude; recall cuantos fraudes se detectan.
+Candidato elegido: **blend_top2_0.25**. Menor costo con el límite de FP en policy_fit; desempate por PR-AUC.
+Función: 5 x FP + 200 x FN. Precision mide cuantas alertas son fraude; recall cuantos fraudes se detectan.
 Bloquear una compra legitima no equivale a perder un cliente: no hay etiquetas de churn para medirlo.
 
-## Evaluacion diagnostica en val_check
+## Evaluación diagnóstica en val_check
 
 | Modelo | PR-AUC | Umbral | FP | FN | Precision | Recall | Costo |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -109,11 +109,11 @@ Bloquear una compra legitima no equivale a perder un cliente: no hay etiquetas d
 
 ## Resultado e implicaciones
 
-Frente a la politica anterior: ahorro observado -665; reduccion de falsos positivos -13.
+Frente a la política anterior: ahorro observado -665; reducción de falsos positivos -13.
 Valores negativos significan empeoramiento. No se cambia el candidato congelado despues de ver val_check.
-No se promete eliminar todas las perdidas: subir la deteccion normalmente aumenta la friccion.
+No se promete eliminar todas las perdidas: subir la detección normalmente aumenta la fricción.
 Intervalo exploratorio bootstrap pareado del ahorro (95%): -1,640 a 150.
-El bootstrap de filas no modela dependencia temporal; no es una garantia de generalizacion.
+El bootstrap de filas no modela dependencia temporal; no es una garantia de generalización.
 
 ## Sensibilidad: pesos monetarios y presupuesto de FP
 
@@ -132,21 +132,21 @@ El bootstrap de filas no modela dependencia temporal; no es una garantia de gene
 | 20.0 | 200 | 0.20435 | 112 | 97 | 21,640 |
 | 20.0 | 500 | 0.20435 | 112 | 97 | 21,640 |
 
-## Protecciones y limites
+## Protecciones y límites
 
 - No se usa el consolidador supervisado de Franco como feature de entrenamiento in-sample.
-  Se evalua directamente como modelo independiente y se permite en mezclas de predicciones de validacion.
+  Se evalúa directamente como modelo independiente y se permite en mezclas de predicciones de validación.
 - El pool causal excluye te_j_bayes (KFold aleatorio) y las dos variables de velocidad con empates temporales.
   score_texto_nb se sustituye por la version temporal sin prior futuro de Ian.
 - tomas_selected_official reproduce las columnas originales para trazabilidad; no participa como candidato
   de negocio final por el problema documentado del prior de texto. Los originales no se sobrescriben.
-- El modelo anterior usa su calibrador/umbral congelados; habia ajustado ese umbral en val_check anteriormente.
-  Tiene una ventaja metodologica: no interpretar esta muestra como prueba independiente.
+- El modelo anterior usa su calibrador/umbral congelados; había ajustado ese umbral en val_check anteriormente.
+  Tiene una ventaja metodológica: no interpretar esta muestra como prueba independiente.
 - Los miembros del promedio se entrenan en train y se preseleccionan por val_search.
-  La eleccion final entre los pesos prefijados usa policy_fit, nunca val_check.
-- Mantener ian_v1 como referencia. Para reemplazarlo con evidencia independiente hace falta un periodo nuevo.
+  La elección final entre los pesos prefijados usa policy_fit, nunca val_check.
+- Mantener ian_v1 como referencia. Para reemplazarlo con evidencia independiente hace falta un período nuevo.
 - El costo FP de 5 cubre contacto; no incluye churn, reputacion ni margen perdido. Se explora subirlo a 10/20.
-- En produccion, derivar riesgo intermedio a verificacion podria reducir friccion; falta medir su efectividad
+- En producción, derivar riesgo intermedio a verificacion podria reducir fricción; falta medir su efectividad
   y costo, por lo que no se contabiliza como ahorro demostrado.
 
 ## Reproducir
@@ -157,10 +157,10 @@ El bootstrap de filas no modela dependencia temporal; no es una garantia de gene
 .\run.bat src/models/compare_team.py --output models/supervised/team_v2 --trials 12 --seed 42
 ```
 
-En esta maquina sigue sin estar disponible el launcher py/3.14; se ejecuto con .venv Python 3.12.14
-y las dependencias fijadas. No se modifico .python-version.
+En esta máquina sigue sin estar disponible el launcher py/3.14; se ejecutó con .venv Python 3.12.14
+y las dependencias fijadas. No se modificó .python-version.
 
 Artefactos: comparison.json, trials_*.json, selected_bundle.joblib, predicciones val_check,
-curvas y politicas en la carpeta de corrida. No hay commits ni push.
+curvas y políticas en la carpeta de corrida. No hay commits ni push.
 
-![Comparacion PR](figures_team/pr_validation.svg)
+![Comparación PR](figures_team/pr_validation.svg)
