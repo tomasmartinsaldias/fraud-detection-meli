@@ -1,6 +1,6 @@
 # Resultados de modelado — Ian
 
-Corrida: `models\supervised\ian_v1`. Semilla: 42.
+Corrida: `models\supervised\ian_v1`. Semilla: 42. Features: `ian_features_selected.parquet`.
 Modelo elegido **solo con val_search**: `lgb_transactional_tpe`.
 
 ## Comparación de búsqueda (val_search)
@@ -19,7 +19,7 @@ Modelo elegido **solo con val_search**: `lgb_transactional_tpe`.
 | lgb_reference_raw | 0.4483 | 0.4488 | 0.8882 |
 | logistic_raw | 0.3319 | 0.3328 | 0.7789 |
 
-## Búsquedas
+## Búsquedas (TPE + pruning vs. CMA-ES, mismo presupuesto)
 
 | Estudio | Trials | Podados | Mejor PR-AUC | Segundos |
 |---|---:|---:|---:|---:|
@@ -29,6 +29,16 @@ Modelo elegido **solo con val_search**: `lgb_transactional_tpe`.
 | trials_raw_tpe | 20 | 10 | 0.4614 | 47.3 |
 | trials_transactional_cmaes | 20 | 12 | 0.4835 | 33.7 |
 | trials_transactional_tpe | 20 | 11 | 0.4852 | 45.7 |
+
+## Comparación del contrato (probabilidades calibradas)
+
+Para cada nivel se toma el mejor LightGBM de búsqueda según val_search (sin mirar test).
+
+| Nivel | Modelo | PR-AUC val_policy | ROC-AUC val_policy | PR-AUC test | ROC-AUC test |
+|---|---|---:|---:|---:|---:|
+| Baseline (logística, crudas) | `logistic_raw` | 0.2053 | 0.7376 | 0.3150 | 0.8075 |
+| Con features transaccionales | `lgb_transactional_tpe` | 0.3245 | 0.8645 | 0.4432 | 0.8865 |
+| Completo (+ scores de anomalías) | `lgb_full_tpe` | 0.3250 | 0.8616 | 0.4368 | 0.8830 |
 
 ## Negocio — test final
 
@@ -78,13 +88,19 @@ Calibración del ganador: Brier sin calibrar 0.032846, con Platt 0.032881.
 ## Límites y próximos pasos
 
 La selección previa de variables ya había consultado val; las cifras de búsqueda son exploratorias.
-Se usó Python 3.12.14 con dependencias fijadas; falta verificar el entorno oficial 3.14.
+Entorno de la corrida: Python 3.12.14 con las dependencias fijadas en requirements.txt.
 Los scores de anomalía son la alternativa IF/PCA/kNN de Ian, no la entrega completa de Franco.
 Costos del período evaluado, sin extrapolación mensual. El tope de FP de validación no es una garantía para otro período.
 Antes de producción: acordar capacidad real de revisión, monitorear calibración y deriva, medir costos de contacto y pérdida de clientes.
 Datos adicionales deseables: identidad de usuario/dispositivo, historial causal, chargebacks confirmados y fecha de confirmación de etiqueta.
 No usar resultados finales para una nueva ronda de ajuste: se necesitaría otro período fuera de muestra.
 
-![Curva PR](figures_ian/pr_test.svg)
+## Curvas
 
-![Curva ROC](figures_ian/roc_test.svg)
+![Curva PR val_policy](figures_ian/pr_val_policy.svg)
+
+![Curva ROC val_policy](figures_ian/roc_val_policy.svg)
+
+![Curva PR test final](figures_ian/pr_test.svg)
+
+![Curva ROC test final](figures_ian/roc_test.svg)

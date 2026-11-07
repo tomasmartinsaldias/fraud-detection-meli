@@ -82,11 +82,7 @@ class FrequencyPreprocessor(BaseEstimator, TransformerMixin):
         self.scaler_: Optional[StandardScaler] = None
 
     def fit(self, df_legit: pd.DataFrame, y: Optional[np.ndarray] = None) -> "FrequencyPreprocessor":
-        # The official cleaned dataset drops legacy r/s. Freeze the available
-        # schema at fit; all other requested columns remain mandatory.
-        self.numeric_cols_ = [c for c in self.numeric_cols
-                              if c not in {'r', 's'} or c in df_legit.columns]
-        x_num = df_legit[self.numeric_cols_].to_numpy(dtype=float, na_value=np.nan)
+        x_num = df_legit[self.numeric_cols].to_numpy(dtype=float, na_value=np.nan)
         self.imputer_ = SimpleImputer(strategy="median").fit(x_num)
         x_num_imp = self.imputer_.transform(x_num)
 
@@ -98,7 +94,7 @@ class FrequencyPreprocessor(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, df: pd.DataFrame) -> np.ndarray:
-        x_num = df[self.numeric_cols_].to_numpy(dtype=float, na_value=np.nan)
+        x_num = df[self.numeric_cols].to_numpy(dtype=float, na_value=np.nan)
         x_num_imp = self.imputer_.transform(x_num)
         x_cat_freq = self.freq_encoder_.transform(df)
         x_full = np.column_stack([x_num_imp, x_cat_freq])
@@ -129,11 +125,7 @@ class HybridIForestPreprocessor(BaseEstimator, TransformerMixin):
         self.scaler_: Optional[StandardScaler] = None
 
     def fit(self, df_legit: pd.DataFrame, y: Optional[np.ndarray] = None) -> "HybridIForestPreprocessor":
-        # The official cleaned dataset drops legacy r/s. Freeze the available
-        # schema at fit; all other requested columns remain mandatory.
-        self.numeric_cols_ = [c for c in self.numeric_cols
-                              if c not in {'r', 's'} or c in df_legit.columns]
-        x_num = df_legit[self.numeric_cols_].to_numpy(dtype=float, na_value=np.nan)
+        x_num = df_legit[self.numeric_cols].to_numpy(dtype=float, na_value=np.nan)
         self.imputer_ = SimpleImputer(strategy="median").fit(x_num)
         x_num_imp = self.imputer_.transform(x_num)
 
@@ -152,7 +144,7 @@ class HybridIForestPreprocessor(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, df: pd.DataFrame) -> np.ndarray:
-        x_num = df[self.numeric_cols_].to_numpy(dtype=float, na_value=np.nan)
+        x_num = df[self.numeric_cols].to_numpy(dtype=float, na_value=np.nan)
         x_num_imp = self.imputer_.transform(x_num)
 
         low_card_str = df[self.low_card_cols].fillna("__MISSING__").astype(str)

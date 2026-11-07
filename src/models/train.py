@@ -9,6 +9,7 @@ import hashlib
 import importlib.metadata
 import json
 from pathlib import Path
+import platform
 import sys
 import time
 
@@ -43,7 +44,7 @@ def fingerprint(path):
     return digest.hexdigest()
 
 
-def load_data(base_path, feature_path, anomaly_path, splits):
+def load_data(base_path, feature_path, anomaly_path, splits, exclude_anomaly_cols=()):
     if not base_path.is_file():
         raise FileNotFoundError(f"Falta {base_path}. Obtener el Parquet oficial o ejecutar src/make_dataset.py.")
     # Predicate pushdown: do not materialize test labels during development.
@@ -58,6 +59,11 @@ def load_data(base_path, feature_path, anomaly_path, splits):
         table = pd.read_parquet(path)
         check_ids(table)
         table = table.loc[table.transaction_id.isin(base.transaction_id)].copy()
+        if kind == "anomalies" and exclude_anomaly_cols:
+            unknown = set(exclude_anomaly_cols) - set(table)
+            if unknown:
+                raise ValueError(f"Columnas a excluir inexistentes en {path}: {sorted(unknown)}")
+            table = table.drop(columns=list(exclude_anomaly_cols))
         columns = [c for c in table if c != "transaction_id"]
         if not columns:
             raise ValueError(f"Archivo sin predictoras: {path}")
@@ -73,6 +79,26 @@ def load_data(base_path, feature_path, anomaly_path, splits):
         else:
             anomaly_cols = columns
     return df, feature_cols, anomaly_cols
+
+
+def build_full_dataset(
+    base_path="data/processed/dataset_base.parquet",
+    feat_path="data/features/features_seleccionadas_end_to_end.parquet",
+    anom_path="data/features/scores_anomalias.parquet",
+    splits=("train", "val", "test"),
+    exclude_anomaly_cols=(),
+) -> pd.DataFrame:
+    """Integración estándar de Contrato C: merge 1:1 por transaction_id.
+
+    Por defecto integra las tres particiones, como el código del contrato.
+    El entrenamiento (develop) la invoca solo con train/val para no leer test.
+    """
+    base_path, feat_path, anom_path = (None if p is None else Path(p) for p in (base_path, feat_path, anom_path))
+    df, _, _ = load_data(base_path, feat_path, anom_path, list(splits), exclude_anomaly_cols)
+    n_base = len(pd.read_parquet(base_path, columns=["transaction_id"], filters=[("split", "in", list(splits))]))
+    assert len(df) == n_base, "Error: El merge alteró la cantidad de filas."
+    assert df["transaction_id"].nunique() == n_base, "Error: Hay transaction_id duplicados."
+    return df
 
 
 def lgb_model(params, seed, jobs):
@@ -139,7 +165,7 @@ def export_curves(out, name, y, p):
 
 
 def develop(args):
-    df, feat, anom = load_data(args.base, args.features, args.anomalies, ["train", "val"])
+    df, feat, anom = load_data(args.base, args.features, args.anomalies, ["train", "val"], args.exclude_anomaly_cols)
     validate_development(df)
     train = df.loc[df.split == "train"]
     tune, calibration, policy = validation_blocks(df.loc[df.split == "val"])
@@ -193,8 +219,17 @@ def develop(args):
             best.update(policy_metrics(policy.fraude, p, policy.monto, best["threshold"], fp_cost, args.loss_fraction, args.fn_cost))
             candidate["policies"][str(fp_cost)] = best
             curve.to_csv(args.output / f"{name}_cost_{fp_cost}.csv", index=False)
+        # Sensibilidad del contrato (C_FN = monto defraudado), SOLO en val_policy.
+        # No se guarda en candidate["policies"], así que evaluate_test nunca la usa.
+        curve = cost_curve(policy.fraude, p, policy.monto, args.fp_costs[0], args.loss_fraction, None)
+        allowed = curve.loc[curve.fp <= args.max_fp] if args.max_fp is not None else curve
+        amount_policy = allowed.loc[allowed.cost.idxmin()].to_dict()
+        amount_policy.update(policy_metrics(policy.fraude, p, policy.monto, amount_policy["threshold"],
+                                            args.fp_costs[0], args.loss_fraction, None))
+        amount_policy["fp_cost"] = args.fp_costs[0]
+        curve.to_csv(args.output / f"{name}_cost_monto.csv", index=False)
         policies[name] = {"raw": metrics(policy.fraude, p_raw), "calibrated": metrics(policy.fraude, p),
-                          "scenarios": candidate["policies"]}
+                          "scenarios": candidate["policies"], "amount_fn_val_only": amount_policy}
         export_curves(args.output, f"{name}_val_policy", policy.fraude, p)
         pd.DataFrame({"transaction_id": policy.transaction_id, "probability": p}).to_parquet(
             args.output / f"{name}_val_predictions.parquet", index=False, compression="snappy")
@@ -208,6 +243,7 @@ def develop(args):
     # Hash development rows only: test data is not inspected to create the model.
     data_hash = hashlib.sha256(pd.util.hash_pandas_object(df, index=False).values.tobytes()).hexdigest()
     manifest = {"winner": winner, "seed": args.seed, "paths": paths, "development_hash": data_hash,
+                "exclude_anomaly_cols": list(args.exclude_anomaly_cols), "python": platform.python_version(),
                 "versions": {p: importlib.metadata.version(p) for p in ("numpy", "pandas", "scikit-learn", "lightgbm", "optuna", "cmaes")},
                 "rows": {"train": len(train), "val_search": len(tune), "val_calibration": len(calibration), "val_policy": len(policy)},
                 "comparison": comparison, "policy_validation": policies, "loss_fraction": args.loss_fraction,
@@ -243,14 +279,15 @@ def evaluate_test(args):
         raise ValueError("El bundle cambió desde su congelamiento.")
     bundle = joblib.load(args.bundle)
     paths = {k: Path(v) if v else None for k, v in manifest["paths"].items()}
-    dev, _, _ = load_data(paths["base"], paths["features"], paths["anomalies"], ["train", "val"])
+    exclude = manifest.get("exclude_anomaly_cols", [])
+    dev, _, _ = load_data(paths["base"], paths["features"], paths["anomalies"], ["train", "val"], exclude)
     current_hash = hashlib.sha256(pd.util.hash_pandas_object(dev, index=False).values.tobytes()).hexdigest()
     if current_hash != manifest["development_hash"]:
         raise ValueError("Los datos/features de desarrollo cambiaron desde el entrenamiento.")
     # Record consumption BEFORE reading test, also preventing concurrent evaluation.
     with lock.open("x", encoding="utf-8") as stream:
         json.dump({"bundle_sha256": manifest["bundle_sha256"]}, stream)
-    df, _, _ = load_data(paths["base"], paths["features"], paths["anomalies"], ["test"])
+    df, _, _ = load_data(paths["base"], paths["features"], paths["anomalies"], ["test"], exclude)
     dates = pd.to_datetime(df.fecha, utc=True, errors="raise")
     if df.empty or dates.isna().any() or dates.min() < pd.Timestamp(manifest["val_end"]):
         raise ValueError("Test vacío o no posterior a val.")
@@ -287,6 +324,8 @@ def main():
     parser.add_argument("--fn-cost", type=float, default=200., help="Costo fijo por FN según consigna.")
     parser.add_argument("--max-fp", type=int, default=100, help="Tope absoluto de FP en val_policy; hipótesis operativa configurable.")
     parser.add_argument("--loss-fraction", type=float, default=1.)
+    parser.add_argument("--exclude-anomaly-cols", nargs="*", default=[],
+                        help="Columnas del Parquet de anomalías a no usar (p. ej. un consolidador supervisado in-sample).")
     parser.add_argument("--evaluate-test", action="store_true")
     parser.add_argument("--bundle", type=Path)
     args = parser.parse_args()

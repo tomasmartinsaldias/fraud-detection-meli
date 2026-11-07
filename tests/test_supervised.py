@@ -13,7 +13,7 @@ from src.models.supervised import (
     BASE_CATEGORICAL, BASE_NUMERIC, FrameEncoder, cost_curve, merge_features,
     policy_metrics, validation_blocks,
 )
-from src.models.train import develop, evaluate_test, load_data
+from src.models.train import build_full_dataset, develop, evaluate_test, load_data
 
 
 class SupervisedTests(unittest.TestCase):
@@ -81,7 +81,8 @@ class SupervisedTests(unittest.TestCase):
             base = root / "base.parquet"
             frame.to_parquet(base)
             args = argparse.Namespace(base=base, features=None, anomalies=None, output=root / "run",
-                                      seed=42, trials=2, max_trees=5, jobs=1, fp_costs=[1., 5.], loss_fraction=1., fn_cost=200., max_fp=100)
+                                      seed=42, trials=2, max_trees=5, jobs=1, fp_costs=[1., 5.], loss_fraction=1., fn_cost=200., max_fp=100,
+                                      exclude_anomaly_cols=[])
             original_read = pd.read_parquet
             observed = []
 
@@ -98,6 +99,9 @@ class SupervisedTests(unittest.TestCase):
             self.assertFalse(manifest["test_used"])
             self.assertEqual(len(manifest["comparison"]), 5)
             self.assertTrue((args.output / "trials_raw_cmaes.json").exists())
+            amount = manifest["policy_validation"]["logistic_raw"]["amount_fn_val_only"]
+            self.assertLessEqual(amount["fp"], 100)
+            self.assertEqual(amount["fp_cost"], 1.)
             args.bundle = args.output / "bundle.joblib"
             evaluate_test(args)
             result = json.loads((args.output / "test_report.json").read_text(encoding="utf-8"))
@@ -105,6 +109,28 @@ class SupervisedTests(unittest.TestCase):
             self.assertEqual(result["winner_frozen_on_val"], manifest["winner"])
             with self.assertRaises(ValueError):
                 evaluate_test(args)
+            self.assertNotIn("monto", "".join(result["results"]["logistic_raw"]["scenarios"]))
+
+    def test_build_full_dataset_and_anomaly_exclusion(self):
+        ids = [f"tx_{i:06}" for i in range(6)]
+        base = pd.DataFrame({"transaction_id": ids, "split": ["train"] * 2 + ["val"] * 2 + ["test"] * 2,
+                             "fraude": [0, 1] * 3, "score": np.arange(6.)})
+        feat = pd.DataFrame({"transaction_id": ids[::-1], "score": np.arange(6.)[::-1], "extra": np.ones(6)})
+        anom = pd.DataFrame({"transaction_id": ids, "s1": np.linspace(0, 1, 6), "consolidado": np.zeros(6)})
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name, frame in (("b", base), ("f", feat), ("a", anom)):
+                frame.to_parquet(root / f"{name}.parquet")
+            full = build_full_dataset(root / "b.parquet", root / "f.parquet", root / "a.parquet",
+                                      exclude_anomaly_cols=["consolidado"])
+            self.assertEqual(len(full), 6)
+            self.assertEqual(full.transaction_id.tolist(), ids)
+            self.assertIn("s1", full)
+            self.assertNotIn("consolidado", full)
+            dev = build_full_dataset(root / "b.parquet", root / "f.parquet", None, splits=("train", "val"))
+            self.assertEqual(set(dev.split), {"train", "val"})
+            with self.assertRaises(ValueError):
+                build_full_dataset(root / "b.parquet", None, root / "a.parquet", exclude_anomaly_cols=["nope"])
 
 
 if __name__ == "__main__":
