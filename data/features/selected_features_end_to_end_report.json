@@ -1,54 +1,217 @@
 {
-  "method": "Forward Stepwise Global End-to-End Blindado (Paso 12 sin sobreajuste)",
-  "final_pr_auc_val": 0.4586313225961489,
-  "selected_count": 12,
-  "selected_features": [
+  "method": "Forward Stepwise Global End-to-End Blindado",
+  "params": {
+    "n_estimators": 120,
+    "learning_rate": 0.06,
+    "num_leaves": 31,
+    "max_depth": 6,
+    "subsample": 0.8,
+    "colsample_bytree": 1.0,
+    "n_jobs": -1,
+    "random_state": 42,
+    "importance_type": "gain",
+    "verbose": -1
+  },
+  "max_steps": 14,
+  "reference_17_base_pr_auc": 0.42868030213026953,
+  "full_model_all_features_pr_auc": 0.4480192334550291,
+  "final_pr_auc_val": 0.4584250057113882,
+  "delta_vs_reference_17_base": 0.029744703581118692,
+  "delta_vs_full_model": 0.010405772256359136,
+  "total_selected_count": 14,
+  "surviving_base_count": 5,
+  "discarded_base_count": 11,
+  "selected_eng_count": 9,
+  "surviving_base_features": [
     "score",
     "o",
     "g",
-    "ratio_monto_m",
-    "es_madrugada",
-    "ratio_monto_ag_bayes",
     "n",
-    "te_j_bayes",
+    "monto"
+  ],
+  "discarded_base_features": [
     "b",
+    "c",
+    "d",
     "e",
-    "ratio_d_m",
-    "text_svd_7"
+    "f",
+    "h",
+    "l",
+    "m",
+    "q",
+    "a",
+    "p"
   ],
-  "base_features": [
-    "score",
-    "o",
-    "g",
-    "n",
-    "b",
-    "e"
-  ],
-  "eng_features": [
-    "ratio_monto_m",
-    "es_madrugada",
+  "selected_eng_features": [
+    "score_heuristico_fraude_10",
     "ratio_monto_ag_bayes",
-    "te_j_bayes",
+    "es_madrugada",
     "ratio_d_m",
-    "text_svd_7"
+    "score_lof_manhattan",
+    "word_count",
+    "text_svd_7",
+    "is_monto_alto",
+    "dia_semana"
+  ],
+  "all_selected_features_order": [
+    "score",
+    "score_heuristico_fraude_10",
+    "o",
+    "ratio_monto_ag_bayes",
+    "g",
+    "es_madrugada",
+    "n",
+    "ratio_d_m",
+    "score_lof_manhattan",
+    "word_count",
+    "text_svd_7",
+    "monto",
+    "is_monto_alto",
+    "dia_semana"
   ],
   "feature_gains": {
-    "score": 46462.33118436858,
-    "o": 55143.60628187496,
-    "g": 7232.255879044533,
-    "ratio_monto_m": 5234.378901481628,
-    "es_madrugada": 1461.1365782022476,
-    "ratio_monto_ag_bayes": 3624.209184885025,
-    "n": 2674.241731405258,
-    "te_j_bayes": 7138.638081431389,
-    "b": 4003.4430367946625,
-    "e": 1910.7137110233307,
-    "ratio_d_m": 4183.602464556694,
-    "text_svd_7": 1956.0698696374893
+    "score": 40741.07651301322,
+    "score_heuristico_fraude_10": 53802.959417037666,
+    "o": 16542.779977202415,
+    "ratio_monto_ag_bayes": 3405.5631749629974,
+    "g": 6505.941121459007,
+    "es_madrugada": 751.1936286687851,
+    "n": 1440.654822587967,
+    "ratio_d_m": 4398.944880723953,
+    "score_lof_manhattan": 3172.094662666321,
+    "word_count": 1434.150725364685,
+    "text_svd_7": 2400.8968868255615,
+    "monto": 2765.129383087158,
+    "is_monto_alto": 30.195980072021484,
+    "dia_semana": 676.3893001079559
   },
-  "pruned_tail_features": [
-    "p",
-    "text_svd_10"
+  "history": [
+    {
+      "step": 1,
+      "feature": "score",
+      "type": "BASE CRUDA",
+      "score": 0.24283648855344653,
+      "delta_vs_best": 0.0,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 2,
+      "feature": "score_heuristico_fraude_10",
+      "type": "INGENIERIZADA",
+      "score": 0.3823130223415266,
+      "delta_vs_best": 0.13947653378808006,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 3,
+      "feature": "o",
+      "type": "BASE CRUDA",
+      "score": 0.4049898375629329,
+      "delta_vs_best": 0.0226768152214063,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 4,
+      "feature": "ratio_monto_ag_bayes",
+      "type": "INGENIERIZADA",
+      "score": 0.4198046138196503,
+      "delta_vs_best": 0.014814776256717399,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 5,
+      "feature": "g",
+      "type": "BASE CRUDA",
+      "score": 0.4312864461298783,
+      "delta_vs_best": 0.011481832310228035,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 6,
+      "feature": "es_madrugada",
+      "type": "INGENIERIZADA",
+      "score": 0.4375443280149015,
+      "delta_vs_best": 0.0062578818850231865,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 7,
+      "feature": "n",
+      "type": "BASE CRUDA",
+      "score": 0.44286001404169767,
+      "delta_vs_best": 0.0053156860267961625,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 8,
+      "feature": "ratio_d_m",
+      "type": "INGENIERIZADA",
+      "score": 0.4491852599184763,
+      "delta_vs_best": 0.006325245876778629,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 9,
+      "feature": "score_lof_manhattan",
+      "type": "INGENIERIZADA",
+      "score": 0.45127190111288296,
+      "delta_vs_best": 0.0020866411944066576,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 10,
+      "feature": "word_count",
+      "type": "INGENIERIZADA",
+      "score": 0.4525288333873895,
+      "delta_vs_best": 0.001256932274506517,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 11,
+      "feature": "text_svd_7",
+      "type": "INGENIERIZADA",
+      "score": 0.45430437497216425,
+      "delta_vs_best": 0.0017755415847747757,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 12,
+      "feature": "monto",
+      "type": "BASE CRUDA",
+      "score": 0.45651230043023244,
+      "delta_vs_best": 0.002207925458068194,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 13,
+      "feature": "is_monto_alto",
+      "type": "INGENIERIZADA",
+      "score": 0.4571564961892636,
+      "delta_vs_best": 0.0006441957590311298,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 14,
+      "feature": "dia_semana",
+      "type": "INGENIERIZADA",
+      "score": 0.4584250057113882,
+      "delta_vs_best": 0.00126850952212465,
+      "patience": 0,
+      "accepted": true
+    }
   ],
-  "pruning_rationale": "Descartadas por delta marginal (< 0.0020) y nula ganancia en validacion cruzada temporal interna."
+  "elapsed_seconds": 273.11
 }

@@ -1,0 +1,164 @@
+{
+  "dataset": "Brasil (g == 'BR')",
+  "total_records": 111628,
+  "train_records": 79324,
+  "val_records": 16680,
+  "val_prevalence": 0.05101918465227818,
+  "final_pr_auc_val": 0.4740989636268465,
+  "final_roc_auc_val": 0.8874663254365343,
+  "best_f1_val": 0.46027742749054223,
+  "best_precision_val": 0.4965986394557823,
+  "best_recall_val": 0.4289071680376028,
+  "optimal_threshold": 0.24242559789387147,
+  "selected_features": [
+    "score",
+    "o",
+    "anomalia_x_monto_br",
+    "c",
+    "diff_m_d",
+    "es_madrugada",
+    "dia_semana",
+    "ratio_monto_q",
+    "avg_word_len",
+    "e",
+    "ratio_monto_a_bayes_br",
+    "ratio_monto_e"
+  ],
+  "feature_importances_gain": {
+    "score": 64713.17138402988,
+    "o": 26263.826797362097,
+    "anomalia_x_monto_br": 5876.853331033344,
+    "c": 4857.19889998436,
+    "diff_m_d": 3419.484485771158,
+    "es_madrugada": 1062.128222823143,
+    "dia_semana": 537.8388073536917,
+    "ratio_monto_q": 2667.1906711662887,
+    "avg_word_len": 1517.2140494271007,
+    "e": 1417.6849706583998,
+    "ratio_monto_a_bayes_br": 2640.4494659637985,
+    "ratio_monto_e": 1616.1714738160658
+  },
+  "selection_history": [
+    {
+      "step": 1,
+      "feature_added": "score",
+      "type": "BASE CRUDA",
+      "score": 0.29706997976322913,
+      "delta_vs_best": 0.0,
+      "roc_auc": 0.812225422718821,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 2,
+      "feature_added": "o",
+      "type": "BASE CRUDA",
+      "score": 0.4262930663201104,
+      "delta_vs_best": 0.12922308655688125,
+      "roc_auc": 0.8764123384179582,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 3,
+      "feature_added": "anomalia_x_monto_br",
+      "type": "ANOMALÍA ONE-CLASS",
+      "score": 0.4350832314098056,
+      "delta_vs_best": 0.008790165089695212,
+      "roc_auc": 0.8812318032640116,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 4,
+      "feature_added": "c",
+      "type": "BASE CRUDA",
+      "score": 0.44602800889334865,
+      "delta_vs_best": 0.010944777483543056,
+      "roc_auc": 0.8818978523332393,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 5,
+      "feature_added": "diff_m_d",
+      "type": "INGENIERÍA NATIVA",
+      "score": 0.4538550788132967,
+      "delta_vs_best": 0.007827069919948026,
+      "roc_auc": 0.8823908934492977,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 6,
+      "feature_added": "es_madrugada",
+      "type": "INGENIERÍA NATIVA",
+      "score": 0.4639204912779874,
+      "delta_vs_best": 0.010065412464690726,
+      "roc_auc": 0.8860164883520474,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 7,
+      "feature_added": "dia_semana",
+      "type": "INGENIERÍA NATIVA",
+      "score": 0.46859470815866255,
+      "delta_vs_best": 0.004674216880675153,
+      "roc_auc": 0.8860853797403938,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 8,
+      "feature_added": "ratio_monto_q",
+      "type": "INGENIERÍA NATIVA",
+      "score": 0.46851479099807497,
+      "delta_vs_best": -7.991716058758369e-05,
+      "roc_auc": 0.8865642417021696,
+      "patience": 1,
+      "accepted": false
+    },
+    {
+      "step": 9,
+      "feature_added": "avg_word_len",
+      "type": "INGENIERÍA NATIVA",
+      "score": 0.47157601993324244,
+      "delta_vs_best": 0.0029813117745798867,
+      "roc_auc": 0.886585176369749,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 10,
+      "feature_added": "e",
+      "type": "BASE CRUDA",
+      "score": 0.4719562440173875,
+      "delta_vs_best": 0.00038022408414506437,
+      "roc_auc": 0.886668729449042,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 11,
+      "feature_added": "ratio_monto_a_bayes_br",
+      "type": "INGENIERÍA NATIVA",
+      "score": 0.4726339622961418,
+      "delta_vs_best": 0.0006777182787542912,
+      "roc_auc": 0.8871655195037977,
+      "patience": 0,
+      "accepted": true
+    },
+    {
+      "step": 12,
+      "feature_added": "ratio_monto_e",
+      "type": "INGENIERÍA NATIVA",
+      "score": 0.4738351621336975,
+      "delta_vs_best": 0.0012011998375556776,
+      "roc_auc": 0.8874663254365343,
+      "patience": 0,
+      "accepted": true
+    }
+  ],
+  "elapsed_seconds": 467.8617136478424
+}

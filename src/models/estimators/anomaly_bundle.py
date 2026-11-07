@@ -379,6 +379,7 @@ class AnomalyPipelineBundle:
         if "monto" in df.columns:
             log_monto = np.log1p(np.maximum(df["monto"].to_numpy(dtype=float), 0.0))
             out_df["anomalia_x_monto"] = out_df["score_iforest_perpendicular"] * log_monto
+            out_df["extended_iforest_x_monto"] = out_df["score_iforest_diagonal"] * log_monto
 
         return out_df
 

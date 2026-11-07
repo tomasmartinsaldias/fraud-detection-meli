@@ -57,6 +57,16 @@ def load_data() -> Tuple[pd.DataFrame, List[str], List[str], List[str], np.ndarr
     df_feat = pd.read_parquet("data/features/features_transaccionales.parquet")
 
     full_df = df_base.merge(df_feat, on="transaction_id")
+
+    # Integración con scores de anomalías si existen (Contrato B)
+    anom_path = Path("data/features/scores_anomalias.parquet")
+    anom_cols = []
+    if anom_path.exists():
+        df_anom = pd.read_parquet(anom_path)
+        full_df = full_df.merge(df_anom, on="transaction_id")
+        anom_cols = [c for c in df_anom.columns if c != "transaction_id"]
+        logger.info(f"Integrados {len(anom_cols)} scores de anomalías desde {anom_path} (incluye anomalia_x_monto)")
+
     for cat in BASE_CATEGORICAL_COLS:
         if cat in full_df.columns:
             full_df[cat] = full_df[cat].astype("category")
@@ -69,7 +79,7 @@ def load_data() -> Tuple[pd.DataFrame, List[str], List[str], List[str], np.ndarr
 
     base_cols = [c for c in BASE_COLS if c in full_df.columns]
     eng_cols = [c for c in df_feat.columns if c != "transaction_id"]
-    all_cand_cols = base_cols + eng_cols
+    all_cand_cols = base_cols + eng_cols + anom_cols
 
     return full_df, base_cols, eng_cols, all_cand_cols, y_train, y_val, train_mask, val_mask
 
@@ -100,8 +110,8 @@ def run_global_forward(max_steps: int = 12):
     full_df, base_cols, eng_cols, all_cand_cols, y_train, y_val, train_mask, val_mask = load_data()
 
     logger.info("================================================================")
-    logger.info(" INICIANDO FORWARD STEPWISE GLOBAL BLINDADO (65 VARIABLES)")
-    logger.info(f" Pool: {len(base_cols)} base + {len(eng_cols)} ingenierizadas | Max Steps: {max_steps}")
+    logger.info(f" INICIANDO FORWARD STEPWISE GLOBAL BLINDADO ({len(all_cand_cols)} VARIABLES)")
+    logger.info(f" Pool: {len(base_cols)} base + {len(all_cand_cols) - len(base_cols)} ingenierizadas/anomalías | Max Steps: {max_steps}")
     logger.info(" colsample_bytree = 1.0 | min_delta = 0.0003 | patience = 2")
     logger.info("================================================================")
 
@@ -110,6 +120,10 @@ def run_global_forward(max_steps: int = 12):
     # Baseline 17 crudas juntas como referencia
     base_all_pr, _ = fit_eval(full_df, base_cols, y_train, y_val, train_mask, val_mask)
     logger.info(f"Referencia (17 crudas base juntas): PR-AUC = {base_all_pr:.4f}")
+
+    # Modelo Completo (Todas las variables juntas)
+    all_cand_pr, _ = fit_eval(full_df, all_cand_cols, y_train, y_val, train_mask, val_mask)
+    logger.info(f"Modelo Completo (Todas las {len(all_cand_cols)} variables juntas): PR-AUC = {all_cand_pr:.4f}")
 
     # Semilla en la variable continua univariada más potente
     seed_col = "score"
@@ -190,9 +204,9 @@ def run_global_forward(max_steps: int = 12):
 
     surviving_base = [c for c in best_selected if c in base_cols]
     discarded_base = [c for c in base_cols if c not in best_selected]
-    selected_eng = [c for c in best_selected if c in eng_cols]
+    selected_eng = [c for c in best_selected if c not in base_cols]
 
-    logger.info(f"Completado en {elapsed:.1f}s. PR-AUC Final: {final_pr:.4f} (+{final_pr - base_all_pr:.4f} vs 17 base)")
+    logger.info(f"Completado en {elapsed:.1f}s. PR-AUC Final: {final_pr:.4f} (+{final_pr - base_all_pr:.4f} vs 17 base | {final_pr - all_cand_pr:+.4f} vs full model)")
     logger.info(f"Base Retenidas ({len(surviving_base)}): {surviving_base}")
     logger.info(f"Ingenierizadas Seleccionadas ({len(selected_eng)}): {selected_eng}")
 
@@ -210,8 +224,10 @@ def run_global_forward(max_steps: int = 12):
         "params": PARAMS_FORWARD,
         "max_steps": max_steps,
         "reference_17_base_pr_auc": base_all_pr,
+        "full_model_all_features_pr_auc": all_cand_pr,
         "final_pr_auc_val": final_pr,
         "delta_vs_reference_17_base": final_pr - base_all_pr,
+        "delta_vs_full_model": final_pr - all_cand_pr,
         "total_selected_count": len(best_selected),
         "surviving_base_count": len(surviving_base),
         "discarded_base_count": len(discarded_base),
@@ -234,8 +250,9 @@ def run_global_forward(max_steps: int = 12):
     print("\n" + "=" * 80)
     print("RESUMEN FORWARD STEPWISE GLOBAL BLINDADO (END-TO-END)")
     print("=" * 80)
-    print(f"Referencia (17 base crudas): {base_all_pr:.4f}")
-    print(f"PR-AUC Final ({len(best_selected)} vars blindadas):       {final_pr:.4f} ({final_pr - base_all_pr:+.4f})")
+    print(f"Referencia (17 base crudas):                          {base_all_pr:.4f}")
+    print(f"Modelo Completo ({len(all_cand_cols)} variables juntas):               {all_cand_pr:.4f}")
+    print(f"PR-AUC Final ({len(best_selected)} vars blindadas):                    {final_pr:.4f} ({final_pr - base_all_pr:+.4f} vs base | {final_pr - all_cand_pr:+.4f} vs full)")
     print(f"Base Retenidas: {len(surviving_base)}/17 | Ingenierizadas Seleccionadas: {len(selected_eng)}")
     print(f"Tiempo total: {elapsed:.1f} segundos")
     print("-" * 80)
@@ -248,4 +265,4 @@ def run_global_forward(max_steps: int = 12):
 
 
 if __name__ == "__main__":
-    run_global_forward(max_steps=12)
+    run_global_forward(max_steps=14)
