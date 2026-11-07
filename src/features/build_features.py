@@ -508,7 +508,7 @@ def compute_heuristic_risk_features(
     """
     Calcula el Score Heurístico y Porcentaje de Violaciones de Fraude basado en un panel
     ortogonal de 10 reglas de asociación de alto WRAcc / impacto neto:
-    - r1 (Perfil/Canal): s == 0 AND o == 'N'
+    - r1 (Perfil/Canal): p == 'N' AND o == 'N'
     - r2 (Inmediatez/Sin historial): ratio_d_m >= 1.0 OR is_f_cero_neg == 1
     - r3 (Tensión Monetaria f): ratio_monto_f > p75 AND is_o_missing == 0
     - r4 (Categoría Crítica): te_j_bayes > p75 AND is_o_missing == 0
@@ -543,7 +543,7 @@ def compute_heuristic_risk_features(
     th_m = float(df_base.loc[train_mask, "m"].quantile(0.25))
     th_diff = float(df_features.loc[train_mask, "diff_m_d"].quantile(0.10))
 
-    r1 = (df_base["s"] == 0) & (df_base["o"] == "N")
+    r1 = (df_base["p"] == "N") & (df_base["o"] == "N")
     r2 = (df_features["ratio_d_m"] >= 1.0) | (df_features["is_f_cero_neg"] == 1)
     r3 = (df_features["ratio_monto_f"] > th_mf) & (df_features["is_o_missing"] == 0)
     r4 = (df_features["te_j_bayes"] > th_te) & (df_features["is_o_missing"] == 0)
