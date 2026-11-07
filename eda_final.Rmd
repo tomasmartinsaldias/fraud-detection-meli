@@ -409,7 +409,12 @@ tema_meli <- theme_minimal(base_size = 11) +
   )
 
 # 2. Separación de funciones acumuladas empíricas (ECDF) y K-S Stat
-train_data <- df_limpio %>% filter(split == "train")
+# Soporta tanto df_limpio directo como dataset_base.parquet con partición 'split'
+train_data <- if ("split" %in% names(df_limpio)) {
+  filter(df_limpio, split == "train")
+} else {
+  df_limpio
+}
 
 ecdf_0 <- ecdf(train_data$score[train_data$fraude == 0])
 ecdf_1 <- ecdf(train_data$score[train_data$fraude == 1])
