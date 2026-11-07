@@ -152,6 +152,14 @@ flowchart TD
 
 ---
 
+### Módulo Satélite Opcional: Reglas de Asociación Heurísticas CARs (Franco / Tomás)
+* **Script Generador:** `src/features/build_rule_features.py`  
+* **Archivo de Salida:** `data/features/features_reglas_asociacion.parquet`  
+* **Propósito:** Módulo desacoplado de 10 reglas de asociación (CARs) para interpretabilidad y auditoría sin alterar el pipeline transaccional central.  
+* **Integración en Modelado:** Opcional vía `df.merge(features_reglas, on='transaction_id')`. Documentado en detalle en `docs/DICCIONARIO_VARIABLES.md`.
+
+---
+
 ### Contrato C: Integrante 3 $\rightarrow$ Entrega Final (Ian)
 * **Rol:** Lead Data Scientist — Modelado Supervisado, Calibración & Negocio  
 * **Script de Integración & Entrenamiento:** `src/models/train.py`  

@@ -174,7 +174,28 @@ Generadas por `src/models/anomaly_detection.py`. Modelos One-Class entrenados **
 
 ---
 
-## 5. Datasets de Modelado Final (Selección Forward Stepwise)
+## 5. Módulo Satélite: Reglas de Asociación Heurísticas CARs (`data/features/features_reglas_asociacion.parquet`)
+
+Generadas por el script satélite independiente `src/features/build_rule_features.py` (desacoplado del pipeline transaccional central). Implementa un panel ortogonal de 10 reglas de asociación de alto impacto neto / WRAcc (Weighted Relative Accuracy).
+
+| Variable | Tipo | Condición Lógica | Justificación de Negocio |
+| :--- | :---: | :--- | :--- |
+| `score_heuristico_fraude_10` | `int8` | $\sum_{k=1}^{10} r_k \in [0, 10]$ | Conteo acumulado de reglas violadas simultáneamente en la transacción. |
+| `pct_heuristico_fraude` | `float64` | $\frac{\text{score\_heuristico\_fraude\_10}}{10.0} \in [0.0, 1.0]$ | Grado porcentual de riesgo heurístico agregado. |
+| `rule_car_1_seguridad_fallida` | `int8` | $p == \text{'N'} \land o == \text{'N'}$ | Medio de pago no tokenizado y fallo/ausencia de autenticación 2FA. |
+| `rule_car_2_inmediatez_sin_historial` | `int8` | $\text{ratio\_d\_m} \ge 1.0 \lor \text{is\_f\_cero\_neg} == 1$ | Ruptura de historial operativo o ausencia de antigüedad en $f$. |
+| `rule_car_3_tension_monto_f` | `int8` | $\text{ratio\_monto\_f} > p_{75} \land \text{is\_o\_missing} == 0$ | Ticket monetario alto sobre factor $f$ con identidad verificada fallida. |
+| `rule_car_4_categoria_critica` | `int8` | $\text{te\_j\_bayes} > p_{75} \land \text{is\_o\_missing} == 0$ | Compra en categorías históricamente vulnerables sin autenticación segura. |
+| `rule_car_5_madrugada_o_texto_nb` | `int8` | $\text{es\_madrugada} == 1 \lor \text{score\_texto\_nb} > p_{90}$ | Operación en ventana crítica nocturna o con vocabulario de alto riesgo. |
+| `rule_car_6_antiguedad_baja_l` | `int8` | $\log(1+l) \le p_{25} \land \text{is\_o\_missing} == 0$ | Cuentas recién creadas en operaciones sin 2FA. |
+| `rule_car_7_tension_monto_m` | `int8` | $\text{ratio\_monto\_m} > p_{75} \land \text{is\_o\_missing} == 0$ | Desproporción del importe actual frente al volumen histórico $m$. |
+| `rule_car_8_b_alto_joven` | `int8` | $b > p_{90} \land m \le p_{25}$ | Tasa de fricción continua extrema en cuentas de bajo volumen. |
+| `rule_car_9_canal_atipico` | `int8` | $a \ne 4.0 \land \text{is\_o\_missing} == 0$ | Canales de transacción atípicos fuera del flujo predominante. |
+| `rule_car_10_discrepancia_m_d` | `int8` | $\text{diff\_m\_d} \le p_{10}$ | Quiebre de coherencia matemática entre escalas históricas $m$ y $d$. |
+
+---
+
+## 6. Datasets de Modelado Final (Selección Forward Stepwise)
 
 Para evitar la maldición de la dimensionalidad y el sobreajuste ante la alta colinealidad, se generaron dos variantes de conjuntos curados para modelado supervisado:
 
