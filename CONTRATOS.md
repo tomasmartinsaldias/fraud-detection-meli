@@ -62,6 +62,11 @@ flowchart TD
   Toda hipótesis, descarte de registros o transformación validada durante el EDA en R debe implementarse formalmente en el pipeline de Python (`src/features/build_features.py`) antes de exportarse a `data/features/features_transaccionales.parquet`. R no genera datasets intermedios para el resto del equipo.  
 
 #### Esquema Oficial Producción (v2):
+
+> [!NOTE]
+> **Diccionario Exhaustivo de Características:**  
+> La explicación profunda, justificación de negocio, formulación matemática completa, análisis de asimetrías y métricas de gain empírico para cada una de las 50 variables ingenierizadas, variables crudas y scores de anomalías se encuentran documentadas en **[docs/DICCIONARIO_VARIABLES.md](docs/DICCIONARIO_VARIABLES.md)**.
+
 | Columna | Tipo | Descripción | Restricción Anti-Leakage / Validación Proxy |
 | :--- | :--- | :--- | :--- |
 | `transaction_id` | `string` | ID universal (`tx_XXXXXX`) | Clave primaria determinista (150.000 filas) |
