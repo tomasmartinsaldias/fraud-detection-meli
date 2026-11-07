@@ -197,9 +197,9 @@ Generadas por el script satélite independiente `src/features/build_rule_feature
 
 ## 6. Datasets de Modelado Final (Selección Forward Stepwise)
 
-Para evitar la maldición de la dimensionalidad y el sobreajuste ante la alta colinealidad, se generaron dos variantes de conjuntos curados para modelado supervisado:
+Para evitar la maldición de la dimensionalidad, eliminar colinealidades y prevenir sobreajuste, se aplicó un algoritmo de Forward Stepwise Selection Global competitivo entre todas las variables disponibles:
 
-### 1. Dataset Recomendado: Forward Stepwise Global Blindado (`data/features/features_seleccionadas_end_to_end.parquet`)
+### Dataset Oficial: Forward Stepwise Global Blindado (`data/features/features_seleccionadas_end_to_end.parquet`)
 
 Selección competitiva abierta entre **67 variables candidatas** (17 crudas + 50 ingenierizadas), con criterio de tolerancia $\Delta \ge 0.0003$ y paciencia $k=2$ sobre el split de validación Out-Of-Time.
 
@@ -220,10 +220,4 @@ Selección competitiva abierta entre **67 variables candidatas** (17 crudas + 50
 
 *Metadatos y traza del algoritmo:* [data/features/selected_features_end_to_end_report.json](file:///C:/Users/tomas/Desktop/universidad/Ciencia%20de%20Datos/Taller%20de%20Resolución%20de%20Problemas%20II/fraud-detection-meli/data/features/selected_features_end_to_end_report.json).
 
-### 2. Dataset Incremental: Baseline Base + Forward (`data/features/features_seleccionadas_forward.parquet`)
 
-Conserva obligatoriamente las 17 variables crudas base y agrega un núcleo complementario de 7 variables ingenierizadas (`es_madrugada`, `te_j_bayes`, `ratio_monto_l`, `diff_m_d`, `score_x_monto`, `text_svd_7`, `avg_word_len`).
-
-* **Cantidad de variables:** **24 variables** (17 base + 7 ingenierizadas).
-* **PR-AUC alcanzado:** **`0.458400`** (+0.0297 vs baseline).
-* **Metadatos y traza del algoritmo:** [data/features/selected_features_forward_report.json](file:///C:/Users/tomas/Desktop/universidad/Ciencia%20de%20Datos/Taller%20de%20Resolución%20de%20Problemas%20II/fraud-detection-meli/data/features/selected_features_forward_report.json).
