@@ -162,6 +162,223 @@ cor(k_vec, df_limpio$fraude)
 ```
 
 ```{r}
+distinct(df_limpio['a'])
+df_limpio |>
+  group_by(a) |>
+  summarise(n = n(), monto_promedio = mean(monto), monto_medio = median(monto))
 
+df_limpio %>% 
+  group_by(a) %>% 
+  summarise(
+    tasa_fraude = mean(fraude)
+  )
+
+df_limpio |>
+  filter(g == c("AR", "BR")) |>
+  group_by(a, g) |>
+  summarise(n=n())
+hist(df_limpio$a, breaks = 5)
+```
+
+```{r}
+df_limpio |>
+  group_by(g) |>
+  summarise(n=n())
+```
+```{r}
+summary(df_limpio)
+head(df[, c("i", "j", "o", "p")], 10)
+any(is.na(df$c))
+
+# Tabla cruzada de valores faltantes entre b y c
+df %>%
+  summarise(
+    total_filas = n(),
+    solo_b_na   = sum(is.na(b) & !is.na(c)),
+    solo_c_na   = sum(!is.na(b) & is.na(c)),
+    ambos_na    = sum(is.na(b) & is.na(c)),
+    ninguno_na  = sum(!is.na(b) & !is.na(c))
+  )
+
+# Aserción estricta opcional: debe dar TRUE si los NA caen siempre juntos
+identical(is.na(df$b), is.na(df$c))
+
+
+df %>%
+  mutate(c_es_na = is.na(c)) %>%
+  group_by(c_es_na) %>%
+  summarise(
+    n = n(),
+    tasa_fraude = mean(fraude),
+    monto_medio = mean(monto, na.rm = TRUE)
+  )
+
+df %>%
+  mutate(c_es_na = is.na(c)) %>%
+  group_by(g, c_es_na) %>%
+  tally() %>%
+  tidyr::pivot_wider(names_from = c_es_na, values_from = n, values_fill = 0)
+
+df %>%
+  mutate(
+    c_es_na = is.na(c),
+    semana = lubridate::floor_date(fecha, "week")
+  ) %>%
+  group_by(semana, c_es_na) %>%
+  tally() %>%
+  tidyr::pivot_wider(names_from = c_es_na, values_from = n, values_fill = 0)
+```
+
+```{r}
+# ==============================================================================
+# AUDITORÍA DE 'es_madrugada' Y TASA DE FRAUDE POR HORA (UTC VS LOCAL)
+# ==============================================================================
+library(scales)
+library(patchwork)
+
+df_limpio <- df_limpio %>%
+  mutate(
+    hora_utc   = hour(fecha),
+    hora_local = hour(with_tz(fecha, "America/Buenos_Aires")),
+    fecha_dia  = as.Date(fecha),
+    es_madrugada_opt = (hora_utc >= 23 | hora_utc <= 5),
+    es_principal = if_else(g %in% c("BR", "AR"), "Principal (BR/AR)", "No Principal (Otros)")
+  )
+
+tasa_hora <- df_limpio %>%
+  group_by(hora = hora_utc) %>%
+  summarise(
+    n           = n(),
+    n_fraude    = sum(fraude),
+    tasa_fraude = mean(fraude),
+    se          = sqrt(tasa_fraude * (1 - tasa_fraude) / n),
+    ic_inf      = pmax(0, tasa_fraude - 1.96 * se),
+    ic_sup      = tasa_fraude + 1.96 * se,
+    .groups     = "drop"
+  ) %>%
+  mutate(es_madrugada = (hora >= 23 | hora <= 5))
+
+tasa_global <- mean(df_limpio$fraude)
+
+p_tasa <- ggplot(tasa_hora, aes(x = factor(hora), y = tasa_fraude)) +
+  geom_col(aes(fill = es_madrugada), alpha = 0.85, width = 0.7) +
+  geom_errorbar(aes(ymin = ic_inf, ymax = ic_sup), width = 0.25, color = "gray30") +
+  geom_hline(yintercept = tasa_global, linetype = "dashed", color = "red3", linewidth = 0.8) +
+  annotate("text", x = 12, y = tasa_global + 0.008, 
+           label = paste0("Tasa promedio: ", percent(tasa_global, accuracy = 0.1)),
+           color = "red3", fontface = "bold", size = 3.5) +
+  scale_fill_manual(values = c("FALSE" = "#2b5c8f", "TRUE" = "#e6550d"),
+                    labels = c("Día / Tarde", "es_madrugada optimizada (23h - 05h UTC)"),
+                    name = "Ventana") +
+  scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 0.21)) +
+  labs(title = "Tasa de Fraude por Hora (UTC)",
+       subtitle = "Riesgo concentrado entre las 23h (9.0%) y las 05h (7.2%), con pico a las 02h (17.2%)",
+       x = "Hora (UTC)", y = "Tasa de Fraude") +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "top", panel.grid.minor = element_blank())
+
+p_volumen <- ggplot(tasa_hora, aes(x = factor(hora), y = n)) +
+  geom_col(fill = "gray50", alpha = 0.75, width = 0.7) +
+  scale_y_continuous(labels = comma_format()) +
+  labs(title = "Volumen de Transacciones por Hora (UTC)",
+       x = "Hora (UTC)", y = "Cantidad de Transacciones") +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.minor = element_blank())
+
+p_tasa / p_volumen
+```
+
+```{r}
+# ==============================================================================
+# DISTRIBUCIÓN EN EL TIEMPO DE PAÍSES NO PRINCIPALES ('g')
+# ==============================================================================
+df_no_principales <- df_limpio %>%
+  filter(!g %in% c("BR", "AR")) %>%
+  mutate(
+    g_etiqueta = fct_na_value_to_level(g, level = "Missing / NA"),
+    pais_top   = fct_lump_n(g_etiqueta, n = 4, other_level = "Otros países")
+  )
+
+# Resumen general de países no principales
+df_no_principales %>%
+  group_by(g_etiqueta) %>%
+  summarise(
+    n = n(),
+    pct_total = percent(n / nrow(df_limpio), accuracy = 0.01),
+    tasa_fraude = percent(mean(fraude), accuracy = 0.1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(n)) %>%
+  head(10)
+
+# Serie temporal diaria por país no principal
+ggplot(df_no_principales %>% count(fecha_dia, pais_top), aes(x = fecha_dia, y = n, color = pais_top)) +
+  geom_line(linewidth = 0.85, alpha = 0.9) +
+  geom_point(size = 1.2, alpha = 0.6) +
+  scale_x_date(date_breaks = "1 week", date_labels = "%d %b") +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title = "Distribución Temporal Diaria: Países No Principales",
+       subtitle = "Flujo sostenido en todo el período sin anomalías de fechas puntuales",
+       x = "Fecha", y = "Transacciones por día", color = "País") +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+# ==============================================================================
+# ANÁLISIS DE RÁFAGAS TEMPORALES DE PRODUCTOS REPETIDOS (BURST / VELOCITY)
+# ==============================================================================
+df_burst <- df_limpio %>%
+  arrange(fecha) %>%
+  group_by(i) %>%
+  mutate(
+    fecha_prev_i = lag(fecha),
+    delta_sec_i  = as.numeric(difftime(fecha, fecha_prev_i, units = "secs"))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    ventana_rafaga = case_when(
+      is.na(delta_sec_i)   ~ "1. Primera vez visto (Sin historia)",
+      delta_sec_i <= 600   ~ "2. Menos de 10 minutos (Ráfaga extrema)",
+      delta_sec_i <= 3600  ~ "3. Entre 10 min y 1 hora",
+      delta_sec_i <= 86400 ~ "4. Entre 1 hora y 24 horas",
+      TRUE                 ~ "5. Más de 24 horas"
+    )
+  )
+
+tasa_global_fraude <- mean(df_burst$fraude)
+
+resumen_rafaga <- df_burst %>%
+  group_by(ventana_rafaga) %>%
+  summarise(
+    total_tx    = n(),
+    pct_pob     = percent(total_tx / nrow(df_burst), accuracy = 0.01),
+    tx_fraude   = sum(fraude),
+    tasa_fraude = mean(fraude),
+    lift        = tasa_fraude / tasa_global_fraude,
+    se          = sqrt(tasa_fraude * (1 - tasa_fraude) / total_tx),
+    ic_inf      = pmax(0, tasa_fraude - 1.96 * se),
+    ic_sup      = tasa_fraude + 1.96 * se,
+    .groups     = "drop"
+  )
+
+print(resumen_rafaga %>% select(ventana_rafaga, total_tx, pct_pob, tasa_fraude, lift))
+
+ggplot(resumen_rafaga, aes(x = ventana_rafaga, y = tasa_fraude)) +
+  geom_col(aes(fill = lift > 2.0), alpha = 0.85, width = 0.65) +
+  geom_errorbar(aes(ymin = ic_inf, ymax = ic_sup), width = 0.2, color = "gray25") +
+  geom_hline(yintercept = tasa_global_fraude, linetype = "dashed", color = "red3", linewidth = 0.8) +
+  geom_text(aes(label = percent(tasa_fraude, accuracy = 0.1)), vjust = -0.6, fontface = "bold", size = 3.8) +
+  scale_fill_manual(values = c("FALSE" = "#2b5c8f", "TRUE" = "#d95f02"),
+                    labels = c("Riesgo basal", "Alto riesgo (Lift > 2x)"),
+                    name = "Nivel de Alerta") +
+  scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 0.45)) +
+  labs(title = "Efecto Ráfaga: Tasa de Fraude según Intervalo entre Ventas del Mismo Producto",
+       subtitle = "Compras repetidas en < 10 minutos alcanzan un 34.8% de fraude (Lift 7x)",
+       x = "Intervalo respecto a la última venta del mismo producto ('i')",
+       y = "Tasa de Fraude") +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "top", axis.text.x = element_text(angle = 20, hjust = 1),
+        panel.grid.minor = element_blank())
 ```
 
