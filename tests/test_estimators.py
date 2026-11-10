@@ -46,8 +46,8 @@ class EstimatorsTests(unittest.TestCase):
         pre = HybridIForestPreprocessor().fit(legit)
         out = pre.transform(df)
 
-        # 14 numéricas + (3-1 para g) + (2-1 para o) + (2-1 para p) + 1 frecuencia para j = 14 + 2 + 1 + 1 + 1 = 19
-        self.assertEqual(out.shape, (100, 19))
+        # 12 numéricas (sin r ni s) + (3-1 para g) + (2-1 para o) + (2-1 para p) + 1 frecuencia para j = 12 + 2 + 1 + 1 + 1 = 17
+        self.assertEqual(out.shape, (100, 17))
         self.assertTrue(np.all(np.isfinite(out)))
 
     def test_frequency_preprocessor_shape(self):
@@ -56,8 +56,8 @@ class EstimatorsTests(unittest.TestCase):
         pre = FrequencyPreprocessor().fit(legit)
         out = pre.transform(df)
 
-        # 14 numéricas + 4 frecuencias = 18
-        self.assertEqual(out.shape, (100, 18))
+        # 12 numéricas (sin r ni s) + 4 frecuencias = 16
+        self.assertEqual(out.shape, (100, 16))
         self.assertTrue(np.all(np.isfinite(out)))
 
     def test_bundle_fit_predict_save_load(self):

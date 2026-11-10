@@ -16,7 +16,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 DEFAULT_NUMERIC_COLS = [
-    "score", "monto", "a", "b", "d", "e", "f", "h", "l", "m", "n", "q", "r", "s"
+    "score", "monto", "a", "b", "d", "e", "f", "h", "l", "m", "n", "q"
 ]
 DEFAULT_CATEGORICAL_COLS = ["g", "j", "o", "p"]
 LOW_CARDINALITY_COLS = ["g", "o", "p"]
