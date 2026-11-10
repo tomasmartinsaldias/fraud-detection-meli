@@ -37,3 +37,15 @@ seleccionar `.venv/Scripts/python.exe` como interprete.
 Las dependencias directas estan fijadas; `requirements.txt` no es un lock completo
 de las dependencias transitivas. Los datos no se incluyen en Git: obtener el
 dataset base oficial del equipo o generar el Parquet desde el CSV original.
+
+## Modelado supervisado (integrante 3)
+
+El pipeline de Ian está en `src/models/train.py`. Incluye regresión logística,
+LightGBM con Optuna (TPE + pruning y CMA-ES), calibración Platt, ensamble y costos
+de la consigna (FP=5, FN=200), con umbral elegido en validación.
+Consultar [metodología y comandos](docs/MODELADO_IAN.md) y los
+[resultados oficiales](docs/RESULTADOS_OFICIAL.md) (features de Tomás + scores de Franco).
+La primera corrida está en [RESULTADOS_IAN.md](docs/RESULTADOS_IAN.md) y la comparación
+exploratoria del equipo en [COMPARACION_EQUIPO.md](docs/COMPARACION_EQUIPO.md).
+Los modelos y datos generados quedan locales, ignorados por Git.
+Las dependencias de pruebas están en `requirements-dev.txt`.
