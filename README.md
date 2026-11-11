@@ -42,14 +42,13 @@ dataset base oficial del equipo o generar el Parquet desde el CSV original.
 
 A continuación se resume la evolución y el desempeño comparativo de los hitos principales del equipo, evaluados bajo el protocolo cronológico out-of-time (OOT) sobre el mismo split temporal (105k Train / 22.5k Val / 22.5k Test) y confirmados a ciegas en Test:
 
-| Etapa / Solución | Arquitectura | Features (N1 / N2) | PR-AUC Val (OOT) | PR-AUC Test | Δ Test vs Base | Justificación y Veredicto Metodológico |
+| Solución / Hito | Arquitectura | Features (N1 / N2) | PR-AUC Val (OOT) | PR-AUC Test | Δ Acumulado vs Crudo | ¿Qué aporta este paso? |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **0. Piso Lineal Crudo** | Regresión Logística base | 16 / — | 0.33190 | 0.31500 | -1293 bps | 📌 **Sanity Check:** Modelo lineal sobre covariables directas. Demuestra la no linealidad severa del problema. |
-| **1. Árbol Crudo (Sin FE)** | LightGBM base sin transformar | 16 / — | 0.44830 | 0.43135 | -130 bps | 📌 **Piso Algorítmico:** Árbol sobre variables brutas sin ninguna transformación de ingeniería. |
-| **2. FE Transaccional (Control)** | LightGBM 11 variables seleccionadas | 11 / — | 0.48136 | 0.44435 | — | 🧠 **Impacto FE Ola 1:** Ratios continuos, ventana nocturna, interacciones y Naive Bayes (+130 bps sobre el crudo). |
-| **3. Baseline Comercial (Finetuneado)** | LightGBM Optuna con semántica ($d=30$) | 13 / — | 0.48850 | **0.44700** | **+26.5 bps** | 🚀 **Impacto FE Ola 2:** SVD + K-Means ($k=50$) de catálogo. Inferencia ultra-rápida (< 4 ms) para checkout síncrono. |
-| **4. 🏆 CHAMPION OFICIAL (Protocolo OOT)** | Stacking Cuatri-Modelo (Lasso $C=0.20$) | 13 / 14 | **`0.49218`** | **0.45014** | **+57.9 bps** | 🎯 **POR QUÉ ES EL CAMPEÓN:** Récord absoluto en desarrollo ciego OOT (`0.49218`). La deduplicación en N2 confirma generalización en Test > 0.45. |
-| **5. 🔬 Récord de Generalización (Ablación L1)** | Stacking Cuatri-Modelo (Lasso $C=0.10$) | 13 / Descol. | 0.49101 | **`0.45093`** | **+65.8 bps** | 🥇 **Hallazgo de Transferencia:** Forzar esparcidad estricta $L_1$ en N2 poda redundancias, alcanzando el pico histórico en Test (+195.8 bps vs crudo). |
+| **0. Árbol Crudo de Partida** | LightGBM base de fábrica (sin FE) | 16 / — | 0.44830 | 0.43135 | — | 📌 **Punto Cero:** LightGBM alimentado con las variables brutas tal como vienen del CSV. |
+| **1. FE Transaccional y Temporal** | LightGBM 11 variables seleccionadas | 11 / — | 0.48136 | 0.44435 | **+130.0 bps** | 🧠 **Impacto FE Ola 1:** Ratios continuos, ventana nocturna, interacciones y Naive Bayes. |
+| **2. Baseline Comercial (Finetuneado)** | LightGBM Optuna con semántica ($d=30$) | 13 / — | 0.48850 | **0.44700** | **+156.5 bps** | 🚀 **Impacto FE Ola 2:** Incorpora clustering semántico NLP. Inferencia ultra-rápida (< 4 ms). |
+| **3. 🏆 CHAMPION OFICIAL (Protocolo OOT)** | Cuatri-Modelo Stacking (Lasso $C=0.20$) | 13 / 14 | **`0.49218`** | **0.45014** | **+187.9 bps** | 🎯 **Aporte del Ensamble:** Récord OOT (`0.49218`). Deduplica en N2 y supera 0.45 en Test. |
+| **4. 🔬 Récord de Generalización (L1)** | Cuatri-Modelo Stacking (Lasso $C=0.10$) | 13 / Descol. | 0.49101 | **`0.45093`** | **+195.8 bps** | 🥇 **Aporte de la Parsimonia:** Esparcidad estricta $L_1$ logra el récord histórico del proyecto. |
 
 ## Mapa de Documentación
 
