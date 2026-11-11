@@ -328,7 +328,6 @@ def main():
         d["pct_heuristico_fraude"] = part_df["pct_heuristico_fraude"].to_numpy(dtype=float)
         d["distancia_log_cluster"] = part_df["distancia_log_cluster"].to_numpy(dtype=float)
         d["deficit_piso_cluster"] = part_df["deficit_piso_cluster"].to_numpy(dtype=float)
-        d["ratio_monto_mediana_cluster"] = part_df["ratio_monto_mediana_cluster"].to_numpy(dtype=float)
         return pd.DataFrame(d)
 
     X_meta_tr = build_meta(p_lgb_oof, p_xgb_oof, p_cat_oof, p_rf_oof, train)
@@ -361,6 +360,12 @@ def main():
     p_blend_tu = w_opt[0] * p_lgb_tu + w_opt[1] * p_xgb_tu + w_opt[2] * p_cat_tu + w_opt[3] * p_rf_tu
     p_blend_te = w_opt[0] * p_lgb_te + w_opt[1] * p_xgb_te + w_opt[2] * p_cat_te + w_opt[3] * p_rf_te
 
+    # 5. Stacking Puro de Nivel 2 (Solo Predicciones / Logits de los 4 Modelos)
+    pred_cols = ["p_lgb", "logit_lgb", "p_xgb", "logit_xgb", "p_cat", "logit_cat", "p_rf", "logit_rf"]
+    m_pure = LogisticRegression(solver="saga", l1_ratio=1.0, C=0.2, max_iter=1000, random_state=seed).fit(X_tr_sc[pred_cols], y_train)
+    p_pure_tu = m_pure.predict_proba(X_tu_sc[pred_cols])[:, 1]
+    p_pure_te = m_pure.predict_proba(X_te_sc[pred_cols])[:, 1]
+
     print("\n" + "=" * 95)
     print("RESULTADOS FINALES LIMPIOS: CUATRI-MODELO CON VARIABLES PURAS DE CHALLENGER V3")
     print("=" * 95)
@@ -372,6 +377,7 @@ def main():
         ("Random Forest Limpio (6 vars)", pr_auc(y_tune, p_rf_tu), pr_auc(y_test, p_rf_te)),
         ("Blend Convexo Óptimo (SLSQP)", pr_auc(y_tune, p_blend_tu), pr_auc(y_test, p_blend_te)),
         ("Stacking Cuatri-Modelo (Ridge L2 C=1.0)", pr_auc(y_tune, p_r_tu), pr_auc(y_test, p_r_te)),
+        ("Stacking Puro Nivel 2 (Solo Predicciones)", pr_auc(y_tune, p_pure_tu), pr_auc(y_test, p_pure_te)),
         ("🏆 Stacking Cuatri-Modelo Limpio (Lasso L1 C=0.1)", pr_auc(y_tune, p_l1_tu), pr_auc(y_test, p_l1_te)),
         ("🏆 Stacking Cuatri-Modelo Limpio (Lasso L1 C=0.2)", pr_auc(y_tune, p_l2_tu), pr_auc(y_test, p_l2_te)),
     ]

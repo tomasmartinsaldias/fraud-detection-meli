@@ -26,10 +26,11 @@ Aplicando un riguroso estudio de ablación y selección hacia adelante, se purga
 | **XGBoost Limpio (12 vars)** | 0.48881 | 0.44592 | +0.00157 (+16 bps) | Boosting por profundidad |
 | **CatBoost Limpio (13 vars)** | 0.48016 | 0.44142 | -0.00293 | Árboles simétricos (OOF `0.4659`) |
 | **Random Forest Limpio (6 vars)** | 0.45029 | 0.40268 | -0.04167 | Inductor de Bagging |
-| **Blend Convexo Óptimo (SLSQP)** | 0.48835 | 0.44739 | +0.00304 (+30 bps) | Ponderación continua |
-| **Stacking Cuatri-Modelo (Ridge L2 C=1.0)** | 0.49065 | 0.45052 | +0.00617 (+62 bps) | Penalización cuadrática |
-| **Stacking Cuatri-Modelo Limpio (Lasso L1 C=0.2)** | 0.49062 | 0.45063 | +0.00628 (+63 bps) | Rompe barrera de 0.45 |
-| **Stacking Cuatri-Modelo (14 vars c/ ratio_med, Lasso L1 C=0.1)** | **`0.49125`** | **`0.45011`** | +0.00576 (+58 bps) | Récord en Validación OOT |
+| **Blend Convexo Óptimo (SLSQP)** | 0.48841 | 0.44737 | +0.00302 (+30 bps) | Ponderación continua |
+| **Stacking Puro Nivel 2 (Solo Predicciones, sin raw)** | 0.49054 | 0.44995 | +0.00560 (+56 bps) | Cero colinealidad raw en Meta |
+| **Stacking Cuatri-Modelo (Ridge L2 C=1.0)** | 0.49081 | 0.44989 | +0.00554 (+55 bps) | Penalización cuadrática |
+| **Stacking Cuatri-Modelo Limpio (Lasso L1 C=0.2)** | 0.49075 | 0.45019 | +0.00584 (+58 bps) | Rompe barrera de 0.45 |
+| **Stacking Cuatri-Modelo Desacoplado (14 vars N1, Lasso L1 C=0.1)** | **`0.49101`** | **`0.45037`** | **`+0.00602` (+60 bps)** | **Solución Desacoplada N1/N2** |
 | **🏆 Stacking Cuatri-Modelo Limpio (13 vars d=30, Lasso L1 C=0.1)** | **`0.49101`** | **`0.45093`** | **`+0.00658` (+66 bps)** | **🥇 RÉCORD ABSOLUTO DUAL (SVD d=30)** |
 
 ---
@@ -99,8 +100,9 @@ RF   0.9168  0.9378  0.9131  1.0000
   * 8 predictores de modelos base: Probabilidades ($p$) y transformaciones logit ($\log \frac{p}{1-p}$) de LGBM, XGBoost, CatBoost y Random Forest (ajustados con 5-Fold Stratified CV en Train).
   * 11 scores de anomalías no supervisadas (PCA, iForest perpendicular, LOF, OCSVM, GMM).
   * 1 regla heurística de asociación (`pct_heuristico_fraude`).
-  * 2 variables de clustering semántico (`distancia_log_cluster` y `deficit_piso_cluster`).
+  * 2 variables de clustering semántico (`distancia_log_cluster` y `deficit_piso_cluster`), **desacopladas** de `ratio_monto_mediana_cluster` para evitar colinealidad en Nivel 2.
 * **Optimización L1:** La penalización Lasso (con $C=0.1$ y $C=0.2$) apagó los coeficientes de variables redundantes, combinando los inductores de forma convexa y garantizando monotonicidad sin riesgo de sobreajuste.
+* **Stacking Puro vs Passthrough:** El modelo con *Stacking Puro* (únicamente las probabilidades y logits de los 4 inductores, sin variables raw) alcanzó **`0.49054` en Val y `0.44995` en Test**, confirmando que la combinación no-lineal de estimadores por sí sola captura prácticamente todo el poder del ensamble. Al agregar las anomalías y el clustering desacoplado, sube a **`0.45037`**.
 
 ---
 
