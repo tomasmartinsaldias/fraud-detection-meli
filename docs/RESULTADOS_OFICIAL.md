@@ -7,8 +7,7 @@ La siguiente tabla resume la evolución del rendimiento a través de los hitos p
 | Hito / Arquitectura | Fase Metodológica | Features N1 | PR-AUC Val (OOT) | PR-AUC Test | Δ Test vs Base | Diagnóstico y Rol Metodológico |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
 | **Control Baseline** | Fase 1: Línea Base Productiva | 11 | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
-| **Tri-Modelo Ensamble** | Fase 2: Diversificación Multimodelo | 11 | 0.48887 | 0.44450 | +1.5 bps | Ensamble preliminar (LGBM + XGB + RF). Techo histórico inicial de Val. |
-| **Challenger v3 (Semántico)** | Fase 3: Expansión Semántica NLP | 13 | 0.48571 | 0.44644 | +20.9 bps | SVD ($d=30$), K-Means ($k=50$) y ratio de precio continuo. |
+| **Baseline Comercial (Finetuneado)** | Fase 3: Producción Ligera NLP | 13 | 0.48850 | **0.44700** | **+26.5 bps** | 🚀 **Producción en Tiempo Real:** 1 solo modelo (LightGBM Optuna, 13 vars semánticas). Latencia < 4 ms. |
 | **🏆 Champion Oficial (Protocolo OOT)** | Fase 4: Stacking Filtrado ($C=0.20$) | 14 | **`0.49218`** | **`0.45014`** | **`+57.9 bps`** | **Selección Formal a Priori:** Mayor capacidad OOT (`0.49218`). Deduplica anomalías colineales en Nivel 2. Confirma generalización en Test > 0.45. |
 | **🔬 Variante de Parsimonia (Ablación L1)** | Fase 4: Esparcidad Estricta Nivel 2 | 13 | 0.49101 | **`0.45093`** | **`+65.8 bps`** | **Hallazgo de Ingeniería:** Forzar esparcidad estricta $L_1$ ($C=0.10$) apaga redundancias residuales, sacrificando 11 bps en Val a cambio del pico de transferencia out-of-sample. |
 

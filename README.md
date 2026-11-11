@@ -38,17 +38,15 @@ Las dependencias directas estan fijadas; `requirements.txt` no es un lock comple
 de las dependencias transitivas. Los datos no se incluyen en Git: obtener el
 dataset base oficial del equipo o generar el Parquet desde el CSV original.
 
-## Síntesis Oficial de Modelado y Resultados
+## Síntesis de Soluciones Productivas
 
-A continuación se resume la evolución y el desempeño comparativo de los hitos principales del equipo, evaluados bajo el protocolo cronológico out-of-time (OOT) y confirmados a ciegas en Test:
+A continuación se presentan las 3 soluciones finales del proyecto comparadas frente a la línea base heredada de partida (Control monomodal 11 variables de Ian: PR-AUC Val `0.48136` / Test `0.44435`):
 
-| Hito / Arquitectura | Fase Metodológica | Features N1 | PR-AUC Val (OOT) | PR-AUC Test | Δ Test vs Base | Diagnóstico y Rol Metodológico |
+| Solución / Arquitectura | Tipo de Modelo | Features N1 | PR-AUC Val (OOT) | PR-AUC Test | Δ vs Base Inicial | Caso de Uso de Producción |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Control Baseline** | Fase 1: Línea Base Productiva | 11 | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
-| **Tri-Modelo Ensamble** | Fase 2: Diversificación Multimodelo | 11 | 0.48887 | 0.44450 | +1.5 bps | Ensamble inicial (LGBM + XGB + RF). Techo histórico inicial de Val. |
-| **Challenger v3 (Semántico)** | Fase 3: Expansión Semántica NLP | 13 | 0.48571 | 0.44644 | +20.9 bps | SVD ($d=30$), K-Means ($k=50$) y ratio de precio continuo. |
-| **🏆 Champion Oficial (Protocolo OOT)** | Fase 4: Stacking Filtrado ($C=0.20$) | 14 | **`0.49218`** | **`0.45014`** | **`+57.9 bps`** | **Selección Formal a Priori:** Mayor capacidad OOT (`0.49218`). Deduplica anomalías colineales en Nivel 2. Confirma generalización en Test > 0.45. |
-| **🔬 Variante de Parsimonia (Ablación L1)** | Fase 4: Esparcidad Estricta Nivel 2 | 13 | 0.49101 | **`0.45093`** | **`+65.8 bps`** | **Hallazgo de Ingeniería:** Forzar esparcidad estricta $L_1$ ($C=0.10$) apaga redundancias residuales, sacrificando 11 bps en Val a cambio del pico de transferencia out-of-sample. |
+| **1. Baseline Comercial (Finetuneado)** | Monomodal (LightGBM Optuna) | 13 | 0.48850 | **0.44700** | **+26.5 bps** | 🚀 **Checkout en Tiempo Real (Baja Latencia):** 1 solo modelo, latencia < 4 ms. Captura el desvío semántico de catálogo ($d=30$) sin requerir infraestructura de ensamble. |
+| **2. 🏆 Champion Oficial (Protocolo OOT)** | Cuatri-Modelo Stacking (Lasso $C=0.20$) | 14 | **`0.49218`** | **0.45014** | **+57.9 bps** | 🎯 **Selección Formal a Priori:** Mayor capacidad OOT (`0.49218`). Deduplica anomalías colineales en Nivel 2 y rompe la barrera de 0.45 en Test. |
+| **3. 🔬 Récord de Generalización (Ablación L1)** | Cuatri-Modelo Stacking (Lasso $C=0.10$) | 13 | 0.49101 | **`0.45093`** | **+65.8 bps** | 🥇 **Máxima Transferencia Out-of-Sample:** Forzar esparcidad estricta $L_1$ poda redundancias, sacrificando 11 bps en Val a cambio del pico histórico en Test. |
 
 ## Mapa de Documentación
 
@@ -59,5 +57,28 @@ A continuación se resume la evolución y el desempeño comparativo de los hitos
 * [Metodología de Modelado y Pipelines](docs/MODELADO_IAN.md): Pipeline oficial de entrenamiento, calibración Platt y optimización de hiperparámetros con Optuna.
 * [Diccionario de Variables](docs/DICCIONARIO_VARIABLES.md): Especificación técnica de features raw, transformadas, temporales y semánticas.
 * [Archivo Histórico](docs/archive/README.md): Registro de reportes y pruebas de etapas exploratorias preliminares.
+
+## Arquitectura del Repositorio
+
+El código fuente en `src/` y los experimentos se organizan con responsabilidades desacopladas:
+
+```plaintext
+src/
+├── features/                  # Ingeniería de features transaccionales, temporales y semánticas
+├── models/
+│   ├── train.py               # Pipeline de entrenamiento supervisado y Optuna
+│   ├── supervised.py          # Módulo core: métricas, splits OOT y calibración Platt
+│   ├── prepare_supervised.py  # Preparación y ensamblado de datasets
+│   ├── report_supervised.py   # Generación de reportes y curvas de decisión
+│   ├── anomaly_detection.py   # Entrypoint unificado de anomalías
+│   ├── compare_team.py        # Benchmarking cruzado de integrantes
+│   ├── estimators/            # Estimadores de anomalías serializados (.joblib)
+│   ├── production/            # Generación de features de anomalías en inferencia
+│   ├── evaluation/            # Evaluadores y métricas de soporte
+│   ├── anomaly_experiments/   # Pruebas de laboratorio por familia (IForest, LOF, PCA, OCSVM)
+│   └── archive/               # Ensayos exploratorios archivados (stackings preliminares, SMOTE)
+scripts/                       # Scripts ejecutables reproducibles del champion y ablaciones
+docs/                          # Documentación metodológica canónica y memorias técnicas
+```
 
 Las dependencias de pruebas están en `requirements-dev.txt`.
