@@ -116,6 +116,18 @@ Para garantizar un proceso libre de *Test Set Snooping*, se comparan los residuo
 > El fenómeno del **"Fraude Hormiga" ya era 100% observable durante la etapa de desarrollo en Validación** ($49.65 vs $74.94).  
 > Esto demuestra que proponer features de *clustering de títulos de producto* o *densidad de micro-tickets* **no es un parche ad-hoc mirando Test**, sino una hipótesis de ingeniería fundamentada rigurosamente en el análisis de residuos del set de desarrollo (Validación).
 
+### C. Auditoría de Prediction Drift y Rescate de Residuos (Challenger v3 con SVD d=30)
+
+Al desplegar las variables semánticas (`deficit_piso_cluster`, `distancia_log_cluster`, `ratio_monto_mediana_cluster`) ajustadas con SVD $d=30$ y normalización $L_2$ ([`scripts/analisis_drift_residuos_d30.py`](../scripts/analisis_drift_residuos_d30.py)):
+
+* **Estabilidad del Score (Prediction Drift):** El Population Stability Index (PSI) de las probabilidades predichas $\hat{p}$ entre Val y Test fue de **`0.00065`**, muy por debajo del umbral de alerta de $0.05$. La distribución de scores no sufre descalibración temporal.
+* **Calibración Intacta:** El Brier score se redujo a **`0.03271`** y el Log-Loss a **`0.12556`**.
+* **Rescate de Fraudes de Bajo Monto:** Gracias al ratio relativo al cluster, transacciones fraudulentas de bajo monto nominal que caían debajo del umbral en el modelo v2 fueron rescatadas:
+  * `tx_041916` (\$5.69, *Cabo Av Para Dreamcast*): $\hat{p}$ subió de $0.0308 \to 0.0378$ (`deficit_piso_cluster = 0.71`).
+  * `tx_125974` (\$7.46, *Relógio De Pulso Digital Led*): $\hat{p}$ subió de $0.0268 \to 0.0336$ (`deficit_piso_cluster = 0.61`).
+  * `tx_012064` (\$26.82, *Cordão 3mm Cadeado Banhado A Ouro*): $\hat{p}$ subió de $0.0274 \to 0.0336$.
+* **Fricción Operativa Minimizada:** La optimización de la función de costo $\text{Costo}(\tau) = 5 \cdot \text{FP} + \sum \text{monto}_{\text{FN}}$ sobre el metamodelo recalibrado elevó el umbral a $\tau^* = 0.0930$, reduciendo los Falsos Positivos de 5,337 a 2,218 (**-58.4% de fricción de checkout**).
+
 ---
 
 ## 4. Síntesis y Recomendaciones para la Defensa

@@ -38,21 +38,25 @@ Las dependencias directas estan fijadas; `requirements.txt` no es un lock comple
 de las dependencias transitivas. Los datos no se incluyen en Git: obtener el
 dataset base oficial del equipo o generar el Parquet desde el CSV original.
 
-## Modelado supervisado (integrante 3)
+## Síntesis Oficial de Modelado y Resultados
 
-El pipeline de Ian está en `src/models/train.py`. Incluye regresión logística,
-LightGBM con Optuna (TPE + pruning y CMA-ES), calibración Platt, ensamble y costos
-de la consigna (FP=5, FN=200), con umbral elegido en validación.
-Consultar [metodología y comandos](docs/MODELADO_IAN.md) y los
-[resultados oficiales](docs/RESULTADOS_OFICIAL.md) (features de Tomás + scores de Franco).
-La primera corrida está en [RESULTADOS_IAN.md](docs/RESULTADOS_IAN.md) y la comparación
-exploratoria del equipo en [COMPARACION_EQUIPO.md](docs/COMPARACION_EQUIPO.md).
-Los modelos y datos generados quedan locales, ignorados por Git.
+A continuación se resume la evolución y el desempeño comparativo de los hitos principales del equipo, evaluados bajo el protocolo cronológico out-of-time (OOT) y confirmados a ciegas en Test:
 
-## Diagnóstico de Drift, Residuos y Modelo Challenger v3
+| Hito / Arquitectura | Autor / Fase | Features | PR-AUC Val (OOT) | PR-AUC Test | Δ vs Base | Diagnóstico Metodológico |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Control Baseline (Ian)** | Ian | 11 | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
+| **Tri-Modelo Campeón Previo** | Franco | 11 | 0.48887 | 0.44450 | +1 bp | Ensamble preliminar (LGBM + XGB + RF). Techo histórico inicial de Val. |
+| **Challenger v3 (Semántico)** | Tomás | 14 | 0.48725 | 0.44661 | +23 bps | Incorporación de SVD ($d=30$), K-Means ($k=50$) y ratio de precio continuo. Rompe la barrera monomodal. |
+| **Cuatri-Modelo Stacking Oficial** | Equipo Consolidado | 14 (Nivel 1) / Desacoplado | **`0.49212`** | **`0.44920`** | **`+48.5 bps`** | 🏆 **Champion Oficial:** Stacking (LGBM + XGB + CatBoost + RF) con metamodelo Lasso ($L_1, C=0.30$). Récord en Validación y máxima ganancia generalizada. |
 
-- [Auditoría Metodológica de Drift y Anatomía del Error (Val vs Test)](docs/DIAGNOSTICO_DRIFT.md): análisis de covariate shift (PSI, $D_{KS}$), intervalos bootstrap al 95%, desfasaje de días de la semana (corte del lunes 13/04 y ausencia de miércoles) y métrica de Capital Recovery Rate (90.4%).
-- [Modelo Challenger v3 — Hipótesis, Forward Selection y Negocio](docs/MODELO_CHALLENGER_V3.md): informe unificado que consolida la hipótesis de clustering semántico en títulos `i`, la traza paso a paso del Forward Stepwise Selection formal (`colsample=1.0`, `min_delta=0.0003`, `patience=2`), la optimización de $k=50$ clusters y la evaluación final en Test elevando el PR-AUC a 0.4642 en Validación y 0.4386 en Test (+61 bps).
-- [Stacking Cuatri-Modelo y Récord Absoluto de PR-AUC](docs/EXPERIMENTO_CUATRI_MODELO_STACKING.md): ensamble de Nivel 1 con LightGBM, XGBoost, CatBoost y Random Forest sobre las 13 variables limpias de Challenger v3, combinado con Metamodelo Lasso L1 de Nivel 2 (probabilidades OOF + 11 anomalías no supervisadas + reglas heurísticas). Alcanza **0.4912 en Validación** y **0.4506 en Test**, quebrando por primera vez la barrera de 0.4500 fuera de muestra.
+## Mapa de Documentación
+
+* [Resultados Oficiales y Contrato C](docs/RESULTADOS_OFICIAL.md): Registro consolidado de corridas oficiales, hiperparámetros de búsqueda y métricas financieras de política.
+* [Cuatri-Modelo Stacking y Selección en Nivel 2](docs/EXPERIMENTO_CUATRI_MODELO_STACKING.md): Ensamble de 4 familias de inductores (LightGBM, XGBoost, CatBoost, Random Forest), forward selection de variables semánticas, desacople arquitectónico Nivel 1 vs Nivel 2 y grid search fino.
+* [Modelo Challenger v3 y Clustering Semántico](docs/MODELO_CHALLENGER_V3.md): Diseño de features a partir de títulos `i` mediante TF-IDF, SVD y K-Means, y estudio de ablación.
+* [Diagnóstico de Drift y Anatomía de Residuos](docs/DIAGNOSTICO_DRIFT.md): Análisis de Covariate Shift, Prediction Drift (PSI = 0.00065) y reducción de Falsos Positivos (-58.4%).
+* [Metodología de Modelado y Pipelines](docs/MODELADO_IAN.md): Pipeline oficial de entrenamiento, calibración Platt y optimización de hiperparámetros con Optuna.
+* [Diccionario de Variables](docs/DICCIONARIO_VARIABLES.md): Especificación técnica de features raw, transformadas, temporales y semánticas.
+* [Archivo Histórico](docs/archive/README.md): Registro de reportes y pruebas de etapas exploratorias preliminares.
 
 Las dependencias de pruebas están en `requirements-dev.txt`.
