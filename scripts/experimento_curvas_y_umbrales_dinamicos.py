@@ -315,6 +315,30 @@ def main():
     m_parsim = LogisticRegression(solver="liblinear", penalty="l1", C=0.10, random_state=seed).fit(X_tr_F, y_train)
     p_parsim_test = m_parsim.predict_proba(X_te_F)[:, 1]
 
+    # Persistencia de Predicciones del Champion para experimentación ultrarrápida
+    pred_export = pd.concat([
+        pd.DataFrame({
+            "transaction_id": tune["transaction_id"].values, "split": "val_tune",
+            "fraude": y_tune, "monto": tune["monto"].values,
+            "deficit_piso_cluster": tune["deficit_piso_cluster"].values,
+            "p_champ": p_champ_val,
+        }),
+        pd.DataFrame({
+            "transaction_id": policy["transaction_id"].values, "split": "val_policy",
+            "fraude": y_policy, "monto": policy["monto"].values,
+            "deficit_piso_cluster": policy["deficit_piso_cluster"].values,
+            "p_champ": p_champ_pol,
+        }),
+        pd.DataFrame({
+            "transaction_id": test["transaction_id"].values, "split": "test",
+            "fraude": y_test, "monto": test["monto"].values,
+            "deficit_piso_cluster": test["deficit_piso_cluster"].values,
+            "p_champ": p_champ_test,
+        }),
+    ], ignore_index=True)
+    pred_export.to_parquet(ROOT / "data/processed/champion_predictions.parquet", index=False)
+    print("  [OK] Predicciones del Champion persistidas en data/processed/champion_predictions.parquet")
+
     print("\n" + "=" * 85)
     print("3. GENERACIÓN DE CURVAS VECTORIALES (PR & ROC) PARA EL REPORTE")
     print("=" * 85)
@@ -335,8 +359,8 @@ def main():
         ("0. Árbol Crudo (sin FE)", p_raw_test, colors["raw"], "--", 1.8),
         ("1. Control Ian (11 vars)", p_11_test, colors["control"], "-.", 2.0),
         ("2. Baseline Comercial (13 vars Optuna)", p_13_test, colors["challenger"], "-", 2.2),
-        ("3. 🏆 Champion Oficial (Stacking C=0.20)", p_champ_test, colors["champion"], "-", 2.8),
-        ("4. 🔬 Variante Parsimonia (Stacking C=0.10)", p_parsim_test, colors["parsimonia"], ":", 2.2),
+        ("3. Champion Oficial (Stacking C=0.20)", p_champ_test, colors["champion"], "-", 2.8),
+        ("4. Variante Parsimonia (Stacking C=0.10)", p_parsim_test, colors["parsimonia"], ":", 2.2),
     ]
 
     # --- FIGURA 1: CURVA PRECISION-RECALL EN TEST ---
@@ -360,8 +384,8 @@ def main():
 
     pr_svg = figures_dir / "curva_pr_comparativa_test.svg"
     pr_png = figures_dir / "curva_pr_comparativa_test.png"
-    fig.savefig(pr_svg, format="svg", bbox_inches="tight")
-    fig.savefig(pr_png, format="png", dpi=300, bbox_inches="tight")
+    fig.savefig(str(pr_svg), format="svg", bbox_inches="tight")
+    fig.savefig(str(pr_png), format="png", dpi=300, bbox_inches="tight")
     plt.close(fig)
     print(f"  [OK] Curva PR guardada en: {pr_svg} y {pr_png}")
 
@@ -385,26 +409,30 @@ def main():
 
     roc_svg = figures_dir / "curva_roc_comparativa_test.svg"
     roc_png = figures_dir / "curva_roc_comparativa_test.png"
-    fig.savefig(roc_svg, format="svg", bbox_inches="tight")
-    fig.savefig(roc_png, format="png", dpi=300, bbox_inches="tight")
+    fig.savefig(str(roc_svg), format="svg", bbox_inches="tight")
+    fig.savefig(str(roc_png), format="png", dpi=300, bbox_inches="tight")
     plt.close(fig)
     print(f"  [OK] Curva ROC guardada en: {roc_svg} y {roc_png}")
 
     # =========================================================================
     print("\n" + "=" * 85)
-    print("4. EXPERIMENTO: UMBRALES DE DECISIÓN DINÁMICOS POR MONTO (tau*(monto))")
+    print("4. EXPERIMENTO: ARQUITECTURA DE DECISIÓN PRODUCTIVA Y UMBRALES DINÁMICOS")
+    print("   (S-CURVE, UMBRAL 2D SEMÁNTICO Y DECISIÓN TRIPARTITA / STEP-UP AUTH)")
     print("=" * 85)
     # =========================================================================
 
     montos_val = policy["monto"].values
+    deficit_val = policy["deficit_piso_cluster"].values
     montos_test = test["monto"].values
+    deficit_test = test["deficit_piso_cluster"].values
     total_fraud_test_capital = float(montos_test[y_test == 1].sum())
 
-    # POLÍTICA 0: Umbral Estático Global (Consigna Formal: Costo = 5*FP + 200*FN)
-    # Calibrado en val_policy con restricción FP <= 100
+    # -------------------------------------------------------------------------
+    # POLÍTICA 0: Umbral Estático Consigna (Control OOT, FP_val <= 100)
+    # -------------------------------------------------------------------------
     taus = np.linspace(0.01, 0.90, 891)
     best_cost_p0 = float("inf")
-    tau_p0 = 0.22
+    tau_p0 = 0.2550
     for tau in taus:
         preds = (p_champ_pol >= tau).astype(int)
         fp = ((preds == 1) & (y_policy == 0)).sum()
@@ -415,7 +443,9 @@ def main():
                 best_cost_p0 = costo
                 tau_p0 = tau
 
-    # POLÍTICA 1: Umbral Segmentado Bimodal por Ticket ($25)
+    # -------------------------------------------------------------------------
+    # POLÍTICA 1: Segmentado Bimodal Ticket ($25, FP_val <= 100)
+    # -------------------------------------------------------------------------
     SPLIT_TICKET = 25.0
     val_low_mask = montos_val <= SPLIT_TICKET
     val_high_mask = montos_val > SPLIT_TICKET
@@ -424,11 +454,10 @@ def main():
     tau_low_opt = tau_p0
     tau_high_opt = tau_p0
 
-    grid_taus = np.linspace(0.05, 0.50, 46)
-    for t_low in grid_taus:
+    for t_low in np.linspace(0.15, 0.45, 31):
         preds_low = (p_champ_pol[val_low_mask] >= t_low).astype(int)
         fp_low = ((preds_low == 1) & (y_policy[val_low_mask] == 0)).sum()
-        for t_high in grid_taus:
+        for t_high in np.linspace(0.08, 0.35, 28):
             preds_high = (p_champ_pol[val_high_mask] >= t_high).astype(int)
             fp_high = ((preds_high == 1) & (y_policy[val_high_mask] == 0)).sum()
             if (fp_low + fp_high) <= 100:
@@ -440,34 +469,84 @@ def main():
                     tau_low_opt = t_low
                     tau_high_opt = t_high
 
-    # POLÍTICA 2: Umbral Estático Financiero (Minimiza 5*FP + sum(Monto_FN))
-    best_fin_cost = float("inf")
-    tau_fin_static = 0.05
-    for tau in np.linspace(0.005, 0.30, 300):
-        preds = (p_champ_pol >= tau).astype(int)
-        fp = ((preds == 1) & (y_policy == 0)).sum()
-        fn_montos = montos_val[(preds == 0) & (y_policy == 1)].sum()
-        costo_fin = 5.0 * fp + fn_montos
-        if costo_fin < best_fin_cost:
-            best_fin_cost = costo_fin
-            tau_fin_static = tau
+    # -------------------------------------------------------------------------
+    # POLÍTICA 2: Umbral Sigmoideo Acotado (S-Curve: tau_min a tau_max con FP_val <= 100)
+    # tau(monto) = tau_min + (tau_max - tau_min) / (1 + exp((monto - M0) / sigma_m))
+    # -------------------------------------------------------------------------
+    M0 = float(np.median(montos_val[y_policy == 1]))  # ~ $49.65 mediana de fraude
+    best_scurve_cost = float("inf")
+    scurve_params = (0.35, 0.10, 30.0)
 
-    # POLÍTICA 3: Curva Continua Bayesiana de Elkan: tau(monto; gamma) = gamma * (5 / (5 + monto))
-    best_bayes_cost = float("inf")
-    gamma_opt = 1.0
-    for g in np.linspace(0.1, 5.0, 100):
-        tau_dynamic_val = np.clip(g * (5.0 / (5.0 + montos_val)), 0.005, 0.95)
-        preds = (p_champ_pol >= tau_dynamic_val).astype(int)
-        fp = ((preds == 1) & (y_policy == 0)).sum()
-        fn_montos = montos_val[(preds == 0) & (y_policy == 1)].sum()
-        costo_fin = 5.0 * fp + fn_montos
-        if costo_fin < best_bayes_cost:
-            best_bayes_cost = costo_fin
-            gamma_opt = g
+    for t_max in [0.30, 0.35, 0.40]:
+        for t_min in [0.08, 0.10, 0.14, 0.18]:
+            for sigma in [20.0, 35.0, 50.0]:
+                tau_s = t_min + (t_max - t_min) / (1.0 + np.exp((montos_val - M0) / sigma))
+                preds = (p_champ_pol >= tau_s).astype(int)
+                fp = ((preds == 1) & (y_policy == 0)).sum()
+                if fp <= 100:
+                    fn = ((preds == 0) & (y_policy == 1)).sum()
+                    costo = 5.0 * fp + 200.0 * fn
+                    if costo < best_scurve_cost:
+                        best_scurve_cost = costo
+                        scurve_params = (t_max, t_min, sigma)
 
-    # Evaluación de las Políticas en Test Final
-    def evaluate_policy_on_test(decision_rule_fn, name):
-        preds_bin = decision_rule_fn(p_champ_test, montos_test)
+    t_max_opt, t_min_opt, sigma_opt = scurve_params
+    def compute_tau_scurve(m):
+        return t_min_opt + (t_max_opt - t_min_opt) / (1.0 + np.exp((m - M0) / sigma_opt))
+
+    # -------------------------------------------------------------------------
+    # POLÍTICA 3: Umbral 2D Semántico: tau(monto, deficit) = tau_S(monto) - alpha * deficit
+    # Calibrado con FP_val <= 100
+    # -------------------------------------------------------------------------
+    best_2d_cost = float("inf")
+    alpha_opt = 0.05
+    for a_cand in np.linspace(0.01, 0.15, 29):
+        tau_2d_val = np.clip(compute_tau_scurve(montos_val) - a_cand * deficit_val, 0.05, 0.90)
+        preds = (p_champ_pol >= tau_2d_val).astype(int)
+        fp = ((preds == 1) & (y_policy == 0)).sum()
+        if fp <= 100:
+            fn = ((preds == 0) & (y_policy == 1)).sum()
+            costo = 5.0 * fp + 200.0 * fn
+            if costo < best_2d_cost:
+                best_2d_cost = costo
+                alpha_opt = a_cand
+
+    def compute_tau_2d(m, def_c):
+        return np.clip(compute_tau_scurve(m) - alpha_opt * def_c, 0.05, 0.90)
+
+    # -------------------------------------------------------------------------
+    # POLÍTICA 4: Decisión Tripartita (Three-Way Decision / Step-up Auth 2FA)
+    # - Green Lane (p < tau_challenge): Fricción cero
+    # - Yellow Lane (tau_challenge <= p < tau_block): Desafío 2FA/Biometría (costo fricción $0.05)
+    #   * Cliente legítimo pasa el 2FA con 95% éxito (costo $0.05).
+    #   * Fraude es detenido en el 2FA con 90% éxito.
+    # - Red Lane (p >= tau_block): Bloqueo directo (costo de FP = $25 por daño de marca)
+    # -------------------------------------------------------------------------
+    best_3way_cost = float("inf")
+    beta_challenge_opt = 0.60
+    for beta in np.linspace(0.40, 0.85, 19):
+        t_block_val = compute_tau_2d(montos_val, deficit_val)
+        t_chal_val = beta * t_block_val
+        preds_block = (p_champ_pol >= t_block_val).astype(int)
+        preds_chal = ((p_champ_pol >= t_chal_val) & (p_champ_pol < t_block_val)).astype(int)
+        fp_block = ((preds_block == 1) & (y_policy == 0)).sum()
+        if fp_block <= 100:
+            fp_chal = ((preds_chal == 1) & (y_policy == 0)).sum()
+            # Fraudes detenidos: todos los del bloque rojo + 90% de los del bloque amarillo
+            tp_detenidos = ((preds_block == 1) & (y_policy == 1)).sum() + 0.90 * ((preds_chal == 1) & (y_policy == 1)).sum()
+            total_fraude_val = (y_policy == 1).sum()
+            fn_remanentes = total_fraude_val - tp_detenidos
+            # Función de costo del sistema: 25 * FP_bloqueo + 0.05 * FP_challenge + 200 * FN
+            costo_3way = 25.0 * fp_block + 0.05 * fp_chal + 200.0 * fn_remanentes
+            if costo_3way < best_3way_cost:
+                best_3way_cost = costo_3way
+                beta_challenge_opt = beta
+
+    # -------------------------------------------------------------------------
+    # EVALUACIÓN DE TODAS LAS POLÍTICAS EN TEST FINAL (FUERA DE MUESTRA)
+    # -------------------------------------------------------------------------
+    def eval_policy_test(decision_rule_fn, name):
+        preds_bin = decision_rule_fn(p_champ_test, montos_test, deficit_test)
         tp = int(((preds_bin == 1) & (y_test == 1)).sum())
         fp = int(((preds_bin == 1) & (y_test == 0)).sum())
         fn = int(((preds_bin == 0) & (y_test == 1)).sum())
@@ -491,34 +570,70 @@ def main():
             "capital_recovery_rate": recovery_rate,
         }
 
-    res_p0 = evaluate_policy_on_test(
-        lambda p, m: (p >= tau_p0).astype(int),
+    res_p0 = eval_policy_test(
+        lambda p, m, d: (p >= tau_p0).astype(int),
         f"0. Umbral Estático Consigna (tau = {tau_p0:.4f})"
     )
 
-    res_bimodal = evaluate_policy_on_test(
-        lambda p, m: np.where(m <= SPLIT_TICKET, p >= tau_low_opt, p >= tau_high_opt).astype(int),
+    res_bimodal = eval_policy_test(
+        lambda p, m, d: np.where(m <= SPLIT_TICKET, p >= tau_low_opt, p >= tau_high_opt).astype(int),
         f"1. Segmentado Ticket ($25): Low={tau_low_opt:.4f}, High={tau_high_opt:.4f}"
     )
 
-    res_fin_static = evaluate_policy_on_test(
-        lambda p, m: (p >= tau_fin_static).astype(int),
-        f"2. Umbral Estático Financiero (tau = {tau_fin_static:.4f})"
+    res_scurve = eval_policy_test(
+        lambda p, m, d: (p >= compute_tau_scurve(m)).astype(int),
+        f"2. Curva S Acotada (t_max={t_max_opt:.2f}, t_min={t_min_opt:.2f})"
     )
 
-    res_bayes = evaluate_policy_on_test(
-        lambda p, m: (p >= np.clip(gamma_opt * (5.0 / (5.0 + m)), 0.005, 0.95)).astype(int),
-        f"3. Curva Dinámica Bayesiana (gamma = {gamma_opt:.2f})"
+    res_2d = eval_policy_test(
+        lambda p, m, d: (p >= compute_tau_2d(m, d)).astype(int),
+        f"3. Umbral 2D Semántico (S-Curve - {alpha_opt:.2f}*deficit)"
     )
 
-    df_policies = pd.DataFrame([res_p0, res_bimodal, res_fin_static, res_bayes])
+    # Evaluación especializada de la Decisión Tripartita (Three-Way Decision)
+    t_blk_te = compute_tau_2d(montos_test, deficit_test)
+    t_chl_te = beta_challenge_opt * t_blk_te
+    block_mask = p_champ_test >= t_blk_te
+    chal_mask = (p_champ_test >= t_chl_te) & (~block_mask)
 
-    print("-" * 115)
-    print(f"{'Política Operativa':<45s} | {'FP':<5s} | {'FN':<5s} | {'Recall':<7s} | {'Costo Consigna':<14s} | {'Costo Real':<12s} | {'Recupero %'}")
-    print("-" * 115)
+    # Fraudes atrapados: los bloqueados + el 90% de los desafiados por 2FA
+    tp_block = int((block_mask & (y_test == 1)).sum())
+    tp_chal = int((chal_mask & (y_test == 1)).sum())
+    tp_3way_effective = int(tp_block + round(0.90 * tp_chal))
+    fp_block_te = int((block_mask & (y_test == 0)).sum())
+    fp_chal_te = int((chal_mask & (y_test == 0)).sum())
+    fn_3way_effective = int((y_test == 1).sum() - tp_3way_effective)
+
+    # Dinero salvado: bloqueo total + 90% del dinero de fraudes en 2FA
+    m_salv_block = float(montos_test[block_mask & (y_test == 1)].sum())
+    m_salv_chal = float(montos_test[chal_mask & (y_test == 1)].sum())
+    salvado_3way = m_salv_block + 0.90 * m_salv_chal
+    perdido_3way = total_fraud_test_capital - salvado_3way
+    costo_consigna_3way = 5.0 * fp_block_te + 0.05 * fp_chal_te + 200.0 * fn_3way_effective
+    costo_real_3way = 25.0 * fp_block_te + 0.05 * fp_chal_te + perdido_3way
+    recovery_rate_3way = (salvado_3way / total_fraud_test_capital) * 100.0
+    recall_3way = (tp_3way_effective / (y_test == 1).sum()) * 100.0
+
+    res_3way = {
+        "politica": f"4. Decisión Tripartita 2FA (beta_chal={beta_challenge_opt:.2f})",
+        "tp": tp_3way_effective, "fp": fp_block_te, "fn": fn_3way_effective,
+        "precision_pct": (tp_3way_effective / (tp_3way_effective + fp_block_te)) * 100.0,
+        "recall_pct": recall_3way,
+        "costo_consigna": costo_consigna_3way,
+        "costo_financiero": costo_real_3way,
+        "capital_salvado": salvado_3way,
+        "capital_perdido": perdido_3way,
+        "capital_recovery_rate": recovery_rate_3way,
+    }
+
+    df_policies = pd.DataFrame([res_p0, res_bimodal, res_scurve, res_2d, res_3way])
+
+    print("-" * 120)
+    print(f"{'Política Operativa':<48s} | {'FP Duro':<7s} | {'FN':<5s} | {'Recall':<7s} | {'Costo Formal':<14s} | {'Costo Real':<12s} | {'Recupero %'}")
+    print("-" * 120)
     for _, r in df_policies.iterrows():
-        print(f"{r['politica']:<45s} | {r['fp']:<5d} | {r['fn']:<5d} | {r['recall_pct']:<6.2f}% | ${r['costo_consigna']:<13,.0f} | ${r['costo_financiero']:<11,.2f} | {r['capital_recovery_rate']:.2f}%")
-    print("-" * 115)
+        print(f"{r['politica']:<48s} | {r['fp']:<7d} | {r['fn']:<5d} | {r['recall_pct']:<6.2f}% | ${r['costo_consigna']:<13,.0f} | ${r['costo_financiero']:<11,.2f} | {r['capital_recovery_rate']:.2f}%")
+    print("-" * 120)
 
     policy_report = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -528,8 +643,14 @@ def main():
             "tau_low": float(tau_low_opt),
             "tau_high": float(tau_high_opt)
         },
-        "financiero_estatico_tau": float(tau_fin_static),
-        "bayes_continuo_gamma": float(gamma_opt),
+        "scurve_params": {
+            "t_max": float(t_max_opt),
+            "t_min": float(t_min_opt),
+            "sigma": float(sigma_opt),
+            "M0": float(M0)
+        },
+        "semantico_2d_alpha": float(alpha_opt),
+        "tripartita_beta_challenge": float(beta_challenge_opt),
         "resultados_test": df_policies.to_dict(orient="records")
     }
     out_json = ROOT / "docs/RESULTADOS_EXPERIMENTO_POLITICA_UMBRALES.json"

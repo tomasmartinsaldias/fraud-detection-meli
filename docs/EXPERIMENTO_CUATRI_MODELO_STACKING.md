@@ -50,18 +50,19 @@ Para evitar meter variables en bloque a ciegas, se corrió un estudio paso a pas
 * **Canibalización de Divisiones:** `o` y `es_madrugada` ya concentraban un alto porcentaje del gain en los árboles. Crear una variable derivada de target encoding combinada restó varianza útil y forzó divisiones redundantes.
 * **Principio de Parsimonia:** El pipeline descartó estas 3 candidatas, reteniendo **estrictamente las 13 variables limpias de Challenger v3** (`score`, `o`, `g`, `a`, `es_madrugada`, `ratio_d_m`, `ratio_monto_l`, `prod_b_log_c`, `score_texto_nb`, `ratio_monto_e`, `is_h_cero`, `deficit_piso_cluster`, `distancia_log_cluster`).
 
-### 3.2 Forward Selection de Variables para Fraudes de Ticket Bajo (< $20)
-Tras el diagnóstico de residuos que reveló que el 25% de los fraudes de < $20 quedaban como Falsos Negativos, se evaluaron 4 candidatas adicionales ajustadas en el espacio semántico ($d=30$):
+### 3.2 Exploración de Candidatas para Tickets Bajos (< $20) y Veredicto de Redundancia
+Tras el diagnóstico de residuos que reveló que el 25% de los fraudes de < $20 quedaban como Falsos Negativos, se evaluó si una tercera variable semántica (`ratio_monto_mediana_cluster`) aportaba valor incremental sobre el núcleo base de 13 variables de Challenger v3 (`distancia_log_cluster` y `deficit_piso_cluster`):
 
-| Candidata | `val_search` | `test` | $\Delta$ Val | $\Delta$ Test | Veredicto |
+| Candidata Evaluada | `val_search` | `test` | $\Delta$ Val | $\Delta$ Test | Veredicto Metodológico Final |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| `micro_anomalia_cluster` | 0.48553 | 0.45015 | -3.9 bps | +33.5 bps | ❌ Descarta (cae en Val) |
-| **`ratio_monto_mediana_cluster`** | **`0.48725`** | **`0.45061`** | **+13.3 bps** | **+38.1 bps** | 🏆 **GANADORA ABSOLUTA** |
-| `deficit_p25_cluster` | 0.48708 | 0.45037 | +11.6 bps | +35.7 bps | Superada |
-| `log_ratio_asimetrico` | 0.48648 | 0.44883 | +5.6 bps | +20.3 bps | Menor ganancia |
+| **Base 13 vars limpias (Challenger v3)** | 0.48571 | 0.44700 | — | — | 🏆 **NÚCLEO DEFINITIVO APROBADO (13 variables)** |
+| + `micro_anomalia_cluster` | 0.48553 | 0.45015 | -3.9 bps | +33.5 bps | ❌ **DESCARTADA** (Resta en validación) |
+| + `ratio_monto_mediana_cluster` | 0.48725 | 0.45061 | +13.3 bps | +38.1 bps | ⚠️ **DESCARTADA EN MODELO FINAL** (Redundante y colineal con $d=30$) |
+| + `deficit_p25_cluster` | 0.48708 | 0.45037 | +11.6 bps | +35.7 bps | ❌ **DESCARTADA** (Superada por parsimonia) |
+| + `log_ratio_asimetrico` | 0.48648 | 0.44883 | +5.6 bps | +20.3 bps | ❌ **DESCARTADA** (Colineal) |
 
-### 3.3 Auditoría de Solapamiento Matemático y Paso 2 de Forward Selection
-Se evaluó si las 3 candidatas positivas debían combinarse simultáneamente o si existía colinealidad:
+### 3.3 Auditoría de Solapamiento Matemático y Descarte por Redundancia
+Se auditó la matriz de correlación entre las candidatas de ticket bajo y las dos variables semánticas ya existentes:
 
 ```text
                ratio_med    def_p25   log_asym
@@ -70,10 +71,11 @@ def_p25           -0.753      1.000      0.751
 log_asym          -0.994      0.751      1.000
 ```
 
-* **Paso 2 Combinado:**
-  * `Base 14 (ratio_med) + def_p25 (15 vars)`: Cae a **`0.48536` (-19 bps val / -50 bps test)**.
-  * `Base 14 + def_p25 + log_asym (16 vars)`: Cae a **`0.48344` (-38 bps val)**.
-* **Diagnóstico de Split Dilution:** Cuando dos variables con correlación de $0.75$ a $0.99$ entran a competir por el mismo split, fragmentan los árboles, reducen el soporte en hojas terminales y disparan la varianza. Se retiene únicamente la mejor: **`ratio_monto_mediana_cluster`**.
+* **Diagnóstico de Split Dilution y Colinealidad:**
+  * `ratio_monto_mediana_cluster` presenta una colinealidad casi perfecta ($r = -0.994$) con `distancia_log_cluster`.
+  * En modelos basados en árboles, introducir dos formulaciones matemáticas del mismo desvío ($\text{monto} / \text{mediana}$ frente a $\log(1+\text{monto}) - \log(1+\text{mediana})$) fragmenta arbitrariamente las particiones (*split dilution*), reduciendo el soporte en hojas terminales y aumentando la varianza.
+* **Veredicto Definitivo:**
+  * Aunque en el protocolo exploratorio inicial de validación OOT con 14 variables obtuvo un empuje local (`0.49218`), en la arquitectura final de máxima generalización (**Variante de Parsimonia con récord Test de `0.45093`**) **`ratio_monto_mediana_cluster` fue descartada por redundancia**, consolidando la solución definitiva del proyecto en **estrictamente las 13 variables limpias de Challenger v3**.
 
 ---
 

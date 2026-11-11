@@ -1,13 +1,19 @@
 {
-  "timestamp": "2026-11-11T18:46:13Z",
+  "timestamp": "2026-11-11T19:10:09Z",
   "tau_estatico_consigna": 0.255,
   "bimodal_params": {
     "corte_ticket": 25.0,
-    "tau_low": 0.33,
-    "tau_high": 0.22000000000000003
+    "tau_low": 0.33000000000000007,
+    "tau_high": 0.21999999999999997
   },
-  "financiero_estatico_tau": 0.18061872909698995,
-  "bayes_continuo_gamma": 1.6343434343434347,
+  "scurve_params": {
+    "t_max": 0.4,
+    "t_min": 0.18,
+    "sigma": 35.0,
+    "M0": 23.02
+  },
+  "semantico_2d_alpha": 0.024999999999999998,
+  "tripartita_beta_challenge": 0.4,
   "resultados_test": [
     {
       "politica": "0. Umbral Est\u00e1tico Consigna (tau = 0.2550)",
@@ -36,30 +42,43 @@
       "capital_recovery_rate": 59.256828384461855
     },
     {
-      "politica": "2. Umbral Est\u00e1tico Financiero (tau = 0.1806)",
-      "tp": 534,
-      "fp": 823,
-      "fn": 502,
-      "precision_pct": 39.3515106853353,
-      "recall_pct": 51.54440154440154,
-      "costo_consigna": 104515.0,
-      "costo_financiero": 31098.77,
-      "capital_salvado": 52396.28,
-      "capital_perdido": 26983.77,
-      "capital_recovery_rate": 66.00686192563498
+      "politica": "2. Curva S Acotada (t_max=0.40, t_min=0.18)",
+      "tp": 458,
+      "fp": 496,
+      "fn": 578,
+      "precision_pct": 48.0083857442348,
+      "recall_pct": 44.20849420849421,
+      "costo_consigna": 118080.0,
+      "costo_financiero": 30984.859999999993,
+      "capital_salvado": 50875.19,
+      "capital_perdido": 28504.859999999993,
+      "capital_recovery_rate": 64.09064998069415
     },
     {
-      "politica": "3. Curva Din\u00e1mica Bayesiana (gamma = 1.63)",
-      "tp": 490,
-      "fp": 1086,
-      "fn": 546,
-      "precision_pct": 31.091370558375637,
-      "recall_pct": 47.2972972972973,
-      "costo_consigna": 114630.0,
-      "costo_financiero": 18318.01,
-      "capital_salvado": 66492.04000000001,
-      "capital_perdido": 12888.009999999998,
-      "capital_recovery_rate": 83.7641699646196
+      "politica": "3. Umbral 2D Sem\u00e1ntico (S-Curve - 0.02*deficit)",
+      "tp": 463,
+      "fp": 504,
+      "fn": 573,
+      "precision_pct": 47.88004136504654,
+      "recall_pct": 44.69111969111969,
+      "costo_consigna": 117120.0,
+      "costo_financiero": 30991.06,
+      "capital_salvado": 50908.99,
+      "capital_perdido": 28471.06,
+      "capital_recovery_rate": 64.13322994883475
+    },
+    {
+      "politica": "4. Decisi\u00f3n Tripartita 2FA (beta_chal=0.40)",
+      "tp": 647,
+      "fp": 504,
+      "fn": 389,
+      "precision_pct": 56.21198957428323,
+      "recall_pct": 62.45173745173746,
+      "costo_consigna": 80385.1,
+      "costo_financiero": 28646.61699999999,
+      "capital_salvado": 63398.532999999996,
+      "capital_perdido": 15981.516999999993,
+      "capital_recovery_rate": 79.86708625152038
     }
   ]
 }

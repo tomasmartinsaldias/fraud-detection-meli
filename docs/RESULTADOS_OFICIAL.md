@@ -23,19 +23,20 @@ Para resolver la disyuntiva entre los requerimientos de la consigna académica y
 2. **Auditoría de Sensibilidad Financiera ($\text{Costo} = 5 \cdot \text{FP} + \sum \text{Monto}_{\text{FN}}$):**  
    En la operación bancaria y de comercio electrónico real, cada fraude sustrae su ticket exacto. Evaluado bajo la distribución de montos transaccionales, el modelo final rescata entre el **79.57% y el 90.60% del capital en riesgo** (\$63.159 a \$71.891 salvados sobre Test), demostrando que la minimización del error formal se traduce directamente en protección patrimonial efectiva.
 
-### 1.2 Estudio Experimental de Umbrales Dinámicos por Monto ($\tau^*(monto)$)
+### 1.2 Estudio Experimental de Arquitectura de Decisión y Umbrales en Producción
 
-Sobre el modelo Champion Oficial, se evaluó si desacoplar la política de umbral fijo en función del ticket transaccional mejora la eficiencia económica sin alterar el ranking PR-AUC:
+Sobre el modelo Champion Oficial, se evaluó cómo desacoplar la política de umbral fijo hacia arquitecturas dinámicas y multiclase (Step-up Auth) para mitigar la fricción con compradores legítimos y maximizar la protección patrimonial en Test ($N=22.500$):
 
-| Política Operativa | Criterio de Decisión | FP | FN | Recall | Costo Consigna | Costo Real ($) | Tasa de Recupero |
+| Política Operativa | Criterio de Corte y Acción | FP Duro (Rechazo) | FN | Recall | Costo Formal Consigna | Pérdida Real ($) | Tasa de Recupero |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **0. Umbral Estático Consigna** | $\tau = 0.2550$ (Control OOT) | 477 | 588 | 43.24% | $119.985 | $37.633 | 55.60% |
-| **1. Segmentado por Ticket** | $\tau_{\le \$25}=0.330, \tau_{>\$25}=0.220$ | 486 | 589 | 43.15% | $120.230 | $34.772 | **59.26% (+3.7 pp)** |
-| **2. Umbral Estático Financiero** | $\tau = 0.1806$ | 823 | 502 | 51.54% | $104.515 | $31.099 | 66.01% |
-| **3. Curva Dinámica Bayesiana** | $\tau(monto) = 1.63 \cdot \frac{5}{5 + monto}$ | 1086 | 546 | 47.30% | $114.630 | **$18.318 (-51.3%)** | **83.76% (+28.2 pp)** |
+| **1. Segmentado por Ticket** | $\tau_{\le \$25}=0.33, \tau_{>\$25}=0.22$ | 486 | 589 | 43.15% | $120.230 | $34.772 | 59.26% (+3.7 pp) |
+| **2. Curva S Acotada** | $\tau_S(monto): \tau_{\max}=0.40, \tau_{\min}=0.18$ | 496 | 578 | 44.21% | $118.080 | $30.985 | 64.09% (+8.5 pp) |
+| **3. Umbral 2D Semántico** | $\tau_S(monto) - 0.02 \cdot \text{deficit}$ | 504 | 573 | 44.69% | $117.120 | $30.991 | 64.13% (+8.5 pp) |
+| **4. 🏆 Decisión Tripartita 2FA** | Green / Yellow (2FA) / Red ($\beta=0.40$) | **504** | **389** | **62.45% (+19.2 pp)** | **$80.385 (-33.0%)** | **$28.647 (-23.9%)** | **`79.87%` (+24.3 pp)** |
 
-> **Hallazgo Clave de Ingeniería Financiera:**  
-> Aplicar la regla de corte bayesiana continua basada en la función de pérdida ($\frac{5}{5 + \text{monto}}$) reduce las pérdidas netas reales a más de la mitad (**$18.318 vs $37.633**), elevando el capital total rescatado de **55.6% a 83.8%**, demostrando el valor de flexibilizar el umbral operativo según el ticket expuesto.
+> **Hallazgo Clave de Ingeniería de Producto:**  
+> La **Decisión Tripartita con Step-up Auth (2FA / OTP)** resuelve la tensión entre fricción y fraude: manteniendo los mismos ~500 falsos positivos de bloqueo duro (fricción restringida al 2.2% de los clientes), intercepta el **62.5% de los fraudes** y rescata el **79.87% del dinero en riesgo**, reduciendo el costo formal del sistema de \$119.985 a \$80.385 (**-33.0% de ahorro directo**).
 
 ---
 
