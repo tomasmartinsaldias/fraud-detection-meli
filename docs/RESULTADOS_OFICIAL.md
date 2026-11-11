@@ -23,20 +23,40 @@ Para resolver la disyuntiva entre los requerimientos de la consigna académica y
 2. **Auditoría de Sensibilidad Financiera ($\text{Costo} = 5 \cdot \text{FP} + \sum \text{Monto}_{\text{FN}}$):**  
    En la operación bancaria y de comercio electrónico real, cada fraude sustrae su ticket exacto. Evaluado bajo la distribución de montos transaccionales, el modelo final rescata entre el **79.57% y el 90.60% del capital en riesgo** (\$63.159 a \$71.891 salvados sobre Test), demostrando que la minimización del error formal se traduce directamente en protección patrimonial efectiva.
 
-### 1.2 Estudio Experimental de Arquitectura de Decisión y Umbrales en Producción
+### 1.2 Arquitectura de Decisión y Umbrales en Producción: La Trilogía Metodológica
 
-Sobre el modelo Champion Oficial, se evaluó cómo desacoplar la política de umbral fijo hacia arquitecturas dinámicas y multiclase (Step-up Auth) para mitigar la fricción con compradores legítimos y maximizar la protección patrimonial en Test ($N=22.500$):
+Para trasladar las probabilidades continuas $\hat{p} \in [0, 1]$ del Champion Oficial a una política de riesgo accionable en una pasarela de pagos real, se estructuró una **jerarquía metodológica en tres niveles de madurez**, evaluada sobre los 22.500 casos de Test:
 
-| Política Operativa | Criterio de Corte y Acción | FP Duro (Rechazo) | FN | Recall | Costo Formal Consigna | Pérdida Real ($) | Tasa de Recupero |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **0. Umbral Estático Consigna** | $\tau = 0.2550$ (Control OOT) | 477 | 588 | 43.24% | $119.985 | $37.633 | 55.60% |
-| **1. Segmentado por Ticket** | $\tau_{\le \$25}=0.33, \tau_{>\$25}=0.22$ | 486 | 589 | 43.15% | $120.230 | $34.772 | 59.26% (+3.7 pp) |
-| **2. Curva S Acotada** | $\tau_S(monto): \tau_{\max}=0.40, \tau_{\min}=0.18$ | 496 | 578 | 44.21% | $118.080 | $30.985 | 64.09% (+8.5 pp) |
-| **3. Umbral 2D Semántico** | $\tau_S(monto) - 0.02 \cdot \text{deficit}$ | 504 | 573 | 44.69% | $117.120 | $30.991 | 64.13% (+8.5 pp) |
-| **4. 🏆 Decisión Tripartita 2FA** | Green / Yellow (2FA) / Red ($\beta=0.40$) | **504** | **389** | **62.45% (+19.2 pp)** | **$80.385 (-33.0%)** | **$28.647 (-23.9%)** | **`79.87%` (+24.3 pp)** |
+| Nivel | Política Operativa | Rol Metodológico | Qué Demuestra |
+| :---: | :--- | :--- | :--- |
+| **1** | **0. Umbral Estático Consigna** ($\tau=0.2550$) | **El Contrato Académico** | **Rigor absoluto.** Cumple al 100% la consigna formal ($\text{FP} \le 100$ en validación `val_policy`) con un costo formal de **$119.985**. Garantiza el cumplimiento estricto de las reglas obligatorias de la cátedra. |
+| **2** | **2. Curva S Sigmoidea Acotada** ($\tau \in [0.18, 0.40]$) | **La Optimización Matemática Pura** | **El puente analítico clave.** Mantiene una decisión binaria clásica (aprobar o bloquear) sin ningún supuesto de 2FA. Con los mismos ~500 bloqueos duros, rescata **+8.5 pp de capital** ($54.372 vs $47.164) eliminando la paranoia de colas de Elkan. |
+| **3** | **4. Decisión Tripartita con 2FA** (Verde / Amarillo / Rojo) | **La Visión Estratégica de Producto** | **Simulación de despliegue fintech.** Muestra cómo romper el techo operativo de los ~500 FPs mediante autenticación escalonada (Step-up Auth), trepando al **75.8% - 79.9% de recupero de capital** con costo marginal de fricción. |
 
-> **Hallazgo Clave de Ingeniería de Producto:**  
-> La **Decisión Tripartita con Step-up Auth (2FA / OTP)** resuelve la tensión entre fricción y fraude: manteniendo los mismos ~500 falsos positivos de bloqueo duro (fricción restringida al 2.2% de los clientes), intercepta el **62.5% de los fraudes** y rescata el **79.87% del dinero en riesgo**, reduciendo el costo formal del sistema de \$119.985 a \$80.385 (**-33.0% de ahorro directo**).
+#### Comparativa Cuantitativa en Test Final ($N=22.500$)
+
+| Nivel / Política | Criterio de Corte y Acción | FP Duro (Rechazos) | FN | Recall Fraude | Costo Formal Consigna | Pérdida Financiera Real | Capital Salvado ($) | Tasa de Recupero |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Nivel 1: Umbral Estático** | $\tau = 0.2550$ (Fijo para todo ticket) | 477 | 588 | 43.24% | $119.985 | $37.633 | $47.164 | 55.60% |
+| **Nivel 2: Curva S Acotada** | $\tau_S(\text{monto}) \in [0.18, 0.40]$ | 496 | 578 | 44.21% | $118.080 | $30.985 | $54.372 | **64.09% (+8.5 pp)** |
+| **Nivel 3: Decisión Tripartita** | Verde / 2FA ($\beta=0.40$) / Bloqueo | **504** | **389** | **62.45% (+19.2 pp)** | **$80.385 (-33.0%)** | **$28.647 (-23.9%)** | **$67.747** | **`79.87%` (+24.3 pp)** |
+
+#### Auditoría de Robustez y Stress Test (Análisis de Sensibilidad de la Decisión Tripartita)
+
+Para evitar sesgos por supuestos de laboratorio excesivamente optimistas (e.g. 95% de éxito en clientes legítimos y 90% de captura de fraude), se simuló el comportamiento bajo condiciones reales y adversas de fricción y ataques de ingeniería social:
+
+| Escenario Operativo | Éxito Legítimo (Pasa 2FA) | Fraude Frenado (2FA) | Recall Fraude | Capital Salvado ($) | Tasa de Recupero | Clientes Legítimos Frustrados | Costo Real Total |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **1. Base Optimista (Push App / FaceID)** | 95% | 90% | 59.3% | $62.163 | 78.3% | 57 clientes | $28.302 |
+| **2. Moderado / Realista (WhatsApp / SMS)** | **90%** | **75%** | **56.5%** | **$60.176** | **`75.8%`** | 114 clientes | **$30.574** |
+| **3. Fricción Severa** | **85%** | **60%** | **53.8%** | **$58.189** | **`73.3%`** | 171 clientes | **$32.846** |
+| **4. Pesimista (Phishing / Ataque Bot)** | **75%** | **50%** | **51.9%** | **$56.865** | **`71.6%`** | 285 clientes | **$34.742** |
+| **5. Peor Caso Absoluto (2FA Inoperante)** | 100% | 0% | 42.8% | $50.242 | 63.3% | 0 clientes | $45.643 |
+
+> **Conclusiones Estratégicas:**  
+> 1. **Blindaje Académico:** El proyecto cumple al 100% la consigna formal obligatoria mediante el Nivel 1.  
+> 2. **Superación Matemática:** El Nivel 2 demuestra que, sin alterar las reglas del juego (decisión puramente binaria), parametrizar la elasticidad del ticket rescata **+$7.200 netos de capital** (+8.5 pp) sin violar la cota de falsos positivos.  
+> 3. **Visión FinTech y Madurez de Negocio:** El Nivel 3 expone la arquitectura real de pasarelas de pago modernas. Incluso bajo escenarios de alta fricción o ataque organizado (Escenario 4), la autenticación escalonada preserva más del **71.6% del capital** (frente al 55.6% estático), reduciendo drásticamente las pérdidas sin romper la experiencia de usuario.
 
 ---
 
