@@ -56,7 +56,8 @@ Para evitar sesgos por supuestos de laboratorio excesivamente optimistas (e.g. 9
 > **Conclusiones Estratégicas:**  
 > 1. **Blindaje Académico:** El proyecto cumple al 100% la consigna formal obligatoria mediante el Nivel 1.  
 > 2. **Superación Matemática:** El Nivel 2 demuestra que, sin alterar las reglas del juego (decisión puramente binaria), parametrizar la elasticidad del ticket rescata **+$7.200 netos de capital** (+8.5 pp) sin violar la cota de falsos positivos.  
-> 3. **Visión FinTech y Madurez de Negocio:** El Nivel 3 expone la arquitectura real de pasarelas de pago modernas. Incluso bajo escenarios de alta fricción o ataque organizado (Escenario 4), la autenticación escalonada preserva más del **71.6% del capital** (frente al 55.6% estático), reduciendo drásticamente las pérdidas sin romper la experiencia de usuario.
+> 3. **Visión FinTech y Madurez de Negocio:** El Nivel 3 expone la arquitectura real de pasarelas de pago modernas. Incluso bajo escenarios de alta fricción o ataque organizado (Escenario 4), la autenticación escalonada preserva más del **71.6% del capital** (frente al 55.6% estático), reduciendo drásticamente las pérdidas sin romper la experiencia de usuario.  
+> 4. **Resiliencia Operativa (Fail-Safe del Carril Rojo):** En el *Peor Caso Absoluto* (Escenario 5, donde el 2FA colapsa y deja pasar el 100% de los fraudes en el carril amarillo), el sistema **no cae** al 55.6% del umbral plano. Como el Carril Rojo está gobernado autónomamente por la Curva S 2D semántica ($\tau_{\text{block}} = \tau_S - \alpha \cdot \text{déficit}$), bloquea por sí solo los fraudes de mayor gravedad patrimonial, garantizando un **piso infranqueable de protección del 63.3% ($50.242 salvados)** con apenas 432 bloqueos directos a clientes legítimos.
 
 ---
 
