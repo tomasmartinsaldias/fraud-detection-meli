@@ -58,4 +58,27 @@ A continuación se presentan las 3 soluciones finales del proyecto comparadas fr
 * [Diccionario de Variables](docs/DICCIONARIO_VARIABLES.md): Especificación técnica de features raw, transformadas, temporales y semánticas.
 * [Archivo Histórico](docs/archive/README.md): Registro de reportes y pruebas de etapas exploratorias preliminares.
 
+## Arquitectura del Repositorio
+
+El código fuente en `src/` y los experimentos se organizan con responsabilidades desacopladas:
+
+```plaintext
+src/
+├── features/                  # Ingeniería de features transaccionales, temporales y semánticas
+├── models/
+│   ├── train.py               # Pipeline de entrenamiento supervisado y Optuna
+│   ├── supervised.py          # Módulo core: métricas, splits OOT y calibración Platt
+│   ├── prepare_supervised.py  # Preparación y ensamblado de datasets
+│   ├── report_supervised.py   # Generación de reportes y curvas de decisión
+│   ├── anomaly_detection.py   # Entrypoint unificado de anomalías
+│   ├── compare_team.py        # Benchmarking cruzado de integrantes
+│   ├── estimators/            # Estimadores de anomalías serializados (.joblib)
+│   ├── production/            # Generación de features de anomalías en inferencia
+│   ├── evaluation/            # Evaluadores y métricas de soporte
+│   ├── anomaly_experiments/   # Pruebas de laboratorio por familia (IForest, LOF, PCA, OCSVM)
+│   └── archive/               # Ensayos exploratorios archivados (stackings preliminares, SMOTE)
+scripts/                       # Scripts ejecutables reproducibles del champion y ablaciones
+docs/                          # Documentación metodológica canónica y memorias técnicas
+```
+
 Las dependencias de pruebas están en `requirements-dev.txt`.

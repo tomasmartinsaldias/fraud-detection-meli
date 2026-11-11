@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from src.models.lof_experiments import (
+from src.models.anomaly_experiments.lof_experiments import (
     frequency_encode,
     prepare_features,
     to_percentiles,

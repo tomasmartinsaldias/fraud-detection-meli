@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 
 from sklearn.metrics import roc_auc_score
 
-from src.models.pca_experiments import calculate_scores, frequency_encode, main, run_experiments, select_features
+from src.models.anomaly_experiments.pca_experiments import calculate_scores, frequency_encode, main, run_experiments, select_features
 
 
 class PCAExperimentsTests(unittest.TestCase):

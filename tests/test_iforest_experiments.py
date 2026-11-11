@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from src.models.iforest_experiments import (
+from src.models.anomaly_experiments.iforest_experiments import (
     RotatedHyperplaneIsolationForest,
     frequency_encode,
     prepare_features,
