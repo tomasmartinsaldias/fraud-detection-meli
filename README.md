@@ -52,6 +52,6 @@ Los modelos y datos generados quedan locales, ignorados por Git.
 ## Diagnóstico de Drift, Residuos y Modelo Challenger v3
 
 - [Auditoría Metodológica de Drift y Anatomía del Error (Val vs Test)](docs/DIAGNOSTICO_DRIFT.md): análisis de covariate shift (PSI, $D_{KS}$), intervalos bootstrap al 95%, desfasaje de días de la semana (corte del lunes 13/04 y ausencia de miércoles) y métrica de Capital Recovery Rate (90.4%).
-- [Auditoría de Forward Selection Formal v3](docs/FORWARD_SELECTION_V3_REPORT.md): selección forward formal paso a paso (`colsample=1.0`, `min_delta=0.0003`, `patience=2`) sobre las nuevas hipótesis de clustering semántico de títulos `i` y densidad temporal, elevando el PR-AUC a 0.4642 en Validación y 0.4386 en Test.
+- [Modelo Challenger v3 — Hipótesis, Forward Selection y Negocio](docs/MODELO_CHALLENGER_V3.md): informe unificado que consolida la hipótesis de clustering semántico en títulos `i`, la traza paso a paso del Forward Stepwise Selection formal (`colsample=1.0`, `min_delta=0.0003`, `patience=2`), la optimización de $k=50$ clusters y la evaluación final en Test elevando el PR-AUC a 0.4642 en Validación y 0.4386 en Test (+61 bps).
 
 Las dependencias de pruebas están en `requirements-dev.txt`.

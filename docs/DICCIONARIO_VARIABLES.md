@@ -238,7 +238,7 @@ Nacidas del diagnóstico de residuos en Validación (donde se descubrió que los
 * `ratio_concurrencia_60m`: Ratio de congestión respecto a la media histórica de esa hora. Rechazada por restar score (-0.0039).
 * `burst_micro_15m`: Ráfagas causales de compras con ticket $< Q_{25}$ en 15 minutos. Rechazada por redundancia/ruido (-0.0059).
 
-*Reporte de auditoría y traza matemática:* [docs/FORWARD_SELECTION_V3_REPORT.md](file:///C:/Users/tomas/Desktop/universidad/Ciencia%20de%20Datos/Taller%20de%20Resolución%20de%20Problemas%20II/fraud-detection-meli/docs/FORWARD_SELECTION_V3_REPORT.md).
+*Reporte unificado de auditoría y traza matemática:* [docs/MODELO_CHALLENGER_V3.md](file:///C:/Users/tomas/Desktop/universidad/Ciencia%20de%20Datos/Taller%20de%20Resolución%20de%20Problemas%20II/fraud-detection-meli/docs/MODELO_CHALLENGER_V3.md).
 
 
 
