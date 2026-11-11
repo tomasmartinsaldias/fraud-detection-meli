@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-11-11T18:46:13Z",
+  "tau_estatico_consigna": 0.255,
+  "bimodal_params": {
+    "corte_ticket": 25.0,
+    "tau_low": 0.33,
+    "tau_high": 0.22000000000000003
+  },
+  "financiero_estatico_tau": 0.18061872909698995,
+  "bayes_continuo_gamma": 1.6343434343434347,
+  "resultados_test": [
+    {
+      "politica": "0. Umbral Est\u00e1tico Consigna (tau = 0.2550)",
+      "tp": 448,
+      "fp": 477,
+      "fn": 588,
+      "precision_pct": 48.432432432432435,
+      "recall_pct": 43.24324324324324,
+      "costo_consigna": 119985.0,
+      "costo_financiero": 37633.229999999996,
+      "capital_salvado": 44131.82000000001,
+      "capital_perdido": 35248.229999999996,
+      "capital_recovery_rate": 55.59560620080236
+    },
+    {
+      "politica": "1. Segmentado Ticket ($25): Low=0.3300, High=0.2200",
+      "tp": 447,
+      "fp": 486,
+      "fn": 589,
+      "precision_pct": 47.90996784565916,
+      "recall_pct": 43.14671814671815,
+      "costo_consigna": 120230.0,
+      "costo_financiero": 34771.95,
+      "capital_salvado": 47038.100000000006,
+      "capital_perdido": 32341.949999999997,
+      "capital_recovery_rate": 59.256828384461855
+    },
+    {
+      "politica": "2. Umbral Est\u00e1tico Financiero (tau = 0.1806)",
+      "tp": 534,
+      "fp": 823,
+      "fn": 502,
+      "precision_pct": 39.3515106853353,
+      "recall_pct": 51.54440154440154,
+      "costo_consigna": 104515.0,
+      "costo_financiero": 31098.77,
+      "capital_salvado": 52396.28,
+      "capital_perdido": 26983.77,
+      "capital_recovery_rate": 66.00686192563498
+    },
+    {
+      "politica": "3. Curva Din\u00e1mica Bayesiana (gamma = 1.63)",
+      "tp": 490,
+      "fp": 1086,
+      "fn": 546,
+      "precision_pct": 31.091370558375637,
+      "recall_pct": 47.2972972972973,
+      "costo_consigna": 114630.0,
+      "costo_financiero": 18318.01,
+      "capital_salvado": 66492.04000000001,
+      "capital_perdido": 12888.009999999998,
+      "capital_recovery_rate": 83.7641699646196
+    }
+  ]
+}

@@ -23,6 +23,20 @@ Para resolver la disyuntiva entre los requerimientos de la consigna académica y
 2. **Auditoría de Sensibilidad Financiera ($\text{Costo} = 5 \cdot \text{FP} + \sum \text{Monto}_{\text{FN}}$):**  
    En la operación bancaria y de comercio electrónico real, cada fraude sustrae su ticket exacto. Evaluado bajo la distribución de montos transaccionales, el modelo final rescata entre el **79.57% y el 90.60% del capital en riesgo** (\$63.159 a \$71.891 salvados sobre Test), demostrando que la minimización del error formal se traduce directamente en protección patrimonial efectiva.
 
+### 1.2 Estudio Experimental de Umbrales Dinámicos por Monto ($\tau^*(monto)$)
+
+Sobre el modelo Champion Oficial, se evaluó si desacoplar la política de umbral fijo en función del ticket transaccional mejora la eficiencia económica sin alterar el ranking PR-AUC:
+
+| Política Operativa | Criterio de Decisión | FP | FN | Recall | Costo Consigna | Costo Real ($) | Tasa de Recupero |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **0. Umbral Estático Consigna** | $\tau = 0.2550$ (Control OOT) | 477 | 588 | 43.24% | $119.985 | $37.633 | 55.60% |
+| **1. Segmentado por Ticket** | $\tau_{\le \$25}=0.330, \tau_{>\$25}=0.220$ | 486 | 589 | 43.15% | $120.230 | $34.772 | **59.26% (+3.7 pp)** |
+| **2. Umbral Estático Financiero** | $\tau = 0.1806$ | 823 | 502 | 51.54% | $104.515 | $31.099 | 66.01% |
+| **3. Curva Dinámica Bayesiana** | $\tau(monto) = 1.63 \cdot \frac{5}{5 + monto}$ | 1086 | 546 | 47.30% | $114.630 | **$18.318 (-51.3%)** | **83.76% (+28.2 pp)** |
+
+> **Hallazgo Clave de Ingeniería Financiera:**  
+> Aplicar la regla de corte bayesiana continua basada en la función de pérdida ($\frac{5}{5 + \text{monto}}$) reduce las pérdidas netas reales a más de la mitad (**$18.318 vs $37.633**), elevando el capital total rescatado de **55.6% a 83.8%**, demostrando el valor de flexibilizar el umbral operativo según el ticket expuesto.
+
 ---
 
 ## 2. Búsqueda Supervisada de Ian (oficial_v2)
@@ -141,7 +155,12 @@ Antes de producción: acordar capacidad real de revisión, monitorear calibraci�
 Datos adicionales deseables: identidad de usuario/dispositivo, historial causal, chargebacks confirmados y fecha de confirmación de etiqueta.
 No usar resultados finales para una nueva ronda de ajuste: se necesitaría otro período fuera de muestra.
 
-## Curvas
+## Curvas Oficiales de Modelado
+
+### Comparativa Multimodelo: Champion Stacking vs. Baselines (Test Final)
+![Curva PR Comparativa Champion vs Baselines](figures_oficial/pr_champion_vs_baseline.svg)
+
+### Curvas de Referencia de Ian (oficial_v2)
 
 ![Curva PR val_policy](figures_oficial/pr_val_policy.svg)
 
