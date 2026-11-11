@@ -42,11 +42,11 @@ dataset base oficial del equipo o generar el Parquet desde el CSV original.
 
 A continuación se presentan las 3 soluciones finales del proyecto comparadas frente a la línea base heredada de partida (Control monomodal 11 variables de Ian: PR-AUC Val `0.48136` / Test `0.44435`):
 
-| Solución / Arquitectura | Tipo de Modelo | Features N1 | PR-AUC Val (OOT) | PR-AUC Test | Δ vs Base Inicial | Caso de Uso de Producción |
+| Solución / Arquitectura | Tipo de Modelo | Features (N1 / N2) | PR-AUC Val (OOT) | PR-AUC Test | Δ vs Base Inicial | Caso de Uso de Producción |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **1. Baseline Comercial (Finetuneado)** | Monomodal (LightGBM Optuna) | 13 | 0.48850 | **0.44700** | **+26.5 bps** | 🚀 **Checkout en Tiempo Real (Baja Latencia):** 1 solo modelo, latencia < 4 ms. Captura el desvío semántico de catálogo ($d=30$) sin requerir infraestructura de ensamble. |
-| **2. 🏆 Champion Oficial (Protocolo OOT)** | Cuatri-Modelo Stacking (Lasso $C=0.20$) | 13 | **`0.49218`** | **0.45014** | **+57.9 bps** | 🎯 **Selección Formal a Priori:** Mayor capacidad OOT (`0.49218`). Deduplica anomalías colineales en Nivel 2 y rompe la barrera de 0.45 en Test. |
-| **3. 🔬 Récord de Generalización (Ablación L1)** | Cuatri-Modelo Stacking (Lasso $C=0.10$) | 13 | 0.49101 | **`0.45093`** | **+65.8 bps** | 🥇 **Máxima Transferencia Out-of-Sample:** Forzar esparcidad estricta $L_1$ poda redundancias, sacrificando 11 bps en Val a cambio del pico histórico en Test. |
+| **1. Baseline Comercial (Finetuneado)** | Monomodal (LightGBM Optuna) | **13 / —** | 0.48850 | **0.44700** | **+26.5 bps** | 🚀 **Checkout en Tiempo Real (Baja Latencia):** 1 solo modelo, latencia < 4 ms. Captura el desvío semántico de catálogo ($d=30$) sin requerir infraestructura de ensamble. |
+| **2. 🏆 Champion Oficial (Protocolo OOT)** | Cuatri-Modelo Stacking (Lasso $C=0.20$) | **13 / 14** | **`0.49218`** | **0.45014** | **+57.9 bps** | 🎯 **Selección Formal a Priori:** Mayor capacidad OOT (`0.49218`). 13 variables en árboles y 14 meta-features filtradas en N2. Rompe 0.45 en Test. |
+| **3. 🔬 Récord de Generalización (Ablación L1)** | Cuatri-Modelo Stacking (Lasso $C=0.10$) | **13 / 22** | 0.49101 | **`0.45093`** | **+65.8 bps** | 🥇 **Máxima Transferencia Out-of-Sample:** 13 variables en árboles y 22 en N2 con Lasso $L_1$ para selección automática, logrando el récord histórico en Test. |
 
 ## Mapa de Documentación
 

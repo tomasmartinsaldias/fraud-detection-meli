@@ -4,12 +4,12 @@
 
 La siguiente tabla resume la evolución del rendimiento a través de los hitos principales del equipo, evaluados bajo validación cronológica out-of-time (OOT) y confirmados a ciegas en Test:
 
-| Hito / Arquitectura | Fase Metodológica | Features N1 | PR-AUC Val (OOT) | PR-AUC Test | Δ Test vs Base | Diagnóstico y Rol Metodológico |
+| Hito / Arquitectura | Fase Metodológica | Features (N1 / N2) | PR-AUC Val (OOT) | PR-AUC Test | Δ Test vs Base | Diagnóstico y Rol Metodológico |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Control Baseline** | Fase 1: Línea Base Productiva | 11 | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
-| **Baseline Comercial (Finetuneado)** | Fase 3: Producción Ligera NLP | 13 | 0.48850 | **0.44700** | **+26.5 bps** | 🚀 **Producción en Tiempo Real:** 1 solo modelo (LightGBM Optuna, 13 vars semánticas). Latencia < 4 ms. |
-| **🏆 Champion Oficial (Protocolo OOT)** | Fase 4: Stacking Filtrado ($C=0.20$) | 13 | **`0.49218`** | **`0.45014`** | **`+57.9 bps`** | **Selección Formal a Priori:** Mayor capacidad OOT (`0.49218`). Deduplica anomalías colineales en Nivel 2. Confirma generalización en Test > 0.45. |
-| **🔬 Variante de Parsimonia (Ablación L1)** | Fase 4: Esparcidad Estricta Nivel 2 | 13 | 0.49101 | **`0.45093`** | **`+65.8 bps`** | **Hallazgo de Ingeniería:** Forzar esparcidad estricta $L_1$ ($C=0.10$) apaga redundancias residuales, sacrificando 11 bps en Val a cambio del pico de transferencia out-of-sample. |
+| **Control Baseline** | Fase 1: Línea Base Productiva | **11 / —** | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
+| **Baseline Comercial (Finetuneado)** | Fase 3: Producción Ligera NLP | **13 / —** | 0.48850 | **0.44700** | **+26.5 bps** | 🚀 **Producción en Tiempo Real:** 1 solo modelo (LightGBM Optuna, 13 vars semánticas). Latencia < 4 ms. |
+| **🏆 Champion Oficial (Protocolo OOT)** | Fase 4: Stacking Filtrado ($C=0.20$) | **13 / 14** | **`0.49218`** | **`0.45014`** | **`+57.9 bps`** | **Selección Formal a Priori:** Mayor capacidad OOT (`0.49218`). 13 variables en árboles y 14 meta-features filtradas en N2. Confirma generalización en Test > 0.45. |
+| **🔬 Récord de Generalización (Ablación L1)** | Fase 4: Esparcidad Estricta Nivel 2 | **13 / 22** | 0.49101 | **`0.45093`** | **`+65.8 bps`** | **Hallazgo de Ingeniería:** 13 variables en árboles y 22 en N2 con Lasso $L_1$ para selección automática, logrando el récord histórico en Test. |
 
 > **Documento Detallado del Champion:** Consultar [`EXPERIMENTO_CUATRI_MODELO_STACKING.md`](EXPERIMENTO_CUATRI_MODELO_STACKING.md) para la auditoría completa de ablación, forward selection y grid search fino en Nivel 2.
 
