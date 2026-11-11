@@ -42,12 +42,13 @@ dataset base oficial del equipo o generar el Parquet desde el CSV original.
 
 A continuación se resume la evolución y el desempeño comparativo de los hitos principales del equipo, evaluados bajo el protocolo cronológico out-of-time (OOT) y confirmados a ciegas en Test:
 
-| Hito / Arquitectura | Fase Metodológica | Features | PR-AUC Val (OOT) | PR-AUC Test | Δ vs Base | Diagnóstico Metodológico |
+| Hito / Arquitectura | Fase Metodológica | Features N1 | PR-AUC Val (OOT) | PR-AUC Test | Δ Test vs Base | Diagnóstico y Trade-off Metodológico |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Control Baseline** | Fase 1: Línea Base Productiva | 11 | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
-| **Tri-Modelo Ensamble** | Fase 2: Diversificación Multimodelo | 11 | 0.48887 | 0.44450 | +1 bp | Ensamble preliminar (LGBM + XGB + RF). Techo histórico inicial de Val. |
-| **Challenger v3 (Semántico)** | Fase 3: Expansión Semántica (NLP) | 14 | 0.48725 | 0.44661 | +23 bps | Incorporación de SVD ($d=30$), K-Means ($k=50$) y ratio de precio continuo. Rompe la barrera monomodal. |
-| **Cuatri-Modelo Stacking Oficial** | Fase 4: Consolidación Final | 14 (Nivel 1) / Desacoplado | **`0.49212`** | **`0.44920`** | **`+48.5 bps`** | 🏆 **Champion Oficial:** Stacking (LGBM + XGB + CatBoost + RF) con metamodelo Lasso ($L_1, C=0.30$). Récord en Validación y máxima ganancia generalizada. |
+| **Control Baseline** | Fase 1: Línea Base | 11 | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
+| **Tri-Modelo Ensamble** | Fase 2: Diversificación | 11 | 0.48887 | 0.44450 | +1.5 bps | Ensamble inicial (LGBM + XGB + RF). Techo monomodal inicial. |
+| **Challenger v3 (Semántico)** | Fase 3: Expansión NLP | 13 | 0.48571 | 0.44644 | +20.9 bps | SVD ($d=30$), K-Means ($k=50$) y ratio de precio continuo. |
+| **Champion Oficial (Protocolo OOT)** | Fase 4: Stacking Filtrado ($C=0.20$) | 14 | **`0.49218`** | **`0.45014`** | **`+57.9 bps`** | 🏆 **Selección Formal a Priori:** Mayor capacidad OOT. Integra anomalías ortogonales descolinealizadas. Confirma generalización en Test > 0.45. |
+| **Variante de Parsimonia (Ablación L1)** | Fase 4: Stacking Esparso ($C=0.10$) | 13 | 0.49101 | **`0.45093`** | **`+65.8 bps`** | 🔬 **Hallazgo de Ingeniería:** Forzar esparcidad L1 estricta apaga redundancias residuales, sacrificando 11 bps de optimismo en Val a cambio de máxima transferencia out-of-sample. |
 
 ## Mapa de Documentación
 
