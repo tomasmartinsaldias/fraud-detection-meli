@@ -50,6 +50,18 @@ A continuación se resume la evolución y el desempeño comparativo de los hitos
 | **3. 🏆 CHAMPION OFICIAL (Protocolo OOT)** | Cuatri-Modelo Stacking (Lasso $C=0.20$) | 13 / 14 | **`0.49218`** | **0.45014** | **+187.9 bps** | 🎯 **Aporte del Ensamble:** Récord OOT (`0.49218`). Deduplica en N2 y supera 0.45 en Test. |
 | **4. 🔬 Récord de Generalización (L1)** | Cuatri-Modelo Stacking (Lasso $C=0.10$) | 13 / Descol. | 0.49101 | **`0.45093`** | **+195.8 bps** | 🥇 **Aporte de la Parsimonia:** Esparcidad estricta $L_1$ logra el récord histórico del proyecto. |
 
+## Arquitectura de Decisión y Políticas de Riesgo (Del Score al Negocio)
+
+Para trasladar las probabilidades del Champion Oficial a políticas de riesgo accionables en pasarela de pagos, se estructuró una **jerarquía metodológica en tres niveles**, evaluada fuera de muestra sobre los 22.500 casos de Test:
+
+| Nivel | Rol Metodológico | Política Operativa | FP Duro (Bloqueos) | Recall Fraude | Capital Rescatado | Costo del Sistema |
+| :---: | :--- | :--- | :---: | :---: | :---: | :---: |
+| **1** | **El Contrato Académico** | Umbral Estático ($\tau=0.2550$) | 477 | 43.24% | $47.164 (55.6%) | $119.985 |
+| **2** | **Optimización Matemática Pura** | Curva S Acotada ($\tau \in [0.18, 0.40]$) | 496 | 44.21% | $54.372 (64.1%) | $118.080 |
+| **3** | **Visión Estratégica FinTech** | Tripartita con 2FA (Verde / Amarillo / Rojo) | 504 | **62.45%** | **$67.747 (79.9%)** | **$80.385 (-33%)** |
+
+> 📖 **Auditoría Completa:** Consultar la [Sección 1.2 de Resultados Oficiales](docs/RESULTADOS_OFICIAL.md#12-arquitectura-de-decisión-y-umbrales-en-producción-la-trilogía-metodológica) para las fórmulas matemáticas, curvas de decisión, stress test de fricción/phishing y la propiedad de fail-safe del carril rojo.
+
 ## Mapa de Documentación
 
 * [Resultados Oficiales y Contrato C](docs/RESULTADOS_OFICIAL.md): Registro consolidado de corridas oficiales, hiperparámetros de búsqueda y métricas financieras de política.
