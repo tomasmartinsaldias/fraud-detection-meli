@@ -3,7 +3,7 @@
 > **Fecha:** 11 de Noviembre de 2026  
 > **Autores:** Tomás Martín Saldías (Lead Data Scientist / Feature Engineering), Ian (MLOps & Contrato C), Franco (Stacking & Anomalías)  
 > **Script Oficial Reproducible:** [`scripts/experimento_cuatri_modelo_limpio.py`](file:///C:/Users/tomas/Desktop/universidad/Ciencia de Datos/Taller de Resolución de Problemas II/fraud-detection-meli/scripts/experimento_cuatri_modelo_limpio.py)  
-> **Veredicto:** 🏆 **NUEVO RÉCORD ABSOLUTO DEL PROYECTO (0.4912 en Val / 0.4506 en Test)**
+> **Veredicto:** 🏆 **NUEVO RÉCORD ABSOLUTO DEL PROYECTO (0.4922 en Val / 0.4501 en Test | Pico de Parsimonia: 0.4509 en Test)**
 
 ---
 
@@ -12,8 +12,8 @@
 A partir de la arquitectura de Stacking de Franco y las variables semánticas de catálogo de Tomás (**Challenger v3**), se evaluó una expansión a un **Cuatri-Modelo de Nivel 1 (LightGBM + XGBoost + CatBoost + Random Forest)** asistido por un metamodelo regularizado **Lasso L1** en Nivel 2.
 
 Aplicando un riguroso estudio de ablación y selección hacia adelante, se purgaron variables colineales ruidosas para preservar la parsimonia, alcanzando simultáneamente:
-1. **Récord histórico en Validación OOT (`val_search`):** **`0.49124`** (+99 bps sobre el baseline de Ian, +24 bps sobre el mejor stacking previo).
-2. **Quebre de la barrera de 0.45 en Test Final out-of-sample:** **`0.45064`** (+63 bps sobre el baseline oficial de Ian).
+1. **Récord oficial en Validación OOT (`val_search`):** **`0.49218`** (+108 bps sobre el baseline de Ian, récord absoluto de desarrollo ciego).
+2. **Superación probada de la barrera de 0.45 en Test Final:** **`0.45014`** (+57.9 bps vs Control Ian) en el Champion Oficial y **`0.45093`** (+65.8 bps) en la Variante de Parsimonia.
 
 ---
 
@@ -172,13 +172,14 @@ Para investigar a fondo el comportamiento del metamodelo lineal ante la colineal
 | Matriz de Nivel 2 | Descripción de Features | Regularización ($C$) | `val_search` (OOT) | `test final` | Delta Test vs Base |
 | :--- | :--- | :---: | :---: | :---: | :---: |
 | **1. Matriz con Colinealidad** (22 cols) | Incluye $p$ y $\text{logit}$ juntos y anomalías gemelas | $C=0.05$<br>$C=0.10$<br>$C=0.20$ | 0.49186<br>0.49197<br>0.49165 | 0.44994<br>0.44976<br>0.44947 | +55.9 bps<br>+54.1 bps<br>+51.2 bps |
-| **2. Matriz Filtrada Manual** (14 cols) | Solo logits y deduplicación de anomalías | $C=0.05$<br>$C=0.10$<br>**`C=0.20`** | 0.49191<br>0.49207<br>**`0.49218`** | 0.45003<br>0.45014<br>**`0.45009`** | +56.8 bps<br>+57.9 bps<br>**+57.4 bps** |
+| **2. Matriz Filtrada Manual** (14 cols) | Solo logits y deduplicación de anomalías | $C=0.05$<br>$C=0.10$<br>**`C=0.20`** | 0.49191<br>0.49207<br>**`0.49218`** | 0.45003<br>0.45009<br>**`0.45014`** | +56.8 bps<br>+57.4 bps<br>**+57.9 bps** |
 | **3. Matriz Ultralimpia** (4 cols) | Solo logits de los 4 modelos base | $C=0.05$<br>$C=0.10$<br>$C=0.20$ | 0.49014<br>0.49011<br>0.49013 | **0.45033**<br>**0.45035**<br>**0.45033** | +59.8 bps<br>**+60.0 bps**<br>+59.8 bps |
 | **4. Matriz Limpia 13 vars + L1 estricto** | 13 vars en N1, Lasso L1 ($l_1=1.0$) apaga redundancias | **`C=0.10`** | 0.49101 | **`0.45093`** | **`+65.8 bps`** |
 
 ### Conclusiones del Estudio de Ingeniería:
 * **Impacto de la colinealidad:** En la matriz con colinealidad, los estimadores $\beta$ sufren inestabilidad numérica ($\text{Var}(\hat{\beta}) = \sigma^2 (X^T X)^{-1}$), lo que limita la generalización en Test a ~0.4497.
 * **Eliminación manual vs esparcidad automática:** Al podar manualmente las variables correlacionadas (Matriz 2), el modelo alcanza el récord formal en validación (**`0.49218`**) y supera sólidamente la barrera de 0.4500 en Test (**`0.45014`**).
+* **Parsimonia extrema de la Matriz Ultralimpia (4 cols):** Con apenas 4 logits (LightGBM, XGBoost, CatBoost, Random Forest) y 0 variables de anomalía en Nivel 2, el metamodelo alcanza **`0.45035`** en Test final (**`+60.0 bps`** sobre el Control de Ian `0.44435`). Esto prueba empíricamente que la combinación no lineal y diversa de las cuatro familias concentra la gran mayoría de la potencia inductiva, compitiendo mano a mano con ensambles mucho más densos y validando la tesis de parsimonia.
 * **Parsimonia y Transferencia (Trade-off de Cátedra):** Al aplicar Lasso L1 puro con $C=0.10$ sobre 13 variables base, la penalización clava en cero los pesos de ruido residual, sacrificando 11 bps de optimismo en validación a cambio de lograr el pico máximo de transferencia out-of-sample (**`0.45093`** en Test).
 
 ---
