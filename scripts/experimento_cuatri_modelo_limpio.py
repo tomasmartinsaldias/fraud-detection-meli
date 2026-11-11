@@ -47,8 +47,8 @@ BASE_CATEGORICAL_COLS = ["a", "g", "n", "o", "p"]
 BASE_NUMERIC_COLS = ["score", "monto", "b", "c", "d", "e", "f", "h", "l", "m", "q"]
 
 
-def build_clustering_features(df_train: pd.DataFrame, df_all: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
-    """Genera deficit_piso_cluster y distancia_log_cluster estrictamente ajustados en Train con SVD d=30."""
+def build_clustering_features(df_train: pd.DataFrame, df_all: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Genera deficit_piso_cluster, distancia_log_cluster y ratio_monto_mediana_cluster estrictamente ajustados en Train con SVD d=30."""
     print("  -> Generando clustering semántico k=50 (SVD d=30 L2-norm) sobre títulos...")
     vec = TfidfVectorizer(max_features=5000, ngram_range=(1, 2), min_df=5, sublinear_tf=True, strip_accents="unicode")
     X_tr_tfidf = vec.fit_transform(df_train["i"].fillna(""))
@@ -76,7 +76,8 @@ def build_clustering_features(df_train: pd.DataFrame, df_all: pd.DataFrame) -> T
 
     distancia_log = (np.log1p(all_montos) - np.log1p(all_medians)).astype(float)
     deficit_piso = np.maximum(0.0, (all_medians - all_montos) / (all_medians + 1e-4)).astype(float)
-    return distancia_log, deficit_piso
+    ratio_monto_mediana = (all_montos / (all_medians + 1e-4)).astype(float)
+    return distancia_log, deficit_piso, ratio_monto_mediana
 
 
 def optimize_blend_weights(y_val: np.ndarray, preds_list: List[np.ndarray]) -> np.ndarray:
@@ -127,9 +128,10 @@ def main():
 
     # 2. Generar Clustering Semántico v3 estrictamente ajustado en Train
     train_mask = base_df["split"] == "train"
-    dist_log, def_piso = build_clustering_features(base_df[train_mask], base_df)
+    dist_log, def_piso, ratio_med = build_clustering_features(base_df[train_mask], base_df)
     base_df["distancia_log_cluster"] = dist_log
     base_df["deficit_piso_cluster"] = def_piso
+    base_df["ratio_monto_mediana_cluster"] = ratio_med
 
     df = (
         base_df
@@ -191,10 +193,14 @@ def main():
     test_cat = df_cat.loc[test.index]
 
     # =========================================================================
-    # MODELO 1: LightGBM (13 variables limpias de Challenger v3)
+    # MODELO 1: LightGBM (14 variables de Challenger v3 con ratio_monto_mediana_cluster)
     # =========================================================================
-    print("\n2. Entrenando Modelo 1: LightGBM Challenger v3 (13 variables)...")
-    lgb_13 = ["score", "o", "g", "a", "es_madrugada", "ratio_d_m", "ratio_monto_l", "prod_b_log_c", "score_texto_nb", "ratio_monto_e", "is_h_cero", "deficit_piso_cluster", "distancia_log_cluster"]
+    print("\n2. Entrenando Modelo 1: LightGBM Challenger v3 (14 variables)...")
+    lgb_14 = [
+        "score", "o", "g", "a", "es_madrugada", "ratio_d_m", "ratio_monto_l",
+        "prod_b_log_c", "score_texto_nb", "ratio_monto_e", "is_h_cero",
+        "deficit_piso_cluster", "distancia_log_cluster", "ratio_monto_mediana_cluster"
+    ]
     best_params_lgb = {
         "learning_rate": 0.03486992722440761,
         "num_leaves": 28,
@@ -205,12 +211,12 @@ def main():
         "reg_lambda": 0.5270037815983998,
         "n_estimators": 253,
     }
-    m_lgb = lgb_model(best_params_lgb, seed, 4).fit(train_xgb[lgb_13], y_train)
-    p_lgb_tu = m_lgb.predict_proba(tune_xgb[lgb_13])[:, 1]
-    p_lgb_ca = m_lgb.predict_proba(cal_xgb[lgb_13])[:, 1]
-    p_lgb_po = m_lgb.predict_proba(policy_xgb[lgb_13])[:, 1]
-    p_lgb_te = m_lgb.predict_proba(test_xgb[lgb_13])[:, 1]
-    print(f"  * LightGBM (13 vars) -> val_search: {pr_auc(y_tune, p_lgb_tu):.5f} | test: {pr_auc(y_test, p_lgb_te):.5f}")
+    m_lgb = lgb_model(best_params_lgb, seed, 4).fit(train_xgb[lgb_14], y_train)
+    p_lgb_tu = m_lgb.predict_proba(tune_xgb[lgb_14])[:, 1]
+    p_lgb_ca = m_lgb.predict_proba(cal_xgb[lgb_14])[:, 1]
+    p_lgb_po = m_lgb.predict_proba(policy_xgb[lgb_14])[:, 1]
+    p_lgb_te = m_lgb.predict_proba(test_xgb[lgb_14])[:, 1]
+    print(f"  * LightGBM (14 vars) -> val_search: {pr_auc(y_tune, p_lgb_tu):.5f} | test: {pr_auc(y_test, p_lgb_te):.5f}")
 
     # =========================================================================
     # MODELO 2: XGBoost (12 variables)
@@ -240,10 +246,10 @@ def main():
     print(f"  * XGBoost ({len(xgb_cols)} vars)  -> val_search: {pr_auc(y_tune, p_xgb_tu):.5f} | test: {pr_auc(y_test, p_xgb_te):.5f}")
 
     # =========================================================================
-    # MODELO 3: CatBoost (con 13 variables de Challenger v3)
+    # MODELO 3: CatBoost (con 14 variables de Challenger v3)
     # =========================================================================
     print("\n4. Entrenando Modelo 3: CatBoost...")
-    cat_cols = [c for c in lgb_13]
+    cat_cols = [c for c in lgb_14]
     cat_indices = [cat_cols.index(c) for c in BASE_CATEGORICAL_COLS if c in cat_cols]
 
     m_cat = CatBoostClassifier(
@@ -288,8 +294,8 @@ def main():
 
     for fold, (tr_idx, va_idx) in enumerate(skf.split(train, y_train), 1):
         # LGB
-        m_lgb_f = lgb_model(best_params_lgb, seed, 4).fit(train_xgb[lgb_13].iloc[tr_idx], y_train[tr_idx])
-        p_lgb_oof[va_idx] = m_lgb_f.predict_proba(train_xgb[lgb_13].iloc[va_idx])[:, 1]
+        m_lgb_f = lgb_model(best_params_lgb, seed, 4).fit(train_xgb[lgb_14].iloc[tr_idx], y_train[tr_idx])
+        p_lgb_oof[va_idx] = m_lgb_f.predict_proba(train_xgb[lgb_14].iloc[va_idx])[:, 1]
         # XGB
         m_xgb_f = xgb.XGBClassifier(**best_params_xgb).fit(train_xgb[xgb_cols].iloc[tr_idx], y_train[tr_idx])
         p_xgb_oof[va_idx] = m_xgb_f.predict_proba(train_xgb[xgb_cols].iloc[va_idx])[:, 1]
@@ -322,6 +328,7 @@ def main():
         d["pct_heuristico_fraude"] = part_df["pct_heuristico_fraude"].to_numpy(dtype=float)
         d["distancia_log_cluster"] = part_df["distancia_log_cluster"].to_numpy(dtype=float)
         d["deficit_piso_cluster"] = part_df["deficit_piso_cluster"].to_numpy(dtype=float)
+        d["ratio_monto_mediana_cluster"] = part_df["ratio_monto_mediana_cluster"].to_numpy(dtype=float)
         return pd.DataFrame(d)
 
     X_meta_tr = build_meta(p_lgb_oof, p_xgb_oof, p_cat_oof, p_rf_oof, train)

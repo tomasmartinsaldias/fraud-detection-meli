@@ -29,7 +29,8 @@ Aplicando un riguroso estudio de ablación y selección hacia adelante, se purga
 | **Blend Convexo Óptimo (SLSQP)** | 0.48835 | 0.44739 | +0.00304 (+30 bps) | Ponderación continua |
 | **Stacking Cuatri-Modelo (Ridge L2 C=1.0)** | 0.49065 | 0.45052 | +0.00617 (+62 bps) | Penalización cuadrática |
 | **Stacking Cuatri-Modelo Limpio (Lasso L1 C=0.2)** | 0.49062 | 0.45063 | +0.00628 (+63 bps) | Rompe barrera de 0.45 |
-| **🏆 Stacking Cuatri-Modelo Limpio (Lasso L1 C=0.1)** | **`0.49101`** | **`0.45093`** | **`+0.00658` (+66 bps)** | **🥇 RÉCORD ABSOLUTO DUAL (SVD d=30)** |
+| **Stacking Cuatri-Modelo (14 vars c/ ratio_med, Lasso L1 C=0.1)** | **`0.49125`** | **`0.45011`** | +0.00576 (+58 bps) | Récord en Validación OOT |
+| **🏆 Stacking Cuatri-Modelo Limpio (13 vars d=30, Lasso L1 C=0.1)** | **`0.49101`** | **`0.45093`** | **`+0.00658` (+66 bps)** | **🥇 RÉCORD ABSOLUTO DUAL (SVD d=30)** |
 
 ---
 
@@ -47,6 +48,31 @@ Para evitar meter variables en bloque a ciegas, se corrió un estudio paso a pas
 ### Diagnóstico de Descarte:
 * **Canibalización de Divisiones:** `o` y `es_madrugada` ya concentraban un alto porcentaje del gain en los árboles. Crear una variable derivada de target encoding combinada restó varianza útil y forzó divisiones redundantes.
 * **Principio de Parsimonia:** El pipeline descartó estas 3 candidatas, reteniendo **estrictamente las 13 variables limpias de Challenger v3** (`score`, `o`, `g`, `a`, `es_madrugada`, `ratio_d_m`, `ratio_monto_l`, `prod_b_log_c`, `score_texto_nb`, `ratio_monto_e`, `is_h_cero`, `deficit_piso_cluster`, `distancia_log_cluster`).
+
+### 3.2 Forward Selection de Variables para Fraudes de Ticket Bajo (< $20)
+Tras el diagnóstico de residuos que reveló que el 25% de los fraudes de < $20 quedaban como Falsos Negativos, se evaluaron 4 candidatas adicionales ajustadas en el espacio semántico ($d=30$):
+
+| Candidata | `val_search` | `test` | $\Delta$ Val | $\Delta$ Test | Veredicto |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| `micro_anomalia_cluster` | 0.48553 | 0.45015 | -3.9 bps | +33.5 bps | ❌ Descarta (cae en Val) |
+| **`ratio_monto_mediana_cluster`** | **`0.48725`** | **`0.45061`** | **+13.3 bps** | **+38.1 bps** | 🏆 **GANADORA ABSOLUTA** |
+| `deficit_p25_cluster` | 0.48708 | 0.45037 | +11.6 bps | +35.7 bps | Superada |
+| `log_ratio_asimetrico` | 0.48648 | 0.44883 | +5.6 bps | +20.3 bps | Menor ganancia |
+
+### 3.3 Auditoría de Solapamiento Matemático y Paso 2 de Forward Selection
+Se evaluó si las 3 candidatas positivas debían combinarse simultáneamente o si existía colinealidad:
+
+```text
+               ratio_med    def_p25   log_asym
+ratio_med          1.000     -0.753     -0.994
+def_p25           -0.753      1.000      0.751
+log_asym          -0.994      0.751      1.000
+```
+
+* **Paso 2 Combinado:**
+  * `Base 14 (ratio_med) + def_p25 (15 vars)`: Cae a **`0.48536` (-19 bps val / -50 bps test)**.
+  * `Base 14 + def_p25 + log_asym (16 vars)`: Cae a **`0.48344` (-38 bps val)**.
+* **Diagnóstico de Split Dilution:** Cuando dos variables con correlación de $0.75$ a $0.99$ entran a competir por el mismo split, fragmentan los árboles, reducen el soporte en hojas terminales y disparan la varianza. Se retiene únicamente la mejor: **`ratio_monto_mediana_cluster`**.
 
 ---
 
