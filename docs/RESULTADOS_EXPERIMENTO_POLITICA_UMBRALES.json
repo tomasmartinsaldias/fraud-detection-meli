@@ -1,0 +1,84 @@
+{
+  "timestamp": "2026-11-11T19:10:09Z",
+  "tau_estatico_consigna": 0.255,
+  "bimodal_params": {
+    "corte_ticket": 25.0,
+    "tau_low": 0.33000000000000007,
+    "tau_high": 0.21999999999999997
+  },
+  "scurve_params": {
+    "t_max": 0.4,
+    "t_min": 0.18,
+    "sigma": 35.0,
+    "M0": 23.02
+  },
+  "semantico_2d_alpha": 0.024999999999999998,
+  "tripartita_beta_challenge": 0.4,
+  "resultados_test": [
+    {
+      "politica": "0. Umbral Est\u00e1tico Consigna (tau = 0.2550)",
+      "tp": 448,
+      "fp": 477,
+      "fn": 588,
+      "precision_pct": 48.432432432432435,
+      "recall_pct": 43.24324324324324,
+      "costo_consigna": 119985.0,
+      "costo_financiero": 37633.229999999996,
+      "capital_salvado": 44131.82000000001,
+      "capital_perdido": 35248.229999999996,
+      "capital_recovery_rate": 55.59560620080236
+    },
+    {
+      "politica": "1. Segmentado Ticket ($25): Low=0.3300, High=0.2200",
+      "tp": 447,
+      "fp": 486,
+      "fn": 589,
+      "precision_pct": 47.90996784565916,
+      "recall_pct": 43.14671814671815,
+      "costo_consigna": 120230.0,
+      "costo_financiero": 34771.95,
+      "capital_salvado": 47038.100000000006,
+      "capital_perdido": 32341.949999999997,
+      "capital_recovery_rate": 59.256828384461855
+    },
+    {
+      "politica": "2. Curva S Acotada (t_max=0.40, t_min=0.18)",
+      "tp": 458,
+      "fp": 496,
+      "fn": 578,
+      "precision_pct": 48.0083857442348,
+      "recall_pct": 44.20849420849421,
+      "costo_consigna": 118080.0,
+      "costo_financiero": 30984.859999999993,
+      "capital_salvado": 50875.19,
+      "capital_perdido": 28504.859999999993,
+      "capital_recovery_rate": 64.09064998069415
+    },
+    {
+      "politica": "3. Umbral 2D Sem\u00e1ntico (S-Curve - 0.02*deficit)",
+      "tp": 463,
+      "fp": 504,
+      "fn": 573,
+      "precision_pct": 47.88004136504654,
+      "recall_pct": 44.69111969111969,
+      "costo_consigna": 117120.0,
+      "costo_financiero": 30991.06,
+      "capital_salvado": 50908.99,
+      "capital_perdido": 28471.06,
+      "capital_recovery_rate": 64.13322994883475
+    },
+    {
+      "politica": "4. Decisi\u00f3n Tripartita 2FA (beta_chal=0.40)",
+      "tp": 647,
+      "fp": 504,
+      "fn": 389,
+      "precision_pct": 56.21198957428323,
+      "recall_pct": 62.45173745173746,
+      "costo_consigna": 80385.1,
+      "costo_financiero": 28646.61699999999,
+      "capital_salvado": 63398.532999999996,
+      "capital_perdido": 15981.516999999993,
+      "capital_recovery_rate": 79.86708625152038
+    }
+  ]
+}
