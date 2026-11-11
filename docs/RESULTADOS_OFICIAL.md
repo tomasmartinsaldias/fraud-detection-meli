@@ -4,12 +4,12 @@
 
 La siguiente tabla resume la evolución del rendimiento a través de los hitos principales del equipo, evaluados bajo validación cronológica out-of-time (OOT) y confirmados a ciegas en Test:
 
-| Hito / Arquitectura | Autor / Fase | Features | PR-AUC Val (OOT) | PR-AUC Test | Δ vs Base | Diagnóstico Metodológico |
+| Hito / Arquitectura | Fase Metodológica | Features | PR-AUC Val (OOT) | PR-AUC Test | Δ vs Base | Diagnóstico Metodológico |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Control Baseline (Ian)** | Ian | 11 | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
-| **Tri-Modelo Campeón Previo** | Franco | 11 | 0.48887 | 0.44450 | +1 bp | Ensamble preliminar (LGBM + XGB + RF). Techo histórico inicial de Val. |
-| **Challenger v3 (Semántico)** | Tomás | 14 | 0.48725 | 0.44661 | +23 bps | Incorporación de SVD ($d=30$), K-Means ($k=50$) y ratio de precio continuo. Rompe la barrera monomodal. |
-| **Cuatri-Modelo Stacking Oficial** | Equipo Consolidado | 14 (Nivel 1) / Desacoplado | **`0.49212`** | **`0.44920`** | **`+48.5 bps`** | 🏆 **Champion Oficial:** Stacking (LGBM + XGB + CatBoost + RF) con metamodelo Lasso ($L_1, C=0.30$). Récord en Validación y máxima ganancia generalizada. |
+| **Control Baseline** | Fase 1: Línea Base Productiva | 11 | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
+| **Tri-Modelo Ensamble** | Fase 2: Diversificación Multimodelo | 11 | 0.48887 | 0.44450 | +1 bp | Ensamble preliminar (LGBM + XGB + RF). Techo histórico inicial de Val. |
+| **Challenger v3 (Semántico)** | Fase 3: Expansión Semántica (NLP) | 14 | 0.48725 | 0.44661 | +23 bps | Incorporación de SVD ($d=30$), K-Means ($k=50$) y ratio de precio continuo. Rompe la barrera monomodal. |
+| **Cuatri-Modelo Stacking Oficial** | Fase 4: Consolidación Final | 14 (Nivel 1) / Desacoplado | **`0.49212`** | **`0.44920`** | **`+48.5 bps`** | 🏆 **Champion Oficial:** Stacking (LGBM + XGB + CatBoost + RF) con metamodelo Lasso ($L_1, C=0.30$). Récord en Validación y máxima ganancia generalizada. |
 
 > **Documento Detallado del Champion:** Consultar [`EXPERIMENTO_CUATRI_MODELO_STACKING.md`](EXPERIMENTO_CUATRI_MODELO_STACKING.md) para la auditoría completa de ablación, forward selection y grid search fino en Nivel 2.
 
