@@ -2,14 +2,16 @@
 
 ## 1. Síntesis Comparativa de Hitos del Equipo
 
-La siguiente tabla resume la evolución del rendimiento a través de los hitos principales del equipo, evaluados bajo validación cronológica out-of-time (OOT) y confirmados a ciegas en Test:
+La siguiente tabla resume la evolución del rendimiento a través de los hitos principales del equipo, evaluados bajo validación cronológica out-of-time (OOT) sobre el mismo split temporal (105k Train / 22.5k Val / 22.5k Test) y confirmados a ciegas en Test:
 
-| Hito / Arquitectura | Fase Metodológica | Features N1 | PR-AUC Val (OOT) | PR-AUC Test | Δ Test vs Base | Diagnóstico y Rol Metodológico |
+| Etapa / Solución | Arquitectura | Features (N1 / N2) | PR-AUC Val (OOT) | PR-AUC Test | Δ Test vs Base | Justificación y Veredicto Metodológico |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Control Baseline** | Fase 1: Línea Base Productiva | 11 | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
-| **Baseline Comercial (Finetuneado)** | Fase 3: Producción Ligera NLP | 13 | 0.48850 | **0.44700** | **+26.5 bps** | 🚀 **Producción en Tiempo Real:** 1 solo modelo (LightGBM Optuna, 13 vars semánticas). Latencia < 4 ms. |
-| **🏆 Champion Oficial (Protocolo OOT)** | Fase 4: Stacking Filtrado ($C=0.20$) | 14 | **`0.49218`** | **`0.45014`** | **`+57.9 bps`** | **Selección Formal a Priori:** Mayor capacidad OOT (`0.49218`). Deduplica anomalías colineales en Nivel 2. Confirma generalización en Test > 0.45. |
-| **🔬 Variante de Parsimonia (Ablación L1)** | Fase 4: Esparcidad Estricta Nivel 2 | 13 | 0.49101 | **`0.45093`** | **`+65.8 bps`** | **Hallazgo de Ingeniería:** Forzar esparcidad estricta $L_1$ ($C=0.10$) apaga redundancias residuales, sacrificando 11 bps en Val a cambio del pico de transferencia out-of-sample. |
+| **0. Piso Lineal Crudo** | Regresión Logística base | 16 / — | 0.33190 | 0.31500 | -1293 bps | 📌 **Sanity Check:** Modelo lineal sobre covariables directas. Demuestra la no linealidad severa del problema. |
+| **1. Árbol Crudo (Sin FE)** | LightGBM base sin transformar | 16 / — | 0.44830 | 0.43135 | -130 bps | 📌 **Piso Algorítmico:** Árbol sobre variables brutas sin ninguna transformación de ingeniería. |
+| **2. FE Transaccional (Control)** | LightGBM 11 variables seleccionadas | 11 / — | 0.48136 | 0.44435 | — | 🧠 **Impacto FE Ola 1:** Ratios continuos, ventana nocturna, interacciones y Naive Bayes (+130 bps sobre el crudo). |
+| **3. Baseline Comercial (Finetuneado)** | LightGBM Optuna con semántica ($d=30$) | 13 / — | 0.48850 | **0.44700** | **+26.5 bps** | 🚀 **Impacto FE Ola 2:** SVD + K-Means ($k=50$) de catálogo. Inferencia ultra-rápida (< 4 ms) para checkout síncrono. |
+| **4. 🏆 CHAMPION OFICIAL (Protocolo OOT)** | Stacking Cuatri-Modelo (Lasso $C=0.20$) | 13 / 14 | **`0.49218`** | **0.45014** | **+57.9 bps** | 🎯 **POR QUÉ ES EL CAMPEÓN:** Récord absoluto en desarrollo ciego OOT (`0.49218`). La deduplicación en N2 confirma generalización en Test > 0.45. |
+| **5. 🔬 Récord de Generalización (Ablación L1)** | Stacking Cuatri-Modelo (Lasso $C=0.10$) | 13 / Descol. | 0.49101 | **`0.45093`** | **+65.8 bps** | 🥇 **Hallazgo de Transferencia:** Forzar esparcidad estricta $L_1$ en N2 poda redundancias, alcanzando el pico histórico en Test (+195.8 bps vs crudo). |
 
 > **Documento Detallado del Champion:** Consultar [`EXPERIMENTO_CUATRI_MODELO_STACKING.md`](EXPERIMENTO_CUATRI_MODELO_STACKING.md) para la auditoría completa de ablación, forward selection y grid search fino en Nivel 2.
 
