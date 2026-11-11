@@ -48,4 +48,10 @@ Consultar [metodología y comandos](docs/MODELADO_IAN.md) y los
 La primera corrida está en [RESULTADOS_IAN.md](docs/RESULTADOS_IAN.md) y la comparación
 exploratoria del equipo en [COMPARACION_EQUIPO.md](docs/COMPARACION_EQUIPO.md).
 Los modelos y datos generados quedan locales, ignorados por Git.
+
+## Diagnóstico de Drift, Residuos y Modelo Challenger v3
+
+- [Auditoría Metodológica de Drift y Anatomía del Error (Val vs Test)](docs/DIAGNOSTICO_DRIFT.md): análisis de covariate shift (PSI, $D_{KS}$), intervalos bootstrap al 95%, desfasaje de días de la semana (corte del lunes 13/04 y ausencia de miércoles) y métrica de Capital Recovery Rate (90.4%).
+- [Auditoría de Forward Selection Formal v3](docs/FORWARD_SELECTION_V3_REPORT.md): selección forward formal paso a paso (`colsample=1.0`, `min_delta=0.0003`, `patience=2`) sobre las nuevas hipótesis de clustering semántico de títulos `i` y densidad temporal, elevando el PR-AUC a 0.4642 en Validación y 0.4386 en Test.
+
 Las dependencias de pruebas están en `requirements-dev.txt`.

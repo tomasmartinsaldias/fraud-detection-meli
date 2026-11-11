@@ -220,4 +220,25 @@ Selección competitiva abierta entre **67 variables candidatas** (17 crudas + 50
 
 *Metadatos y traza del algoritmo:* [data/features/selected_features_end_to_end_report.json](file:///C:/Users/tomas/Desktop/universidad/Ciencia%20de%20Datos/Taller%20de%20Resolución%20de%20Problemas%20II/fraud-detection-meli/data/features/selected_features_end_to_end_report.json).
 
+---
+
+## 7. Módulo Challenger v3: Features de Segunda Generación (Clustering Semántico y Desvío de Piso)
+
+Nacidas del diagnóstico de residuos en Validación (donde se descubrió que los fraudes no detectados se concentraban en micro-tickets de ~$49 frente a ~$75 de los detectados). Fueron puestas a competir mediante **Forward Selection formal con las mismas reglas del Contrato A** (`PARAMS_FORWARD`, `colsample=1.0`, `min_delta=0.0003`, `patience=2`).
+
+### Variables Aprobadas por el Pipeline (Incorporadas al Challenger v3)
+
+| Variable | Tipo | Definición Matemática / Lógica | Propósito y Rendimiento |
+| :--- | :---: | :--- | :--- |
+| `deficit_piso_cluster` | `float64` | $\max\left(0, \frac{\text{mediana}_{\text{cluster}} - \text{monto}}{\text{mediana}_{\text{cluster}}}\right)$ | Penalización de piso cuando el precio de compra está anormalmente por debajo de la mediana del cluster semántico del título `i` (K-Means $k=50$ sobre SVD de texto). Aprobada en Ronda 1 (+0.0019 PR-AUC). |
+| `distancia_log_cluster` | `float64` | $\log(1 + \text{monto}) - \log(1 + \text{mediana}_{\text{cluster}})$ | Desvío logarítmico simétrico del importe respecto a la mediana bayesiana del cluster de títulos. Aprobada en Ronda 2 (+0.0025 PR-AUC adicional). |
+
+### Variables Descartadas por el Pipeline (Control Anti-Ruido)
+* `volumen_tx_60m`: Concurrencia de transacciones en la plataforma en los últimos 60 minutos. Rechazada por el pipeline (no superó el `min_delta`).
+* `ratio_concurrencia_60m`: Ratio de congestión respecto a la media histórica de esa hora. Rechazada por restar score (-0.0039).
+* `burst_micro_15m`: Ráfagas causales de compras con ticket $< Q_{25}$ en 15 minutos. Rechazada por redundancia/ruido (-0.0059).
+
+*Reporte de auditoría y traza matemática:* [docs/FORWARD_SELECTION_V3_REPORT.md](file:///C:/Users/tomas/Desktop/universidad/Ciencia%20de%20Datos/Taller%20de%20Resolución%20de%20Problemas%20II/fraud-detection-meli/docs/FORWARD_SELECTION_V3_REPORT.md).
+
+
 
