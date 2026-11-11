@@ -38,15 +38,18 @@ Las dependencias directas estan fijadas; `requirements.txt` no es un lock comple
 de las dependencias transitivas. Los datos no se incluyen en Git: obtener el
 dataset base oficial del equipo o generar el Parquet desde el CSV original.
 
-## Síntesis de Soluciones Productivas
+## Síntesis Oficial de Modelado y Rendimiento
 
-A continuación se presentan las 3 soluciones finales del proyecto comparadas frente a la línea base heredada de partida (Control monomodal 11 variables de Ian: PR-AUC Val `0.48136` / Test `0.44435`):
+A continuación se resume la evolución y el desempeño comparativo de los hitos principales del equipo, evaluados bajo el protocolo cronológico out-of-time (OOT) sobre el mismo split temporal (105k Train / 22.5k Val / 22.5k Test) y confirmados a ciegas en Test:
 
-| Solución / Arquitectura | Tipo de Modelo | Features (N1 / N2) | PR-AUC Val (OOT) | PR-AUC Test | Δ vs Base Inicial | Caso de Uso de Producción |
+| Etapa / Solución | Arquitectura | Features (N1 / N2) | PR-AUC Val (OOT) | PR-AUC Test | Δ Test vs Base | Justificación y Veredicto Metodológico |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **1. Baseline Comercial (Finetuneado)** | Monomodal (LightGBM Optuna) | **13 / —** | 0.48850 | **0.44700** | **+26.5 bps** | 🚀 **Checkout en Tiempo Real (Baja Latencia):** 1 solo modelo, latencia < 4 ms. Captura el desvío semántico de catálogo ($d=30$) sin requerir infraestructura de ensamble. |
-| **2. 🏆 Champion Oficial (Protocolo OOT)** | Cuatri-Modelo Stacking (Lasso $C=0.20$) | **13 / 14** | **`0.49218`** | **0.45014** | **+57.9 bps** | 🎯 **Selección Formal a Priori:** Mayor capacidad OOT (`0.49218`). 13 variables en árboles y 14 meta-features filtradas en N2. Rompe 0.45 en Test. |
-| **3. 🔬 Récord de Generalización (Ablación L1)** | Cuatri-Modelo Stacking (Lasso $C=0.10$) | **13 / 22** | 0.49101 | **`0.45093`** | **+65.8 bps** | 🥇 **Máxima Transferencia Out-of-Sample:** 13 variables en árboles y 22 en N2 con Lasso $L_1$ para selección automática, logrando el récord histórico en Test. |
+| **0. Piso Lineal Crudo** | Regresión Logística base | 16 / — | 0.33190 | 0.31500 | -1293 bps | 📌 **Sanity Check:** Modelo lineal sobre covariables directas. Demuestra la no linealidad severa del problema. |
+| **1. Árbol Crudo (Sin FE)** | LightGBM base sin transformar | 16 / — | 0.44830 | 0.43135 | -130 bps | 📌 **Piso Algorítmico:** Árbol sobre variables brutas sin ninguna transformación de ingeniería. |
+| **2. FE Transaccional (Control)** | LightGBM 11 variables seleccionadas | 11 / — | 0.48136 | 0.44435 | — | 🧠 **Impacto FE Ola 1:** Ratios continuos, ventana nocturna, interacciones y Naive Bayes (+130 bps sobre el crudo). |
+| **3. Baseline Comercial (Finetuneado)** | LightGBM Optuna con semántica ($d=30$) | 13 / — | 0.48850 | **0.44700** | **+26.5 bps** | 🚀 **Impacto FE Ola 2:** SVD + K-Means ($k=50$) de catálogo. Inferencia ultra-rápida (< 4 ms) para checkout síncrono. |
+| **4. 🏆 CHAMPION OFICIAL (Protocolo OOT)** | Stacking Cuatri-Modelo (Lasso $C=0.20$) | 13 / 14 | **`0.49218`** | **0.45014** | **+57.9 bps** | 🎯 **POR QUÉ ES EL CAMPEÓN:** Récord absoluto en desarrollo ciego OOT (`0.49218`). La deduplicación en N2 confirma generalización en Test > 0.45. |
+| **5. 🔬 Récord de Generalización (Ablación L1)** | Stacking Cuatri-Modelo (Lasso $C=0.10$) | 13 / Descol. | 0.49101 | **`0.45093`** | **+65.8 bps** | 🥇 **Hallazgo de Transferencia:** Forzar esparcidad estricta $L_1$ en N2 poda redundancias, alcanzando el pico histórico en Test (+195.8 bps vs crudo). |
 
 ## Mapa de Documentación
 
