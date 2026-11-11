@@ -4,15 +4,25 @@
 
 La siguiente tabla resume la evolución del rendimiento a través de los hitos principales del equipo, evaluados bajo validación cronológica out-of-time (OOT) y confirmados a ciegas en Test:
 
-| Hito / Arquitectura | Fase Metodológica | Features N1 | PR-AUC Val (OOT) | PR-AUC Test | Δ Test vs Base | Diagnóstico y Trade-off Metodológico |
+| Hito / Arquitectura | Fase Metodológica | Features N1 | PR-AUC Val (OOT) | PR-AUC Test | Δ Test vs Base | Diagnóstico y Rol Metodológico |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Control Baseline** | Fase 1: Línea Base | 11 | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
-| **Tri-Modelo Ensamble** | Fase 2: Diversificación | 11 | 0.48887 | 0.44450 | +1.5 bps | Ensamble inicial (LGBM + XGB + RF). Techo monomodal inicial. |
-| **Challenger v3 (Semántico)** | Fase 3: Expansión NLP | 13 | 0.48571 | 0.44644 | +20.9 bps | SVD ($d=30$), K-Means ($k=50$) y ratio de precio continuo. |
-| **Champion Oficial (Protocolo OOT)** | Fase 4: Stacking Filtrado ($C=0.20$) | 14 | **`0.49218`** | **`0.45014`** | **`+57.9 bps`** | 🏆 **Selección Formal a Priori:** Mayor capacidad OOT. Integra anomalías ortogonales descolinealizadas. Confirma generalización en Test > 0.45. |
-| **Variante de Parsimonia (Ablación L1)** | Fase 4: Stacking Esparso ($C=0.10$) | 13 | 0.49101 | **`0.45093`** | **`+65.8 bps`** | 🔬 **Hallazgo de Ingeniería:** Forzar esparcidad L1 estricta apaga redundancias residuales, sacrificando 11 bps de optimismo en Val a cambio de máxima transferencia out-of-sample. |
+| **Control Baseline** | Fase 1: Línea Base Productiva | 11 | 0.48136 | 0.44435 | — | Modelo productivo monomodal base (LightGBM). |
+| **Tri-Modelo Ensamble** | Fase 2: Diversificación Multimodelo | 11 | 0.48887 | 0.44450 | +1.5 bps | Ensamble preliminar (LGBM + XGB + RF). Techo histórico inicial de Val. |
+| **Challenger v3 (Semántico)** | Fase 3: Expansión Semántica NLP | 13 | 0.48571 | 0.44644 | +20.9 bps | SVD ($d=30$), K-Means ($k=50$) y ratio de precio continuo. |
+| **🏆 Champion Oficial Congelado** | Fase 4: Protocolo Formal OOT | 14 | **`0.49212`** | **`0.44920`** | **`+48.5 bps`** | **Modelo Oficial Congelado a Priori:** Seleccionado por regla formal en Grid Search OOT (Lasso $L_1, C=0.30$). Serializado en [`RESULTADOS_CIERRE_OFICIAL_GRID_NIVEL2.json`](RESULTADOS_CIERRE_OFICIAL_GRID_NIVEL2.json). |
+| **Variante de Filtrado Ortogonal** | Fase 4: Descolinealización Nivel 2 | 14 | **`0.49218`** | **`0.45014`** | **`+57.9 bps`** | **Estudio de Ablación:** Remueve anomalías colineales gemelas y poda probabilidades repetidas con Lasso ($C=0.20$), superando la barrera de 0.45 en Test. |
+| **Variante de Parsimonia (Ablación L1)** | Fase 4: Esparcidad Estricta Nivel 2 | 13 | 0.49101 | **`0.45093`** | **`+65.8 bps`** | 🔬 **Hallazgo de Ingeniería:** Forzar esparcidad estricta $L_1$ ($C=0.10$) apaga redundancias residuales, sacrificando 11 bps en Val a cambio de máxima transferencia out-of-sample. |
 
 > **Documento Detallado del Champion:** Consultar [`EXPERIMENTO_CUATRI_MODELO_STACKING.md`](EXPERIMENTO_CUATRI_MODELO_STACKING.md) para la auditoría completa de ablación, forward selection y grid search fino en Nivel 2.
+
+### 1.1 Dualidad de la Función de Costo: Consigna Formal vs. Realidad Financiera
+
+Para resolver la disyuntiva entre los requerimientos de la consigna académica y las métricas de negocio reales de prevención de fraude, el equipo implementó una evaluación dual integrada:
+
+1. **Optimización Formal de Consigna ($\text{Costo} = 5 \cdot \text{FP} + 200 \cdot \text{FN}$):**  
+   El umbral operativo de decisión se congeló en el bloque temporal de validación (`val_policy`) respetando estrictamente la cuota operativa ($\text{FP} \le 100$). Bajo esta métrica obligatoria, el modelo oficial alcanza un costo en Test de **\$119.130** (frente a \$140.435 del baseline logístico), generando un **ahorro neto de \$21.305 (-15.2%)**.
+2. **Auditoría de Sensibilidad Financiera ($\text{Costo} = 5 \cdot \text{FP} + \sum \text{Monto}_{\text{FN}}$):**  
+   En la operación bancaria y de comercio electrónico real, cada fraude sustrae su ticket exacto. Evaluado bajo la distribución de montos transaccionales, el modelo final rescata entre el **79.57% y el 90.60% del capital en riesgo** (\$63.159 a \$71.891 salvados sobre Test), demostrando que la minimización del error formal se traduce directamente en protección patrimonial efectiva.
 
 ---
 
