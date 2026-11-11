@@ -30,7 +30,7 @@ from scipy.optimize import minimize
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
-from sklearn.preprocessing import OrdinalEncoder, StandardScaler
+from sklearn.preprocessing import OrdinalEncoder, StandardScaler, normalize
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
 from sklearn.cluster import MiniBatchKMeans
@@ -48,18 +48,18 @@ BASE_NUMERIC_COLS = ["score", "monto", "b", "c", "d", "e", "f", "h", "l", "m", "
 
 
 def build_clustering_features(df_train: pd.DataFrame, df_all: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
-    """Genera deficit_piso_cluster y distancia_log_cluster estrictamente ajustados en Train."""
-    print("  -> Generando clustering semántico k=50 sobre títulos...")
+    """Genera deficit_piso_cluster y distancia_log_cluster estrictamente ajustados en Train con SVD d=30."""
+    print("  -> Generando clustering semántico k=50 (SVD d=30 L2-norm) sobre títulos...")
     vec = TfidfVectorizer(max_features=5000, ngram_range=(1, 2), min_df=5, sublinear_tf=True, strip_accents="unicode")
     X_tr_tfidf = vec.fit_transform(df_train["i"].fillna(""))
-    svd = TruncatedSVD(n_components=10, random_state=42)
-    X_tr_svd = svd.fit_transform(X_tr_tfidf)
+    svd = TruncatedSVD(n_components=30, random_state=42)
+    X_tr_svd = normalize(svd.fit_transform(X_tr_tfidf))
 
     kmeans = MiniBatchKMeans(n_clusters=50, random_state=42, batch_size=2048)
     train_clusters = kmeans.fit_predict(X_tr_svd)
 
     X_all_tfidf = vec.transform(df_all["i"].fillna(""))
-    X_all_svd = svd.transform(X_all_tfidf)
+    X_all_svd = normalize(svd.transform(X_all_tfidf))
     all_clusters = kmeans.predict(X_all_svd)
 
     temp_train = pd.DataFrame({"cluster_i": train_clusters, "monto": df_train["monto"].values})
