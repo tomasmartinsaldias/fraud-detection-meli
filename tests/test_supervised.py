@@ -129,6 +129,13 @@ class SupervisedTests(unittest.TestCase):
             self.assertNotIn("consolidado", full)
             dev = build_full_dataset(root / "b.parquet", root / "f.parquet", None, splits=("train", "val"))
             self.assertEqual(set(dev.split), {"train", "val"})
+            # Test rules integration
+            rules = pd.DataFrame({"transaction_id": ids, "pct_heuristico_fraude": np.linspace(0, 1, 6)})
+            rules.to_parquet(root / "r.parquet")
+            full_rules = build_full_dataset(root / "b.parquet", root / "f.parquet", root / "a.parquet",
+                                            rules_path=root / "r.parquet", rule_cols=["pct_heuristico_fraude"],
+                                            exclude_anomaly_cols=["consolidado"])
+            self.assertIn("pct_heuristico_fraude", full_rules)
             with self.assertRaises(ValueError):
                 build_full_dataset(root / "b.parquet", None, root / "a.parquet", exclude_anomaly_cols=["nope"])
 

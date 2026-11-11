@@ -123,3 +123,96 @@ No usar resultados finales para una nueva ronda de ajuste: se necesitaría otro 
 ![Curva PR test final](figures_oficial/pr_test.svg)
 
 ![Curva ROC test final](figures_oficial/roc_test.svg)
+
+---
+
+# Fase 2: Afinamiento Iterativo y Exploración de Ensambles (Franco)
+
+> [!IMPORTANT]
+> **Protocolo de Blindaje de Prueba:**
+> Todos los experimentos documentados en esta sección son **pruebas iterativas de afinamiento, selección de variables y exploración de arquitecturas de ensamble**.
+> Por estricto protocolo metodológico, **NINGUNA de estas pruebas fue evaluada en el split de prueba (`test`)**. 
+> La partición `test` se mantiene 100% sellada e inviolada para evitar *Data Leakage* y sobreajuste acumulativo. Todas las decisiones y comparaciones se realizaron exclusivamente sobre la partición temporal de validación fuera de tiempo (OOT): `val_search` (60%), `val_calibration` (20%) y `val_policy` (20%).
+
+---
+
+## 1. Resumen Ejecutivo del Árbol de Hipótesis
+
+A partir de la línea de base oficial de Contrato C (`lgb_full_cmaes`, PR-AUC control: **0.480969** en este entorno), se desarrollaron 7 hipótesis de modelado estructuradas en un árbol de decisión:
+
+1. **H1 (Inyección Naive de Reglas Heurísticas en Árboles):** Se evaluó agregar `pct_heuristico_fraude` directamente al conjunto de 21 variables en un solo LightGBM.
+   * *Resultado:* **Rechazada.** El PR-AUC en `val_search` bajó a **0.477821** debido a la redundancia y canibalización de divisiones en los árboles entre `score_heuristico_fraude_10` y `pct_heuristico_fraude`.
+2. **H2 (Stacking Simple de 2 Variables):** Se entrenó un metamodelo de Regresión Logística con predicciones OOF de LightGBM + `pct_heuristico_fraude`.
+   * *Resultado:* **Neutral.** En espacio log-odds alcanzó un PR-AUC de **0.480977** (empate técnico en búsqueda) con un leve ahorro en costo de monto (\$4.994 vs \$5.027).
+3. **H3 (Stacking Enriquecido Multidimensional):** Desacoplamiento estructural de señales. Nivel 1: LightGBM ajustado únicamente sobre las 11 variables transaccionales de Forward Selection (PR-AUC 0.484730). Nivel 2: Metamodelo de 15 variables (probabilidades OOF, logit, 11 scores de anomalías no supervisadas y reglas).
+   * *Resultado:* **Aceptada.** El PR-AUC subió a **0.485172** y el costo operativo en `val_policy` cayó a **$19.695 - $19.875** (ahorro de hasta \$400 dólares).
+4. **H4 (Diversidad Tri-Modelo: LightGBM + XGBoost + Random Forest con Stacking L2):**
+   * Se aplicó Forward Selection y optimización CMA-ES de manera independiente para cada uno de los tres algoritmos.
+   * Se eliminó la variable colineal `score_heuristico_fraude_10` dejando únicamente `pct_heuristico_fraude`.
+   * *Resultado:* **🏆 ACEPTADA (NUEVO CAMPEÓN DEL PROYECTO).** El metamodelo alcanzó un **PR-AUC récord de 0.488871** en `val_search` (superando la marca previa de 0.4877 de Ian) y redujo el costo por monto en `val_policy` a **$4.187 - $4.432**.
+5. **H5 (Inclusión de Naive Bayes Generativo):** Se evaluó GaussianNB con `var_smoothing` para aportar descorrelación teórica ($r \approx 0.01$).
+   * *Resultado:* **Rechazada.** Las probabilidades colapsaron a valores extremos por falta de gaussianidad (ROC-AUC de 0.5001 y AP de 0.0518). El regularizador Lasso le asignó coeficiente $0.0000$, descartándolo automáticamente.
+6. **H6 (Segmentación Geográfica por País: BR, AR, REST):** Se entrenaron modelos independientes por geografía.
+   * *Resultado:* **Cancelada / Descartada.** La fragmentación de datos dañó la generalización en todos los sectores (Brasil cayó -0.0014, Argentina -0.0008 y países minoritarios colapsaron en -0.0723 de PR-AUC), duplicando las pérdidas por monto a \$6.329.
+7. **H7 (SMOTE Dirigido a Países Minoritarios):** Se duplicó la masa de fraudes en países minoritarios (REST) mediante interpolación k-NN en `train`.
+   * *Resultado:* **Rechazada.** No mejoró a los países minoritarios (+0.00039) y generó ruido de fronteras que provocó una caída severa de **-2.2 puntos porcentuales en Argentina** (PR-AUC cayó de 0.4727 a 0.4507) y elevó las pérdidas monetarias a \$5.404.
+
+---
+
+## 2. Registro Auditado de Experimentos de Afinamiento (Validación OOT)
+
+| ID | Arquitectura / Enfoque | Variables Nivel 1 & 2 | PR-AUC (`val_search`) | AP (`val_search`) | ROC-AUC (`val_search`) | PR-AUC Cal (`val_policy`) | Costo Fijo ($5\text{FP}+200\text{FN}$) | Costo Monto (`val_policy`) | Estado |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Control** | `lgb_full_cmaes` (Oficial Ian) | 21 vars (11 base + 10 anomalías) | 0.480969 | 0.481286 | 0.888972 | 0.317943 | $20.095 (99 FP, 59 TP, 98 FN) | $5.027 | Referencia |
+| **H1** | `lgb_full_plus_rules` | 22 vars (21 vars + `pct_heuristico`) | 0.477821 | 0.478140 | 0.887201 | 0.308612 | $20.290 (98 FP, 58 TP, 99 FN) | $5.120 | Rechazada |
+| **H2** | `stacking_lr_logit` | 2 vars en N2: `[logit_lgb, pct_heuristico]` | 0.480977 | 0.481294 | 0.888684 | 0.317507 | $20.290 (98 FP, 58 TP, 99 FN) | $4.994 | Neutral |
+| **H3** | `meta_lr_l2` (H3 Enriquecido) | 15 vars en N2 (`p_lgb`, logit, 11 anom, 2 reglas) | 0.485172 | 0.485489 | 0.891463 | 0.317649 | **$19.875** (95 FP, 60 TP, 97 FN) | $5.215 | Aceptada |
+| **H3 Lasso**| `meta_lr_l1_lasso` (H3) | 15 vars en N2 (Sparse weights) | 0.484991 | 0.485308 | 0.891436 | 0.315751 | **$19.695** (99 FP, **61 TP**, 96 FN) | $5.044 | Aceptada |
+| **H4 Base 2**| `base_xgboost_cmaes` | 12 vars transaccionales (Forward XGB) | 0.485547 | 0.485882 | 0.894478 | 0.298959 | $20.285 (97 FP, 58 TP, 99 FN) | **$4.187** | Aceptada |
+| **H4 Base 3**| `base_random_forest` | 14 vars transaccionales (Forward RF) | 0.462730 | 0.463095 | 0.885996 | 0.286295 | $21.280 (96 FP, 53 TP, 104 FN) | $7.588 | Aceptada |
+| **🏆 H4 Tri L2**| **`Meta-LR L2 (Tri-Modelo Global)`** | **18 vars en N2 (LGB + XGB + RF + 11 anom + pct)** | **0.488871** | **0.489185** | **0.893989** | **0.310663** | **$20.500** (100 FP, 57 TP, 100 FN) | **$4.432** | **CAMPEÓN VIGENTE** |
+| **H4 Tri L1**| `Meta-LR Lasso (Tri-Modelo)` | 18 vars en N2 (Sparse Feature Selection) | 0.488650 | 0.488966 | 0.894311 | 0.313087 | $20.500 (100 FP, 57 TP, 100 FN) | $4.432 | Aceptada |
+| **H5 Quad** | `Meta-LR L2 (Cuádruple con NB)`| 20 vars en N2 (LGB + XGB + RF + NB + anom + pct) | 0.488712 | 0.489027 | 0.894001 | 0.311397 | $20.300 (100 FP, 58 TP, 99 FN) | $4.415 | Rechazada |
+| **H6 Seg** | `Tri-Modelo Segmentado País` | Modelos independientes BR, AR y REST | 0.487163 | 0.487479 | 0.891804 | 0.302867 | $20.700 (100 FP, 56 TP, 101 FN) | $6.329 | Cancelada |
+| **H7 SMOTE** | `Tri-Modelo H4 + SMOTE REST` | Duplicación de fraudes REST en train | 0.486507 | 0.486823 | 0.893041 | 0.308712 | $20.900 (100 FP, 55 TP, 102 FN) | $5.404 | Rechazada |
+
+---
+
+## 3. Análisis de Correlación y Diversidad (H4 vs H5)
+
+### Correlación Lineal de Pearson (`val_search`):
+| Modelo | `p_lgb` | `p_xgb` | `p_rf` | `p_nb` |
+| :--- | :---: | :---: | :---: | :---: |
+| **`p_lgb`** | 1.0000 | 0.9785 | 0.9541 | -0.0036 |
+| **`p_xgb`** | 0.9785 | 1.0000 | 0.9697 | +0.0010 |
+| **`p_rf`** | 0.9541 | 0.9697 | 1.0000 | -0.0123 |
+| **`p_nb`** | -0.0036 | +0.0010 | -0.0123 | 1.0000 |
+
+### Correlación de Orden de Ranks (Spearman en `val_search`):
+| Modelo | `p_lgb` | `p_xgb` | `p_rf` | `p_nb` |
+| :--- | :---: | :---: | :---: | :---: |
+| **`p_lgb`** | 1.0000 | 0.9775 | **0.9319** | +0.0177 |
+| **`p_xgb`** | 0.9775 | 1.0000 | **0.9430** | +0.0298 |
+| **`p_rf`** | **0.9319** | **0.9430** | 1.0000 | -0.0043 |
+| **`p_nb`** | +0.0177 | +0.0298 | -0.0043 | 1.0000 |
+
+---
+
+## 4. Desglose Geográfico por Países (Slice Analysis en `val_search`)
+
+Comparativa entre el **Modelo Global Tri-Modelo H4**, los **Modelos Segmentados por País (H6)** y el **Efecto de SMOTE (H7)**:
+
+| Sector Geográfico | Registros `train` | Fraudes `train` | PR-AUC Modelo Global H4 | PR-AUC Segmentado H6 | PR-AUC SMOTE H7 | Conclusión Científica |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Brasil (`BR`)** | 79.324 | 4.484 (5.65%) | **0.49819** | 0.49679 (-0.0014) | 0.49731 (-0.0009) | El modelo global supera al especializado por masa crítica. |
+| **Argentina (`AR`)** | 21.435 | 857 (4.00%) | **0.47274** | 0.47197 (-0.0008) | 0.45072 (-0.0220) | SMOTE distorsiona fuertemente las fronteras locales (-2.2%). |
+| **Resto (`REST`)** | 4.241 | 105 (2.48%) | **0.38776** | 0.31548 (-0.0723) | 0.38815 (+0.0004) | Colapso segmentado severo; SMOTE no aporta valor real. |
+| **GLOBAL (`val_search`)** | 105.000 | 5.446 (5.19%) | **0.48887** | 0.48716 (-0.0017) | 0.48651 (-0.0024) | **El Tri-Modelo Global H4 sin perturbaciones es el óptimo.** |
+
+---
+
+## 5. Próximos Pasos para Afinar Aún Más Antes de Test
+
+1. **Afinamiento de Umbrales Multicriterio en `val_policy`:** Explorar si el umbral óptimo $\tau^*$ debe calibrarse de forma diferenciada por rango de monto (transacciones pequeñas vs montos críticos).
+2. **Evaluación de Reducción de Dimensionalidad en Anomalías:** Evaluar si las 11 anomalías pueden consolidarse en 4 componentes principales no lineales para reducir aún más la varianza en el metamodelo L2.
+3. **Decisión Final de Apertura de `test`:** Una vez congelada la arquitectura definitiva, se ejecutará el pipeline final una única vez sobre el split de prueba para reportar las métricas contractuales definitivas.

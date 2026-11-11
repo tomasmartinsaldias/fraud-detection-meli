@@ -21,7 +21,9 @@ import joblib
 import lightgbm as lgb
 import numpy as np
 import optuna
+import os
 import pandas as pd
+import random
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import precision_recall_curve, roc_curve
 
@@ -44,12 +46,14 @@ def fingerprint(path):
     return digest.hexdigest()
 
 
-def load_data(base_path, feature_path, anomaly_path, splits, exclude_anomaly_cols=()):
+def load_data(base_path, feature_path, anomaly_path, splits, exclude_anomaly_cols=(), rules_path=None, rule_cols=None):
     if not base_path.is_file():
         raise FileNotFoundError(f"Falta {base_path}. Obtener el Parquet oficial o ejecutar src/make_dataset.py.")
     # Predicate pushdown: do not materialize test labels during development.
     base = pd.read_parquet(base_path, filters=[("split", "in", splits)])
     check_ids(base)
+    if "is_na_bc" not in base.columns and "c" in base.columns:
+        base["is_na_bc"] = base["c"].isna().astype(int)
     df, feature_cols, anomaly_cols = base, [], []
     for path, kind in ((feature_path, "features"), (anomaly_path, "anomalies")):
         if path is None:
@@ -78,7 +82,26 @@ def load_data(base_path, feature_path, anomaly_path, splits, exclude_anomaly_col
             feature_cols = columns
         else:
             anomaly_cols = columns
-    return df, feature_cols, anomaly_cols
+
+    rules_cols = []
+    if rules_path is not None:
+        if not rules_path.is_file():
+            raise FileNotFoundError(f"Falta {rules_path}; usar --rules none para omitir explícitamente.")
+        table = pd.read_parquet(rules_path)
+        check_ids(table)
+        table = table.loc[table.transaction_id.isin(base.transaction_id)].copy()
+        if rule_cols:
+            unknown = set(rule_cols) - set(table)
+            if unknown:
+                raise ValueError(f"Columnas de reglas inexistentes en {rules_path}: {sorted(unknown)}")
+            table = table[["transaction_id"] + list(rule_cols)]
+        columns = [c for c in table if c != "transaction_id"]
+        if not columns:
+            raise ValueError(f"Archivo de reglas sin predictoras: {rules_path}")
+        df = merge_features(df, table)
+        rules_cols = columns
+
+    return df, feature_cols, anomaly_cols, rules_cols
 
 
 def build_full_dataset(
@@ -87,14 +110,16 @@ def build_full_dataset(
     anom_path="data/features/scores_anomalias.parquet",
     splits=("train", "val", "test"),
     exclude_anomaly_cols=(),
+    rules_path=None,
+    rule_cols=(),
 ) -> pd.DataFrame:
     """Integración estándar de Contrato C: merge 1:1 por transaction_id.
 
     Por defecto integra las tres particiones, como el código del contrato.
     El entrenamiento (develop) la invoca solo con train/val para no leer test.
     """
-    base_path, feat_path, anom_path = (None if p is None else Path(p) for p in (base_path, feat_path, anom_path))
-    df, _, _ = load_data(base_path, feat_path, anom_path, list(splits), exclude_anomaly_cols)
+    base_path, feat_path, anom_path, rules_path = (None if p is None else Path(p) for p in (base_path, feat_path, anom_path, rules_path))
+    df, _, _, _ = load_data(base_path, feat_path, anom_path, list(splits), exclude_anomaly_cols, rules_path, rule_cols)
     n_base = len(pd.read_parquet(base_path, columns=["transaction_id"], filters=[("split", "in", list(splits))]))
     assert len(df) == n_base, "Error: El merge alteró la cantidad de filas."
     assert df["transaction_id"].nunique() == n_base, "Error: Hay transaction_id duplicados."
@@ -112,6 +137,8 @@ def lgb_metric(y, prediction):
 
 
 def search(x_train, y_train, x_val, y_val, sampler_name, args, out):
+    random.seed(args.seed)
+    np.random.seed(args.seed)
     sampler = (optuna.samplers.TPESampler(seed=args.seed) if sampler_name == "tpe"
                else optuna.samplers.CmaEsSampler(seed=args.seed))
     pruner = optuna.pruners.MedianPruner(n_startup_trials=5, n_warmup_steps=50, interval_steps=10)
@@ -165,7 +192,17 @@ def export_curves(out, name, y, p):
 
 
 def develop(args):
-    df, feat, anom = load_data(args.base, args.features, args.anomalies, ["train", "val"], args.exclude_anomaly_cols)
+    os.environ["PYTHONHASHSEED"] = str(args.seed)
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    rules = getattr(args, "rules", None)
+    rule_cols = getattr(args, "rule_cols", [])
+    samplers = getattr(args, "samplers", ["tpe", "cmaes"])
+    target_groups = getattr(args, "groups", None)
+
+    df, feat, anom, rules_cols = load_data(
+        args.base, args.features, args.anomalies, ["train", "val"], args.exclude_anomaly_cols, rules, rule_cols
+    )
     validate_development(df)
     train = df.loc[df.split == "train"]
     tune, calibration, policy = validation_blocks(df.loc[df.split == "val"])
@@ -179,6 +216,14 @@ def develop(args):
         groups["transactional"] = feat if "score" in feat else list(dict.fromkeys(raw + feat))
     if anom:
         groups["full"] = list(dict.fromkeys(groups.get("transactional", raw) + anom))
+    if rules_cols:
+        groups["full_plus_rules"] = list(dict.fromkeys(groups.get("full", groups.get("transactional", raw)) + rules_cols))
+
+    if target_groups:
+        groups = {k: v for k, v in groups.items() if k in target_groups}
+        if not groups:
+            raise ValueError(f"Ninguno de los grupos solicitados {target_groups} está disponible.")
+
     args.output.mkdir(parents=True, exist_ok=False)
     candidates, comparison = {}, []
     for name, columns in groups.items():
@@ -192,7 +237,7 @@ def develop(args):
                   "subsample": .8, "colsample_bytree": .8}
         model = lgb_model(params, args.seed, args.jobs).fit(x_train, train.fraude)
         candidates[f"lgb_reference_{name}"] = {"model": model, "encoder": encoder, "params": params}
-        for sampler in ("tpe", "cmaes"):
+        for sampler in samplers:
             model, params = search(x_train, train.fraude, x_val, tune.fraude, sampler, args,
                                    args.output / f"trials_{name}_{sampler}.json")
             candidates[f"lgb_{name}_{sampler}"] = {"model": model, "encoder": encoder, "params": params}
@@ -239,11 +284,12 @@ def develop(args):
                       map(float, candidate["model"].feature_importances_))))
 
     paths = {k: str(v.resolve()) if v else None for k, v in
-             (("base", args.base), ("features", args.features), ("anomalies", args.anomalies))}
+             (("base", args.base), ("features", args.features), ("anomalies", args.anomalies), ("rules", rules))}
     # Hash development rows only: test data is not inspected to create the model.
     data_hash = hashlib.sha256(pd.util.hash_pandas_object(df, index=False).values.tobytes()).hexdigest()
     manifest = {"winner": winner, "seed": args.seed, "paths": paths, "development_hash": data_hash,
-                "exclude_anomaly_cols": list(args.exclude_anomaly_cols), "python": platform.python_version(),
+                "exclude_anomaly_cols": list(args.exclude_anomaly_cols), "rule_cols": list(rule_cols) if rule_cols else [],
+                "python": platform.python_version(),
                 "versions": {p: importlib.metadata.version(p) for p in ("numpy", "pandas", "scikit-learn", "lightgbm", "optuna", "cmaes")},
                 "rows": {"train": len(train), "val_search": len(tune), "val_calibration": len(calibration), "val_policy": len(policy)},
                 "comparison": comparison, "policy_validation": policies, "loss_fraction": args.loss_fraction,
@@ -280,14 +326,16 @@ def evaluate_test(args):
     bundle = joblib.load(args.bundle)
     paths = {k: Path(v) if v else None for k, v in manifest["paths"].items()}
     exclude = manifest.get("exclude_anomaly_cols", [])
-    dev, _, _ = load_data(paths["base"], paths["features"], paths["anomalies"], ["train", "val"], exclude)
+    rule_cols = manifest.get("rule_cols", [])
+    rules_path = paths.get("rules")
+    dev, _, _, _ = load_data(paths["base"], paths["features"], paths["anomalies"], ["train", "val"], exclude, rules_path, rule_cols)
     current_hash = hashlib.sha256(pd.util.hash_pandas_object(dev, index=False).values.tobytes()).hexdigest()
     if current_hash != manifest["development_hash"]:
         raise ValueError("Los datos/features de desarrollo cambiaron desde el entrenamiento.")
     # Record consumption BEFORE reading test, also preventing concurrent evaluation.
     with lock.open("x", encoding="utf-8") as stream:
         json.dump({"bundle_sha256": manifest["bundle_sha256"]}, stream)
-    df, _, _ = load_data(paths["base"], paths["features"], paths["anomalies"], ["test"], exclude)
+    df, _, _, _ = load_data(paths["base"], paths["features"], paths["anomalies"], ["test"], exclude, rules_path, rule_cols)
     dates = pd.to_datetime(df.fecha, utc=True, errors="raise")
     if df.empty or dates.isna().any() or dates.min() < pd.Timestamp(manifest["val_end"]):
         raise ValueError("Test vacío o no posterior a val.")
@@ -315,6 +363,14 @@ def main():
     parser.add_argument("--base", type=Path, default=Path("data/processed/dataset_base.parquet"))
     parser.add_argument("--features", type=optional_path, default=Path("data/features/features_seleccionadas_end_to_end.parquet"))
     parser.add_argument("--anomalies", type=optional_path, default=Path("data/features/scores_anomalias.parquet"))
+    parser.add_argument("--rules", type=optional_path, default=None,
+                        help="Ruta al Parquet de reglas de asociación satélite (opcional).")
+    parser.add_argument("--rule-cols", nargs="*", default=["pct_heuristico_fraude"],
+                        help="Columnas de reglas a incorporar.")
+    parser.add_argument("--samplers", nargs="+", default=["tpe", "cmaes"],
+                        choices=["tpe", "cmaes"], help="Samplers de Optuna a ejecutar.")
+    parser.add_argument("--groups", nargs="*", default=None,
+                        help="Grupos de features a evaluar (p. ej. full full_plus_rules).")
     parser.add_argument("--output", type=Path, default=Path("models/supervised/first_run"))
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--trials", type=int, default=20, help="Trials por sampler y conjunto de variables.")
