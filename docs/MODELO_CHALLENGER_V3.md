@@ -76,7 +76,9 @@ La evaluación en Test se realizó posteriormente con carácter **estrictamente 
 | **$k = 100$** | 0.4614 | 0.4364 | $+0.0039$ | Comienza a fragmentar en clusters con pocas ventas. |
 | **$k = 150$** | 0.4598 | 0.4373 | $+0.0048$ | Sobre-segmentación (ruido de vocabulario infrecuente). |
 
-> **Nota sobre Consistencia:** En el pipeline formal de Forward Selection paso a paso (con 120 estimadores fijos y parada temprana), Challenger v3 se consolida oficialmente con **PR-AUC Test = 0.4386 (+61 bps)**.
+> **Nota sobre la Evolución y Calibración:**  
+> El score de **PR-AUC Test = 0.4386 (+61 bps)** reportado en la tabla superior corresponde a la corrida preliminar del pipeline de *Forward Selection* con hiperparámetros base fijos (120 árboles y parada temprana estática).  
+> Posteriormente, al integrarse en el pipeline productivo completo con optimización bayesiana de hiperparámetros (253 árboles, learning rate afinado) y normalización $L_2$ con $d=30$ en SVD, el modelo monomodal Challenger v3 alcanzó su rendimiento definitivo de **`val_search = 0.48571`** y **`PR-AUC Test = 0.44644`** (+20.9 bps sobre el baseline de Ian `0.44435`), tal como se registra canónicamente en [`RESULTADOS_OFICIAL.md`](RESULTADOS_OFICIAL.md) y [`EXPERIMENTO_CUATRI_MODELO_STACKING.md`](EXPERIMENTO_CUATRI_MODELO_STACKING.md).
 
 ---
 

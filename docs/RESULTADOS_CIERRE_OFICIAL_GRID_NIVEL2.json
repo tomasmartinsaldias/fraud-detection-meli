@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-11-11T14:18:10Z",
+  "ganador_paso2": "Matriz B (Desacoplada)",
+  "familia_optima": "Lasso L1",
+  "C_optimo": 0.3,
+  "l1_ratio_optimo": 1.0,
+  "val_search_ganador": 0.49211569898556107,
+  "justificacion": "Matriz B empat\u00f3 o super\u00f3 el umbral de parsimonia (Delta = +2.2 bps < +3.0 bps). Se adopta la arquitectura desacoplada para evitar colinealidad en Nivel 2.",
+  "metricas_test": {
+    "pr_auc": 0.4491987854175508,
+    "delta_vs_ian_test": 0.004848785417550794,
+    "roc_auc": 0.8877155085573832,
+    "brier_score": 0.03271127543691111,
+    "log_loss": 0.12556275044100754,
+    "tau_optimo": 0.093,
+    "tp": 706,
+    "fp": 2218,
+    "fn": 330,
+    "event_recall_pct": 68.14671814671814,
+    "capital_recovery_pct": 79.56549536061016,
+    "capital_salvado": 63159.130000000005,
+    "capital_total": 79380.04999999999
+  }
+}
