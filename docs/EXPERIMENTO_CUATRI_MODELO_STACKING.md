@@ -127,8 +127,38 @@ Al evaluar bajo el umbral de corte de costo óptimo ($\tau^* = 0.0314$):
 
 ---
 
-## 6. Conclusiones y Defensa Metodológica
+## 6. Resolución Metodológica Definitiva: Pasos 1, 2 y 3
+
+Para resolver la disyuntiva entre la arquitectura acoplada y desacoplada de forma 100% blindada, se ejecutó el plan formal en [`scripts/paso1_paso2_grid_search_nivel2.py`](file:///C:/Users/tomas/Desktop/universidad/Ciencia de Datos/Taller de Resolución de Problemas II/fraud-detection-meli/scripts/paso1_paso2_grid_search_nivel2.py):
+
+### Paso 1: Grid Search Fino en Nivel 2 (Estrictamente en `val_search`)
+Se comparó en paralelo la **Matriz A (Acoplada)** contra la **Matriz B (Desacoplada)** sobre 22 configuraciones de regularización (10 valores de Lasso $C \in [0.01, 0.50]$ y 12 combinaciones de ElasticNet $C \times l_1$):
+
+* **Top 1 Matriz A (Acoplada):** ElasticNet ($l_1=0.5, C=0.20$) $\to$ `val_search` = **`0.49234`**
+* **Top 1 Matriz B (Desacoplada):** Lasso L1 ($C=0.30$) $\to$ `val_search` = **`0.49212`**
+
+### Paso 2: Criterio de Selección Formal (A ciegas de Test)
+* **Diferencia observada:** $\Delta(\text{Matriz A} - \text{Matriz B}) = +0.00022$ (+2.2 bps).
+* **Regla de decisión automática:** Dado que $\Delta = +2.2\text{ bps} < +3.0\text{ bps}$ (umbral de tolerancia para justificar colinealidad), se activa la regla de parsimonia.
+* **Modelo Ganador Congelado:** **Matriz B (Desacoplada) con Lasso L1 $C=0.30$**.
+
+### Paso 3: Inferencia Única en Test Final con el Modelo Congelado
+* **PR-AUC en Test:** **`0.44920`** (+48.5 bps sobre el control productivo de Ian `0.44435`).
+* **ROC-AUC en Test:** **`0.88772`** (ranking global superior).
+* **Brier Score en Test:** **`0.03271`** (menor error cuadrático y calibración sólida).
+* **Log-Loss en Test:** **`0.12556`**.
+* **Política de Costos bajo $\tau^* = 0.0930$:**
+  * **Falsos Positivos:** **2,218** (reducción masiva de fricción operativa frente a los >5,000 iniciales).
+  * **Falsos Negativos:** 330.
+  * **Event Recall en Fraude:** **68.15%**.
+  * **Capital Recovery Rate:** **79.57%** (\$63,159.13 recuperados de \$79,380.05).
+
+Artefacto serializado: [`docs/RESULTADOS_CIERRE_OFICIAL_GRID_NIVEL2.json`](file:///C:/Users/tomas/Desktop/universidad/Ciencia de Datos/Taller de Resolución de Problemas II/fraud-detection-meli/docs/RESULTADOS_CIERRE_OFICIAL_GRID_NIVEL2.json).
+
+---
+
+## 7. Conclusiones y Defensa Metodológica
 
 1. **Blindaje Metodológico Total:** Ninguna decisión de hiperparámetros ni selección de features se tomó mirando Test. El protocolo OOT de tres bloques (`val_search`, `val_calibration`, `val_policy`) se respetó al 100%.
-2. **Superación Concurrente:** El modelo no transa validación por test; bate el récord de desarrollo (`0.49101`) y valida fuera de muestra quebrando la barrera de `0.4500` con **`0.45093`** en Test.
-3. **Sinergia Grupal:** El resultado final consolida el Feature Engineering y clustering de Tomás, la infraestructura y contratos de Ian, y el framework de stacking de Franco.
+2. **Superación Concurrente:** El modelo no transa validación por test; bate el récord de desarrollo (`0.49212` en Val OOT) y valida sólidamente fuera de muestra (+48.5 bps en Test sobre el Baseline de Ian).
+3. **Sinergia Grupal:** El resultado final consolida el Feature Engineering y clustering semántico de Tomás, la infraestructura y contratos de Ian, y el framework de stacking de Franco.
