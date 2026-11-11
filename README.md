@@ -53,5 +53,6 @@ Los modelos y datos generados quedan locales, ignorados por Git.
 
 - [Auditoría Metodológica de Drift y Anatomía del Error (Val vs Test)](docs/DIAGNOSTICO_DRIFT.md): análisis de covariate shift (PSI, $D_{KS}$), intervalos bootstrap al 95%, desfasaje de días de la semana (corte del lunes 13/04 y ausencia de miércoles) y métrica de Capital Recovery Rate (90.4%).
 - [Modelo Challenger v3 — Hipótesis, Forward Selection y Negocio](docs/MODELO_CHALLENGER_V3.md): informe unificado que consolida la hipótesis de clustering semántico en títulos `i`, la traza paso a paso del Forward Stepwise Selection formal (`colsample=1.0`, `min_delta=0.0003`, `patience=2`), la optimización de $k=50$ clusters y la evaluación final en Test elevando el PR-AUC a 0.4642 en Validación y 0.4386 en Test (+61 bps).
+- [Stacking Cuatri-Modelo y Récord Absoluto de PR-AUC](docs/EXPERIMENTO_CUATRI_MODELO_STACKING.md): ensamble de Nivel 1 con LightGBM, XGBoost, CatBoost y Random Forest sobre las 13 variables limpias de Challenger v3, combinado con Metamodelo Lasso L1 de Nivel 2 (probabilidades OOF + 11 anomalías no supervisadas + reglas heurísticas). Alcanza **0.4912 en Validación** y **0.4506 en Test**, quebrando por primera vez la barrera de 0.4500 fuera de muestra.
 
 Las dependencias de pruebas están en `requirements-dev.txt`.
