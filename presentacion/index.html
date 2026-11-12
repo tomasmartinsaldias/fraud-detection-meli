@@ -219,17 +219,17 @@
 
 <!-- SLIDE 2: FEATURE ENGINEERING 1 (PRIMERA OLA) -->
 <section class="slide">
-  <h2>El Forward Selection depura 51 candidatas y aporta +130 bps al modelo</h2>
+  <h2>El Forward Selection aísla 11 variables clave en ratios, madrugada y texto</h2>
   <div class="split">
     <div class="artefact-container">
       <img src="figures/fig1_embudo_seleccion.svg" alt="Embudo de Selección de Variables Ola 1">
     </div>
     <div class="context-pane">
       <div class="takeaway-bullet">
-        <p><strong>51 candidatas a 11 seleccionadas:</strong> el algoritmo poda el 78% del ruido de forma orgánica.</p>
+        <p><strong>4 dominios de ingeniería:</strong> ratios monetarios, patrón nocturno (<code>es_madrugada</code>), interacción no lineal (<code>prod_b_log_c</code>) y Naive Bayes de texto (<code>score_texto_nb</code>).</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Salto inmediato:</strong> PR-AUC de 0.4443 (+130 bps) con señales temporales y texto sin leakage.</p>
+        <p><strong>Poda de 51 a 11:</strong> el algoritmo descarta 40 candidatas redundantes y asegura +130 bps directos en validación OOT.</p>
       </div>
     </div>
   </div>
@@ -260,75 +260,26 @@
   <p class="footnote">Evaluación univariada en validación OOT con preprocesamiento híbrido y 256 muestras por partición.</p>
 </section>
 
-<!-- SLIDE 4: AUDITORÍA DE RESIDUOS (FRAUDE HORMIGA) -->
+<!-- SLIDE 4: AUDITORÍA DE RESIDUOS Y SOLUCIÓN SEMÁNTICA (FRAUDE HORMIGA) -->
 <section class="slide">
-  <h2>La auditoría de residuos aísla un punto ciego crítico en compras menores a $20</h2>
+  <h2>El fraude hormiga menor a $20 se resuelve con clustering semántico de precios</h2>
   <div class="split">
     <div class="artefact-container">
       <img src="figures/fig2_residuos_fraude_hormiga.svg" alt="Auditoría de Residuos y Fraude Hormiga">
     </div>
     <div class="context-pane">
       <div class="takeaway-bullet">
-        <p><strong>Fraude hormiga:</strong> el modelo base cazaba compras caras ($75), pero se le fugaban medianas de $22.</p>
+        <p><strong>Punto ciego detectado:</strong> el modelo cazaba compras de $75, pero se le fugaban fraudes chicos con mediana de $22.</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>El disparador:</strong> la fuga en tickets chicos motiva el clustering semántico para comparar precio contra categoría.</p>
+        <p><strong>Solución semántica (13 vars):</strong> clustering de títulos (d=30, k=50) fija precios de referencia y rescata +26 bps.</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Auditoría sobre el conjunto de desarrollo Validación (Train a Val) para blindar contra Test Snooping.</p>
+  <p class="footnote">Auditoría en validación OOT; variables aprobadas: deficit_piso_cluster (+19 bps) y distancia_log_cluster (+25 bps).</p>
 </section>
 
-<!-- SLIDE 5: FEATURE ENGINEERING 2 (SEMÁNTICA NLP) -->
-<section class="slide">
-  <h2>El clustering semántico crea variables de precio que atrapan el fraude hormiga</h2>
-  <div class="split">
-    <div class="context-pane">
-      <table class="clean-table">
-        <thead>
-          <tr>
-            <th>Variable Candidata</th>
-            <th>Mecanismo Técnico</th>
-            <th>Veredicto OOT</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>deficit_piso_cluster</code></td>
-            <td>Penalización precio vs mediana</td>
-            <td style="color: var(--accent); font-weight:700;">Aprobada (+19 bps)</td>
-          </tr>
-          <tr>
-            <td><code>distancia_log_cluster</code></td>
-            <td>Desvío logarítmico simétrico</td>
-            <td style="color: var(--accent); font-weight:700;">Aprobada (+25 bps)</td>
-          </tr>
-          <tr>
-            <td><code>volumen_tx_60m</code></td>
-            <td>Concurrencia temporal 1h</td>
-            <td style="color: #d93025;">Descartada (-10 bps)</td>
-          </tr>
-          <tr>
-            <td><code>burst_micro_15m</code></td>
-            <td>Ráfagas compras menores Q25</td>
-            <td style="color: #d93025;">Descartada (-56 bps)</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="context-pane">
-      <div class="takeaway-bullet">
-        <p><strong>Clustering NLP (d=30):</strong> k=50 clusters sobre títulos para estimar precios base por categoría.</p>
-      </div>
-      <div class="takeaway-bullet">
-        <p><strong>Núcleo de 13 variables:</strong> Forward Selection adopta solo las anomalías semánticas y descarta colineales.</p>
-      </div>
-    </div>
-  </div>
-  <p class="footnote">Clustering ajustado estrictamente en Train; descarte metodológico de colinealidad r=-0.994 para evitar split dilution.</p>
-</section>
-
-<!-- SLIDE 6: EL CHAMPION (STACKING L1) -->
+<!-- SLIDE 5: EL CHAMPION (STACKING L1) -->
 <section class="slide">
   <h2>La regularización L1 apaga colinealidad y supera la barrera de 0.4500 de PR-AUC</h2>
   <div class="split">
@@ -347,7 +298,7 @@
   <p class="footnote">Validación cruzada Out-Of-Fold (OOF) interna de 5 folds sin filtración cronológica.</p>
 </section>
 
-<!-- SLIDE 7: LA DECISIÓN DEL UMBRAL (CURVA S) -->
+<!-- SLIDE 6: LA DECISIÓN DEL UMBRAL (CURVA S) -->
 <section class="slide">
   <h2>Adaptar el umbral al ticket rescata +8.5 puntos de capital sin elevar rechazos</h2>
   <div class="split">
@@ -366,7 +317,7 @@
   <p class="footnote">Parámetros sigmoideos: t_max=0.40, t_min=0.18, inflexión M0=$23.02, dispersión sigma=35.</p>
 </section>
 
-<!-- SLIDE 8: LA ARQUITECTURA TRIPARTITA (SEMÁFORO 2FA) -->
+<!-- SLIDE 7: LA ARQUITECTURA TRIPARTITA (SEMÁFORO 2FA) -->
 <section class="slide">
   <h2>La autenticación 2FA alcanza el 80% de recupero con resiliencia probada</h2>
   <div class="split">
@@ -389,7 +340,7 @@
   <p class="footnote">Evaluación sobre 22.500 casos de Test con semáforo tripartito y fallback automático a Curva S.</p>
 </section>
 
-<!-- SLIDE 9: THE ASK (DECISIÓN Y CIERRE) -->
+<!-- SLIDE 8: THE ASK (DECISIÓN Y CIERRE) -->
 <section class="slide">
   <h2>Proponemos activar la Curva S en backend y desplegar 2FA en checkout</h2>
   <div class="split">
