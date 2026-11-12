@@ -415,37 +415,49 @@
 
 <!-- SLIDE 6: EL CHAMPION (STACKING L1) -->
 <section class="slide" data-steps="2">
-  <h2>El Stacking cuatri-modelo y la regularización L1 quiebran la barrera de 0.4500</h2>
+  <h2>El Champion elegido en validación supera 0.4500 y la parsimonia L1 fija el récord</h2>
   <div class="split">
-    <div style="display: flex; flex-direction: column; gap: 3vh; justify-content: center;">
-      <div style="display: flex; gap: 3.5vw; align-items: flex-end;">
-        <div>
-          <p class="footnote" style="text-transform: uppercase;">Techo Monomodal</p>
-          <div style="font-size: clamp(2.2rem, 3.8vw, 3.2rem); font-weight: 700; color: var(--ink-muted); line-height: 1.1;">0.4464</div>
-          <p class="footnote" style="margin-top: 0.5vh;">Límite de árboles individuales</p>
+    <div style="display: flex; flex-direction: column; gap: 2.5vh; justify-content: center;">
+      <!-- BLOQUE 1: CHAMPION DE PROTOCOLO (PASO 0) -->
+      <div style="border-left: 3.5px solid var(--accent); padding-left: 1.2vw;">
+        <p class="footnote" style="text-transform: uppercase; color: var(--accent); font-weight: 700;">1. Champion Oficial de Protocolo (Lasso C=0.20)</p>
+        <div style="display: flex; gap: 2.8vw; align-items: baseline; margin-top: 0.6vh;">
+          <div>
+            <div style="font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; color: var(--accent); line-height: 1.1;">0.4922</div>
+            <p class="footnote">Récord en Validación OOT</p>
+          </div>
+          <div style="font-size: 1.4rem; color: var(--ink-muted);">&rarr;</div>
+          <div>
+            <div style="font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; color: var(--ink-secondary); line-height: 1.1;">0.4501</div>
+            <p class="footnote">Supera 0.4500 en Test</p>
+          </div>
         </div>
-        <div style="font-size: 2.2rem; color: var(--accent); padding-bottom: 1.2vh; font-weight: 700;">&rarr;</div>
-        <div>
-          <p class="footnote" style="text-transform: uppercase; color: var(--accent); font-weight: 700;">Récord Test OOT</p>
-          <div class="hero-metric"><span>0.4509</span></div>
-          <p class="footnote metric-delta" style="color: var(--accent); font-weight: 700; margin-top: 0.5vh;">+195.8 bps con Lasso L1</p>
-        </div>
+        <p class="footnote" style="margin-top: 0.4vh; color: var(--ink-muted);">Elegido formalmente a ciegas en validación antes de abrir Test.</p>
       </div>
-      <div class="step-bullet-focus" style="border-left: 3.5px solid var(--accent); padding-left: 1.2vw; margin-top: 0.5vh;">
-        <p class="footnote" style="font-weight: 700; color: var(--accent); font-size: 1rem;">
-          Champion Formal de Protocolo: Val 0.4922 &rarr; Test 0.4501
-        </p>
-        <p class="footnote" style="margin-top: 0.3vh;">
-          Seleccionado a ciegas en validación; ambos ensambles rompieron la barrera sin test snooping.
-        </p>
+
+      <!-- BLOQUE 2: EXPERIMENTO PARSIMONIA (PASO 1) -->
+      <div class="step-bullet-focus" style="border-left: 3.5px solid #FFD100; padding-left: 1.2vw;">
+        <p class="footnote" style="text-transform: uppercase; color: var(--accent); font-weight: 700;">2. Hallazgo: ¿Forzar a Lasso a apagar coeficientes? (C=0.10)</p>
+        <div style="display: flex; gap: 2.8vw; align-items: baseline; margin-top: 0.6vh;">
+          <div>
+            <div style="font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; color: #d93025; line-height: 1.1;">0.4910</div>
+            <p class="footnote">Empeora en Val (-11 bps)</p>
+          </div>
+          <div style="font-size: 1.4rem; color: var(--accent);">&rarr;</div>
+          <div>
+            <div class="hero-metric" style="font-size: clamp(2rem, 3.4vw, 2.8rem);"><span style="background: linear-gradient(180deg, transparent 65%, #FFE600 65%);">0.4509</span></div>
+            <p class="footnote" style="color: var(--accent); font-weight: 700;">Récord Test (+195.8 bps)</p>
+          </div>
+        </div>
+        <p class="footnote" style="margin-top: 0.4vh; color: var(--ink-muted);">Esparcidad extrema: sacrifica optimismo y maximiza generalización.</p>
       </div>
     </div>
     <div class="context-pane">
       <div class="takeaway-bullet">
-        <p><strong>Nivel 1 (4 familias):</strong> LightGBM, XGBoost, CatBoost y Random Forest desacoplados con 5-fold OOF.</p>
+        <p><strong>Rigor de cátedra:</strong> el modelo oficial es el de validación (0.4922), respetando el protocolo sin test snooping.</p>
       </div>
       <div class="takeaway-bullet step-bullet-focus">
-        <p><strong>Nivel 2 (Parsimonia L1):</strong> Lasso apaga redundancias y fija el récord en 0.4509 con máxima transferencia.</p>
+        <p><strong>Lección metodológica:</strong> forzar coeficientes a cero reduce overfitting y logra la mejor transferencia fuera de muestra.</p>
       </div>
     </div>
   </div>
