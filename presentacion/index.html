@@ -39,7 +39,31 @@
     gap: 2.5vh;
   }
   .slide.active { display: flex; }
-  .slide.active > * { animation: reveal 300ms var(--ease) both; }
+  .slide.active h1, .slide.active h2 {
+    animation: reveal 300ms var(--ease) both;
+  }
+  .slide.active .artefact-container {
+    animation: reveal 340ms var(--ease) 70ms both;
+  }
+  .slide.active .hero-metric {
+    animation: reveal 320ms var(--ease) 90ms both;
+  }
+  .slide.active .hero-metric span {
+    display: inline-block;
+    animation: marker-wipe 420ms var(--ease) 180ms both;
+  }
+  .slide.active .takeaway-bullet:nth-child(1) {
+    animation: reveal 320ms var(--ease) 140ms both;
+  }
+  .slide.active .takeaway-bullet:nth-child(2) {
+    animation: reveal 320ms var(--ease) 210ms both;
+  }
+  .slide.active .clean-table {
+    animation: reveal 320ms var(--ease) 100ms both;
+  }
+  .slide.active .footnote, .slide.active .brand {
+    animation: reveal 280ms var(--ease) 250ms both;
+  }
 
   h1, h2 {
     color: var(--ink-secondary);
@@ -151,11 +175,24 @@
   }
 
   @keyframes reveal {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: none; }
   }
+
+  @keyframes marker-wipe {
+    from { clip-path: inset(0 100% 0 0); }
+    to { clip-path: inset(0 0 0 0); }
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 280ms;
+    animation-timing-function: var(--ease);
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .slide.active > *, #progress { animation: none; transition: none; }
+    .slide.active *, #progress { animation: none !important; transition: none !important; }
+    ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
   }
 </style>
 </head>
@@ -381,9 +418,20 @@
   const slides = [...document.querySelectorAll('.slide')];
   let i = 0;
   function show(n) {
-    i = Math.max(0, Math.min(slides.length - 1, n));
-    slides.forEach((s, k) => s.classList.toggle('active', k === i));
-    document.getElementById('progress').style.width = ((i + 1) / slides.length * 100) + '%';
+    const next = Math.max(0, Math.min(slides.length - 1, n));
+    if (next === i && slides[i].classList.contains('active')) return;
+
+    const render = () => {
+      i = next;
+      slides.forEach((s, k) => s.classList.toggle('active', k === i));
+      document.getElementById('progress').style.width = ((i + 1) / slides.length * 100) + '%';
+    };
+
+    if (!document.startViewTransition) {
+      render();
+    } else {
+      document.startViewTransition(render);
+    }
   }
   document.addEventListener('keydown', e => {
     if (['ArrowRight', 'PageDown', ' '].includes(e.key)) show(i + 1);
