@@ -414,22 +414,42 @@
 </section>
 
 <!-- SLIDE 6: EL CHAMPION (STACKING L1) -->
-<section class="slide">
+<section class="slide" data-steps="2">
   <h2>El Stacking cuatri-modelo y la regularización L1 quiebran la barrera de 0.4500</h2>
   <div class="split">
-    <div class="artefact-container">
-      <img src="figures/fig_pr_comparativa_test.svg" alt="Stacking Cuatri-Modelo y Récord de Test">
+    <div style="display: flex; flex-direction: column; gap: 3vh; justify-content: center;">
+      <div style="display: flex; gap: 3.5vw; align-items: flex-end;">
+        <div>
+          <p class="footnote" style="text-transform: uppercase;">Techo Monomodal</p>
+          <div style="font-size: clamp(2.2rem, 3.8vw, 3.2rem); font-weight: 700; color: var(--ink-muted); line-height: 1.1;">0.4464</div>
+          <p class="footnote" style="margin-top: 0.5vh;">Límite de árboles individuales</p>
+        </div>
+        <div style="font-size: 2.2rem; color: var(--accent); padding-bottom: 1.2vh; font-weight: 700;">&rarr;</div>
+        <div>
+          <p class="footnote" style="text-transform: uppercase; color: var(--accent); font-weight: 700;">Récord Test OOT</p>
+          <div class="hero-metric"><span>0.4509</span></div>
+          <p class="footnote metric-delta" style="color: var(--accent); font-weight: 700; margin-top: 0.5vh;">+195.8 bps con Lasso L1</p>
+        </div>
+      </div>
+      <div class="step-bullet-focus" style="border-left: 3.5px solid var(--accent); padding-left: 1.2vw; margin-top: 0.5vh;">
+        <p class="footnote" style="font-weight: 700; color: var(--accent); font-size: 1rem;">
+          Champion Formal de Protocolo: Val 0.4922 &rarr; Test 0.4501
+        </p>
+        <p class="footnote" style="margin-top: 0.3vh;">
+          Seleccionado a ciegas en validación; ambos ensambles rompieron la barrera sin test snooping.
+        </p>
+      </div>
     </div>
     <div class="context-pane">
       <div class="takeaway-bullet">
-        <p><strong>Nivel 1 (4 familias):</strong> LightGBM, XGBoost, CatBoost y Random Forest desacoplados con 5-fold OOF sin leakage.</p>
+        <p><strong>Nivel 1 (4 familias):</strong> LightGBM, XGBoost, CatBoost y Random Forest desacoplados con 5-fold OOF.</p>
       </div>
-      <div class="takeaway-bullet">
-        <p><strong>Nivel 2 (Doble Champion):</strong> récord formal en Val (0.4922 / Test 0.4501) y récord histórico en Test con Lasso L1 (0.4509).</p>
+      <div class="takeaway-bullet step-bullet-focus">
+        <p><strong>Nivel 2 (Parsimonia L1):</strong> Lasso apaga redundancias y fija el récord en 0.4509 con máxima transferencia.</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Modelos congelados a ciegas en validación temporal OOT; superación concurrente de 0.4500 sin test snooping.</p>
+  <p class="footnote">Validación Out-of-Time (OOT) temporal de 22.500 casos de Test; superación probada de 0.4500 sin tocar Test.</p>
 </section>
 
 <!-- SLIDE 7: LA DECISIÓN DEL UMBRAL (CURVA S) -->
