@@ -254,26 +254,45 @@
   <p class="footnote">Evaluación fuera de muestra out-of-time (OOT) sobre 22.500 casos de Test (16 a 21 de abril).</p>
 </section>
 
-<!-- SLIDE 2: FEATURE ENGINEERING 1 (PRIMERA OLA) -->
+<!-- SLIDE 2: FEATURE ENGINEERING 1 (FORWARD SELECTION) -->
 <section class="slide">
-  <h2>El Forward Selection aísla 11 variables clave en ratios, madrugada y texto</h2>
+  <h2>El Forward Selection depura 51 candidatas y aporta +130 bps al modelo</h2>
   <div class="split">
     <div class="artefact-container">
       <img src="figures/fig1_embudo_seleccion.svg" alt="Embudo de Selección de Variables Ola 1">
     </div>
     <div class="context-pane">
       <div class="takeaway-bullet">
-        <p><strong>4 dominios de ingeniería:</strong> ratios monetarios, patrón nocturno (<code>es_madrugada</code>), interacción no lineal (<code>prod_b_log_c</code>) y Naive Bayes de texto (<code>score_texto_nb</code>).</p>
+        <p><strong>51 candidatas a 11 seleccionadas:</strong> el algoritmo poda el 78% del ruido evaluando estabilidad con paciencia k=2.</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Poda de 51 a 11:</strong> el algoritmo descarta 40 candidatas redundantes y asegura +130 bps directos en validación OOT.</p>
+        <p><strong>Salto inmediato:</strong> PR-AUC de 0.4443 (+130 bps) en validación temporal sin sobreajuste.</p>
       </div>
     </div>
   </div>
   <p class="footnote">Filtro con tolerancia delta PR-AUC mayor a 0.0003 y paciencia k=2 ajustado en validación temporal.</p>
 </section>
 
-<!-- SLIDE 3: DETECCIÓN DE ANOMALÍAS -->
+<!-- SLIDE 3: FEATURE ENGINEERING 2 (COMPLEJIDAD MATEMÁTICA Y CIRCADIANA) -->
+<section class="slide">
+  <h2>Modelado circadiano, texto bayesiano e interacciones capturan la señal oculta</h2>
+  <div class="split">
+    <div class="artefact-container">
+      <img src="figures/fig_fe_complejidad.svg" alt="Complejidad Técnica del Feature Engineering">
+    </div>
+    <div class="context-pane">
+      <div class="takeaway-bullet">
+        <p><strong>Ventana circadiana (es_madrugada):</strong> el fraude salta de 4.1% a 17.2% a las 02:00 UTC (3.8x sobre el día).</p>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>Texto bayesiano y no lineal:</strong> n-gramas con priors Dirichlet (<code>score_texto_nb</code>) y <code>prod_b_log_c</code> sin leakage.</p>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">Priors bayesianos y normalizaciones ajustados estrictamente en Train para evitar cualquier data leakage.</p>
+</section>
+
+<!-- SLIDE 4: DETECCIÓN DE ANOMALÍAS -->
 <section class="slide">
   <h2>El Isolation Forest con hiperplanos rotados triplica la discriminación sobre el azar</h2>
   <div class="split">
@@ -297,7 +316,7 @@
   <p class="footnote">Evaluación univariada en validación OOT con preprocesamiento híbrido y 256 muestras por partición.</p>
 </section>
 
-<!-- SLIDE 4: AUDITORÍA DE RESIDUOS Y SOLUCIÓN SEMÁNTICA (FRAUDE HORMIGA) -->
+<!-- SLIDE 5: AUDITORÍA DE RESIDUOS Y SOLUCIÓN SEMÁNTICA (FRAUDE HORMIGA) -->
 <section class="slide">
   <h2>El fraude hormiga menor a $20 se resuelve con clustering semántico de precios</h2>
   <div class="split">
@@ -316,7 +335,7 @@
   <p class="footnote">Auditoría en validación OOT; variables aprobadas: deficit_piso_cluster (+19 bps) y distancia_log_cluster (+25 bps).</p>
 </section>
 
-<!-- SLIDE 5: EL CHAMPION (STACKING L1) -->
+<!-- SLIDE 6: EL CHAMPION (STACKING L1) -->
 <section class="slide">
   <h2>La regularización L1 apaga colinealidad y supera la barrera de 0.4500 de PR-AUC</h2>
   <div class="split">
@@ -335,7 +354,7 @@
   <p class="footnote">Validación cruzada Out-Of-Fold (OOF) interna de 5 folds sin filtración cronológica.</p>
 </section>
 
-<!-- SLIDE 6: LA DECISIÓN DEL UMBRAL (CURVA S) -->
+<!-- SLIDE 7: LA DECISIÓN DEL UMBRAL (CURVA S) -->
 <section class="slide">
   <h2>Adaptar el umbral al ticket rescata +8.5 puntos de capital sin elevar rechazos</h2>
   <div class="split">
@@ -354,7 +373,7 @@
   <p class="footnote">Parámetros sigmoideos: t_max=0.40, t_min=0.18, inflexión M0=$23.02, dispersión sigma=35.</p>
 </section>
 
-<!-- SLIDE 7: LA ARQUITECTURA TRIPARTITA (SEMÁFORO 2FA) -->
+<!-- SLIDE 8: LA ARQUITECTURA TRIPARTITA (SEMÁFORO 2FA) -->
 <section class="slide">
   <h2>La autenticación 2FA alcanza el 80% de recupero con resiliencia probada</h2>
   <div class="split">
@@ -377,7 +396,7 @@
   <p class="footnote">Evaluación sobre 22.500 casos de Test con semáforo tripartito y fallback automático a Curva S.</p>
 </section>
 
-<!-- SLIDE 8: THE ASK (DECISIÓN Y CIERRE) -->
+<!-- SLIDE 9: THE ASK (DECISIÓN Y CIERRE) -->
 <section class="slide">
   <h2>Proponemos activar la Curva S en backend y desplegar 2FA en checkout</h2>
   <div class="split">
