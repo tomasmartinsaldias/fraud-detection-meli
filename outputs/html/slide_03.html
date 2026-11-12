@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1600">
+  <title>Slide 03 — Arquitectura del Cuatri-Modelo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #f5f2eb; --surface: #ffffff; --surface-subtle: #fbf9f6; --ink: #181b1f;
+      --text-mid: #525964; --text-muted: #828a97; --accent: #b8442e; --border: rgba(24, 27, 31, 0.1);
+    }
+    body {
+      display: flex; justify-content: center; align-items: center; min-height: 100vh;
+      background: #111215; overflow: hidden; font-family: 'Inter', sans-serif; color: var(--ink);
+    }
+    .slide {
+      width: 1600px; height: 900px; background: var(--bg); padding: 50px 70px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      box-shadow: 0 25px 65px rgba(0,0,0,0.5); border-radius: 8px;
+    }
+    .slide-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      border-bottom: 2px solid var(--ink); padding-bottom: 16px;
+    }
+    .header-pill {
+      font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 6px;
+    }
+    .header-left h1 { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
+    .header-left p { font-size: 17px; color: var(--text-mid); margin-top: 5px; font-weight: 500; }
+    .content-zone { display: flex; flex-direction: column; gap: 16px; margin: auto 0; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
+    .card-accent { border-top: 4px solid var(--accent); background: rgba(184, 68, 46, 0.03); }
+    .card-kicker { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+    .card-title { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+    .card-desc { font-size: 13.5px; color: var(--text-mid); line-height: 1.5; }
+    .metamodel-card {
+      background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--accent);
+      border-radius: 6px; padding: 22px 28px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .slide-footer {
+      border-top: 1px solid var(--border); padding-top: 12px; display: flex;
+      justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="slide">
+    <div class="slide-header">
+      <div class="header-left">
+        <div class="header-pill">03 · Arquitectura del Ensamble</div>
+        <h1>Cuatro especialistas y un juez inteligente</h1>
+        <p>Cada algoritmo analiza la transacción con una óptica distinta para compensar los errores del otro.</p>
+      </div>
+      <div style="font-family:'DM Mono', monospace; font-weight:700; background:rgba(0,0,0,0.05); padding:6px 12px; border-radius:4px;">03 / 05</div>
+    </div>
+
+    <div class="content-zone">
+      <div class="grid-4">
+        <div class="card" style="border-top: 3px solid var(--ink);">
+          <div class="card-kicker" style="color:var(--text-mid);">Especialista 01</div>
+          <div class="card-title">LightGBM</div>
+          <p class="card-desc"><strong>Crecimiento por hojas:</strong> muy rápido y agresivo identificando combinaciones de alto riesgo.</p>
+        </div>
+
+        <div class="card" style="border-top: 3px solid var(--ink);">
+          <div class="card-kicker" style="color:var(--text-mid);">Especialista 02</div>
+          <div class="card-title">XGBoost</div>
+          <p class="card-desc"><strong>Crecimiento por niveles:</strong> acota la profundidad para no memorizar casos atípicos.</p>
+        </div>
+
+        <div class="card card-accent">
+          <div class="card-kicker" style="color:var(--accent);">Especialista 03 · Clave</div>
+          <div class="card-title" style="color:var(--accent);">CatBoost</div>
+          <p class="card-desc"><strong>Árboles simétricos:</strong> aporta la mayor descorrelación y diversidad al ensamble.</p>
+        </div>
+
+        <div class="card" style="border-top: 3px solid var(--ink);">
+          <div class="card-kicker" style="color:var(--text-mid);">Especialista 04</div>
+          <div class="card-title">Random Forest</div>
+          <p class="card-desc"><strong>Votación por promedio:</strong> estabiliza la predicción final y amortigua la varianza.</p>
+        </div>
+      </div>
+
+      <div class="metamodel-card">
+        <div style="flex:1;">
+          <div style="font-family:'DM Mono', monospace; font-size:11px; font-weight:700; text-transform:uppercase; color:var(--accent); margin-bottom:4px;">Piso 2 · El Árbitro del Ensamble</div>
+          <div style="font-size: 21px; font-weight: 700; color: var(--ink);">Metamodelo Lineal con Regularización Lasso (L1)</div>
+          <p style="font-size: 14px; color: var(--text-mid); margin-top: 4px;">
+            En vez de un promedio simple donde el ruido se multiplica, el filtro Lasso <strong>clava en cero automáticamente</strong> cualquier predicción redundante o contradictoria.
+          </p>
+        </div>
+        <div style="background:var(--surface-subtle); border:1px solid var(--border); border-radius:6px; padding:12px 20px; text-align:center;">
+          <div style="font-family:'DM Mono', monospace; font-size:11px; text-transform:uppercase; color:var(--text-muted);">Efecto Lasso</div>
+          <div style="font-weight:800; color:var(--accent); font-size:15px; margin-top:2px;">Cero Colinealidad</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div>VALIDACIÓN CRUZADA: <strong>5-FOLD STRATIFIED CV CON GENERACIÓN OOF (OUT-OF-FOLD)</strong></div>
+      <div>APORTE COMPLEMENTARIO: <strong>SEÑALES DE ANOMALÍAS NO SUPERVISADAS (PCA, IFOREST, LOF)</strong></div>
+    </div>
+  </div>
+</body>
+</html>
