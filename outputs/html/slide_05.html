@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1600">
+  <title>Slide 05 — Impacto en Negocio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500;700&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #f5f2eb; --surface: #ffffff; --ink: #181b1f; --text-mid: #525964;
+      --text-muted: #828a97; --accent: #b8442e; --green: #15803d;
+      --green-soft: rgba(21, 128, 61, 0.08); --accent-soft: rgba(184, 68, 46, 0.08); --border: rgba(24, 27, 31, 0.1);
+    }
+    body {
+      display: flex; justify-content: center; align-items: center; min-height: 100vh;
+      background: #111215; overflow: hidden; font-family: 'Inter', sans-serif; color: var(--ink);
+    }
+    .slide {
+      width: 1600px; height: 900px; background: var(--bg); padding: 50px 70px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      box-shadow: 0 25px 65px rgba(0,0,0,0.5); border-radius: 8px;
+    }
+    .slide-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      border-bottom: 2px solid var(--ink); padding-bottom: 16px;
+    }
+    .header-pill {
+      font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 6px;
+    }
+    .header-left h1 { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
+    .header-left p { font-size: 17px; color: var(--text-mid); margin-top: 5px; font-weight: 500; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin: auto 0; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 28px; }
+    .card-green { border-top: 4px solid var(--green); }
+    .card-accent { border-top: 4px solid var(--accent); }
+    .card-title { font-size: 21px; font-weight: 700; margin-bottom: 6px; }
+    .card-desc { font-size: 14.5px; color: var(--text-mid); line-height: 1.5; }
+    .hero-number { font-family: 'Playfair Display', serif; font-size: 68px; font-weight: 900; line-height: 0.95; margin: 8px 0; }
+    .pill-badge {
+      display: inline-flex; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+      padding: 4px 10px; border-radius: 999px; margin-top: 14px;
+    }
+    .pill-badge-green { background: var(--green-soft); color: var(--green); }
+    .pill-badge-accent { background: var(--accent-soft); color: var(--accent); }
+    .slide-footer {
+      border-top: 1px solid var(--border); padding-top: 12px; display: flex;
+      justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="slide">
+    <div class="slide-header">
+      <div class="header-left">
+        <div class="header-pill">05 · Retorno de Negocio y Operaciones</div>
+        <h1>Más dinero recuperado, menos compras trabadas</h1>
+        <p>La mejora estadística se traduce directamente en proteger las finanzas de la empresa cuidando al usuario honesto.</p>
+      </div>
+      <div style="font-family:'DM Mono', monospace; font-weight:700; background:rgba(0,0,0,0.05); padding:6px 12px; border-radius:4px;">05 / 05</div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card card-green" style="display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="font-family:'DM Mono', monospace; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--green); margin-bottom:6px;">Protección Financiera</div>
+          <div class="hero-number" style="color:var(--green);">80%</div>
+          <div class="card-title">Del dinero en fraude interceptado</div>
+          <p class="card-desc">Bajo el umbral óptimo se rescataron <strong>$63,159 USD</strong> sobre los $79,380 evaluados en el conjunto de prueba.</p>
+        </div>
+        <div>
+          <div class="pill-badge pill-badge-green">8 de cada 10 dólares salvados</div>
+        </div>
+      </div>
+
+      <div class="card card-accent" style="display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="font-family:'DM Mono', monospace; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--accent); margin-bottom:6px;">Experiencia de Checkout</div>
+          <div class="hero-number" style="color:var(--accent);">-3,000</div>
+          <div class="card-title">Falsos positivos eliminados</div>
+          <p class="card-desc">Se redujo drásticamente el bloqueo de tarjetas a usuarios legítimos, ahorrando quejas en soporte y fricción de compra.</p>
+        </div>
+        <div>
+          <div class="pill-badge pill-badge-accent">Menor costo operativo</div>
+        </div>
+      </div>
+
+      <div class="card" style="border-top:4px solid var(--ink); display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="font-family:'DM Mono', monospace; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--ink); margin-bottom:6px;">Invarianza en el Tiempo</div>
+          <div class="hero-number" style="color:var(--ink);">0.0006</div>
+          <div class="card-title">Índice de Estabilidad (PSI)</div>
+          <p class="card-desc">Muy por debajo de la cota crítica de 0.05. El modelo no sufre descalibración ni corrimiento entre períodos.</p>
+        </div>
+        <div>
+          <div class="pill-badge" style="background:rgba(0,0,0,0.05); color:var(--ink);">Robusto al paso del tiempo</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div>ESTADO: <strong>LISTO PARA DESPLIEGUE PRODUCTIVO EN INFERENCIA POR LOTES</strong></div>
+      <div>CÓDIGO REPRODUCIBLE CON SEMILLA 42</div>
+    </div>
+  </div>
+</body>
+</html>
