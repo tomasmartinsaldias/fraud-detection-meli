@@ -415,21 +415,21 @@
 
 <!-- SLIDE 6: EL CHAMPION (STACKING L1) -->
 <section class="slide">
-  <h2>La regularización L1 apaga colinealidad y supera la barrera de 0.4500 de PR-AUC</h2>
+  <h2>El Stacking cuatri-modelo y la regularización L1 quiebran la barrera de 0.4500</h2>
   <div class="split">
     <div class="artefact-container">
-      <img src="figures/fig_pr_comparativa_test.svg" alt="Curva PR Comparativa en Test">
+      <img src="figures/fig_pr_comparativa_test.svg" alt="Stacking Cuatri-Modelo y Récord de Test">
     </div>
     <div class="context-pane">
       <div class="takeaway-bullet">
-        <p><strong>Cuatro familias de árboles:</strong> LightGBM, XGBoost, CatBoost y Random Forest combinados en Nivel 1.</p>
+        <p><strong>Nivel 1 (4 familias):</strong> LightGBM, XGBoost, CatBoost y Random Forest desacoplados con 5-fold OOF sin leakage.</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Parsimonia estricta:</strong> Lasso L1 (C=0.10) apaga redundancias y fija el récord histórico en 0.4509.</p>
+        <p><strong>Nivel 2 (Doble Champion):</strong> récord formal en Val (0.4922 / Test 0.4501) y récord histórico en Test con Lasso L1 (0.4509).</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Validación cruzada Out-Of-Fold (OOF) interna de 5 folds sin filtración cronológica.</p>
+  <p class="footnote">Modelos congelados a ciegas en validación temporal OOT; superación concurrente de 0.4500 sin test snooping.</p>
 </section>
 
 <!-- SLIDE 7: LA DECISIÓN DEL UMBRAL (CURVA S) -->
