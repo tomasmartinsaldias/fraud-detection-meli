@@ -121,15 +121,16 @@
 
 ## Slide 6: Auditoría de Residuos y Fraude Hormiga
 * **Quién expone:** Tomi
-* **Título propuesto:** *Auditoría de Residuos: cómo cerramos la fuga en compras menores a $50.*
+* **Título propuesto:** *Auditoría de residuos: compras de $22 evadían el modelo por sesgo a montos altos.*
 * **Eyebrow (ceja):** `6. AUDITORÍA DE RESIDUOS`
 * **Datos y evidencia oficial:**
-  * **El punto ciego:** Al auditar los errores del modelo en validación, descubrimos que detectaba muy bien compras grandes (mediana $75), pero se le fugaban sistemáticamente transacciones chicas (mediana **$22**).
+  * **El punto ciego:** Al auditar los errores del modelo en validación, descubrimos que detectaba muy bien compras grandes (mediana $75, media $98), pero se le fugaban sistemáticamente transacciones chicas (mediana **$22.76**, media $47.50).
   * **Solución semántica de precios:**
     * Clustering de títulos de publicación ($k=50$, embedding $d=30$) para establecer el precio de referencia de cada categoría de producto.
     * Creación de variables de desvío: `deficit_piso_cluster` (+19 bps) y `distancia_log_cluster` (+25 bps).
-    * Impacto neto: **+26 bps de ganancia final**, neutralizando la fuga en compras chicas.
-* **Visual:** `figures/fig2_residuos_fraude_hormiga.svg` (Distribución de montos de fraude detectado vs fraude escapado).
+    * Impacto neto: **+44 bps en Validación y +61 bps en Test**, neutralizando la fuga en compras chicas.
+  * **Límite del umbral plano:** La mediana de cazados apenas bajó de **$27.52 a $27.00** (-1.9%), demostrando que el ML solo no alcanza y se requiere un umbral dinámico (la Curva S).
+* **Visual:** Panel izquierdo con Big Numbers de diagnóstico ($75 vs $22.76) y límite del umbral plano ($27.52 &rarr; $27.00); panel derecho con tabla de 4 casos reales rescatados (87% a 97% de déficit).
 * **Notas / Qué decir:**
   * [Explicar cómo analizar los errores nos permitió diseñar variables quirúrgicas en vez de tirar modelos a ciegas].
   * **1. Auditoría de Residuos (El Diagnóstico):**

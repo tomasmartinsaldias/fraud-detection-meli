@@ -563,20 +563,41 @@
   <p class="footnote">Validación OOT temporal; ensamble no supervisado combina Isolation Forest, PCA y LOF con meta-regresión logística.</p>
 </section>
 
-<!-- NOTAS TOMÁS SALDÍAS: 1. Diagnóstico: Al auditar residuos en Validación OOT, los fraudes detectados promediaban $97.96, pero los escapados tenían mediana de $22.76. 2. Causa raíz: Todas las variables de primera ola tenían monto en el numerador (ratio_monto_l, ratio_monto_e), sesgando los árboles hacia tickets altos. 3. Solución semántica: Agrupamos títulos en 50 clusters semánticos (TF-IDF + SVD d=30 + k-means en Train) y calculamos la mediana bayesiana de precio de cada cluster; creamos deficit_piso_cluster (+19 bps) y distancia_log_cluster (+25 bps), logrando +44 bps en Val y +61 bps en Test. 4. Casos reales rescatados: PSN Plus a $0.40 (mediana $14.41, déficit 97%), Spotify Premium a $2.22 (mediana $25.61, déficit 91%), Sims 4 / GTA 5 a $2.50 (mediana $15-20, déficit 87%), estéreos Fiat Palio a $1.89 (mediana $19.55, déficit 90%). 5. Puente a umbrales: Aún con este avance, con umbral fijo la mediana cazada apenas bajó a $27. Se requiere un umbral elástico. -->
+<!-- NOTAS TOMÁS SALDÍAS: 1. Diagnóstico: Al auditar residuos en Validación OOT, los fraudes detectados promediaban $97.96 (mediana $75), pero los escapados tenían mediana de $22.76. 2. Causa raíz: Todas las variables de primera ola tenían monto en el numerador (ratio_monto_l, ratio_monto_e), sesgando los árboles hacia tickets altos. 3. Solución semántica: Agrupamos títulos en 50 clusters semánticos (TF-IDF + SVD d=30 + k-means en Train) y calculamos la mediana bayesiana de precio de cada cluster; creamos deficit_piso_cluster (+19 bps) y distancia_log_cluster (+25 bps), logrando +44 bps en Val y +61 bps en Test. 4. Casos reales rescatados: PSN Plus a $0.40 (mediana $14.41, déficit 97%), Spotify Premium a $2.22 (mediana $25.61, déficit 91%), Sims 4 / GTA 5 a $2.50 (mediana $15-20, déficit 87%), estéreos Fiat Palio a $1.89 (mediana $19.55, déficit 90%). 5. Puente a umbrales: Aún con este avance, con un umbral plano estático la mediana cazada apenas bajó de $27.52 a $27.00. El ML solo no alcanza si la regla de corte es plana; se requiere la Curva S. -->
 <!-- SLIDE 5: AUDITORÍA DE RESIDUOS Y SOLUCIÓN SEMÁNTICA (FRAUDE HORMIGA) -->
-<section class="slide" data-steps="2">
+<section class="slide">
   <div>
     <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">5. AUDITORÍA DE RESIDUOS</p>
-    <h2>El fraude hormiga menor a $20 se resuelve con clustering semántico de precios</h2>
+    <h2>Auditoría de residuos: compras de $22 evadían el modelo por sesgo a montos altos</h2>
   </div>
   <div class="split">
-    <div class="artefact-container">
-      <div class="focal-artefact-stack">
-        <img src="figures/fig2_residuos_fraude_hormiga_base.svg" alt="Auditoría de Residuos Base" class="focal-layer base">
-        <img src="figures/fig2_residuos_fraude_hormiga.svg" alt="Auditoría de Residuos y Fraude Hormiga" class="focal-layer focus">
+    <div style="display: flex; flex-direction: column; gap: 2.5vh; justify-content: center;">
+      <div style="border-left: 3.5px solid var(--accent); padding-left: 1.2vw;">
+        <p class="footnote" style="text-transform: uppercase; font-weight: 700; color: var(--accent);">Punto Ciego en Residuos (Validación)</p>
+        <div style="display: flex; align-items: baseline; gap: 2vw; margin-top: 0.6vh;">
+          <div>
+            <p class="footnote">Detectados</p>
+            <div class="hero-metric" style="font-size: clamp(2rem, 3.2vw, 2.8rem); color: var(--accent);">$75</div>
+            <p class="footnote">Mediana (media $98)</p>
+          </div>
+          <div style="font-size: 1.4rem; color: #d93025; font-weight: 700;">&rarr;</div>
+          <div>
+            <p class="footnote" style="color: #d93025; font-weight: 700;">Escapados (FN)</p>
+            <div class="hero-metric" style="font-size: clamp(2rem, 3.2vw, 2.8rem); color: #d93025;">$22.76</div>
+            <p class="footnote" style="color: #d93025; font-weight: 600;">Mediana 3.3x menor</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-left: 3.5px solid #b06000; padding-left: 1.2vw;">
+        <p class="footnote" style="text-transform: uppercase; font-weight: 700; color: #b06000;">Límite del Umbral Plano (&tau; = 0.255)</p>
+        <div class="hero-metric" style="font-size: clamp(1.8rem, 2.8vw, 2.4rem); color: #b06000; margin-top: 0.6vh;">
+          $27.52 &rarr; $27.00
+        </div>
+        <p class="footnote" style="color: #b06000; font-weight: 600; margin-top: 0.3vh;">Apenas -$0.52 (-1.9%): con umbral fijo el modelo no los puede cazar.</p>
       </div>
     </div>
+
     <div class="context-pane">
       <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 1.2vh;">
         <thead>
@@ -615,14 +636,14 @@
         </tbody>
       </table>
       <div class="takeaway-bullet">
-        <p><strong>Punto ciego:</strong> fraudes detectados promediaban $98 (mediana $75); los escapados tenían mediana de $22.76.</p>
+        <p><strong>Causa raíz:</strong> ratios con monto en numerador sesgaban los árboles hacia tickets altos.</p>
       </div>
-      <div class="takeaway-bullet step-bullet-focus">
-        <p><strong>Solución semántica:</strong> clustering (k=50) fija precios de referencia (+44 bps Val, +61 bps Test).</p>
+      <div class="takeaway-bullet">
+        <p><strong>Solución semántica:</strong> clustering (k=50) aporta +61 bps Test, pero exige Curva S para ejecutarse.</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Auditoría en validación OOT; variables aprobadas: deficit_piso_cluster (+19 bps) y distancia_log_cluster (+25 bps).</p>
+  <p class="footnote">Auditoría en validación OOT (150.000 tx); variables aprobadas: deficit_piso_cluster (+19 bps) y distancia_log_cluster (+25 bps).</p>
 </section>
 
 <!-- NOTAS IAN CONNON & FRANCO ESTERELLAS: Ian: El modelo oficial congelado a ciegas en Validación OOT fue Lasso C=0.20 (0.4922) combinando LightGBM, CatBoost, RF y XGBoost; en Test OOT cruzó la barrera de 0.4500 (0.4501) sin test-snooping. Franco: Al incrementar la regularización L1 a C=0.10, Lasso apaga coeficientes colineales redundantes entre familias de árboles; sacrifica 11 bps de optimismo en validación (0.4910), pero alcanza el récord histórico absoluto del taller en Test con 0.4509 (+195.8 bps), capturando 79.9% ($63.4k) de capital. -->
