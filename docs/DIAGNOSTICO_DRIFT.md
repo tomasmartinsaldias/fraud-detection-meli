@@ -126,7 +126,7 @@ Al desplegar las variables semánticas (`deficit_piso_cluster`, `distancia_log_c
   * `tx_041916` (\$5.69, *Cabo Av Para Dreamcast*): $\hat{p}$ subió de $0.0308 \to 0.0378$ (`deficit_piso_cluster = 0.71`).
   * `tx_125974` (\$7.46, *Relógio De Pulso Digital Led*): $\hat{p}$ subió de $0.0268 \to 0.0336$ (`deficit_piso_cluster = 0.61`).
   * `tx_012064` (\$26.82, *Cordão 3mm Cadeado Banhado A Ouro*): $\hat{p}$ subió de $0.0274 \to 0.0336$.
-* **Fricción Operativa Minimizada:** La optimización de la función de costo $\text{Costo}(\tau) = 5 \cdot \text{FP} + \sum \text{monto}_{\text{FN}}$ sobre el metamodelo recalibrado elevó el umbral a $\tau^* = 0.0930$, reduciendo los Falsos Positivos de 5,337 a 2,218 (**-58.4% de fricción de checkout**).
+* **Optimización de Umbral bajo Pérdida Monetaria Real:** Al optimizar la función de costo $\text{Costo}(\tau) = 5 \cdot \text{FP} + \sum \text{monto}_{\text{FN}}$ sobre el metamodelo recalibrado, el umbral óptimo se fijó en $\tau^* = 0.0930$, reduciendo los Falsos Positivos de 5.337 a 2.218 (**-58.4% de bloqueos erróneos a transacciones lícitas**).
 
 ---
 
