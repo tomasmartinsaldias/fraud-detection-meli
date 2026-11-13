@@ -180,6 +180,20 @@
     transition: opacity 350ms var(--ease);
   }
 
+  /* Slide 5 focal shift on umbral flat block */
+  .slide[data-steps="2"].step-0 .umbral-step-focus {
+    opacity: 0.16;
+    filter: grayscale(1);
+    transition: opacity 350ms var(--ease), filter 350ms var(--ease), transform 350ms var(--ease);
+    transform: translateY(3px);
+  }
+  .slide[data-steps="2"].step-1 .umbral-step-focus {
+    opacity: 1;
+    filter: none;
+    transition: opacity 350ms var(--ease), filter 350ms var(--ease), transform 350ms var(--ease);
+    transform: none;
+  }
+
   /* Two-step flat-canvas comparison (Stacking C=0.20 vs C=0.10) */
   .stacking-compare {
     display: grid;
@@ -565,7 +579,7 @@
 
 <!-- NOTAS TOMÁS SALDÍAS: 1. Diagnóstico: Al auditar residuos en Validación OOT, los fraudes detectados promediaban $97.96 (mediana $75), pero los escapados tenían mediana de $22.76. 2. Causa raíz: Todas las variables de primera ola tenían monto en el numerador (ratio_monto_l, ratio_monto_e), sesgando los árboles hacia tickets altos. 3. Solución semántica: Agrupamos títulos en 50 clusters semánticos (TF-IDF + SVD d=30 + k-means en Train) y calculamos la mediana bayesiana de precio de cada cluster; creamos deficit_piso_cluster (+19 bps) y distancia_log_cluster (+25 bps), logrando +44 bps en Val y +61 bps en Test. 4. Casos reales rescatados: PSN Plus a $0.40 (mediana $14.41, déficit 97%), Spotify Premium a $2.22 (mediana $25.61, déficit 91%), Sims 4 / GTA 5 a $2.50 (mediana $15-20, déficit 87%), estéreos Fiat Palio a $1.89 (mediana $19.55, déficit 90%). 5. Puente a umbrales: Aún con este avance, con un umbral plano estático la mediana cazada apenas bajó de $27.52 a $27.00. El ML solo no alcanza si la regla de corte es plana; se requiere la Curva S. -->
 <!-- SLIDE 5: AUDITORÍA DE RESIDUOS Y SOLUCIÓN SEMÁNTICA (FRAUDE HORMIGA) -->
-<section class="slide">
+<section class="slide" data-steps="2">
   <div>
     <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">5. AUDITORÍA DE RESIDUOS</p>
     <h2>Auditoría de residuos: compras de $22 evadían el modelo por sesgo a montos altos</h2>
@@ -589,7 +603,7 @@
         </div>
       </div>
 
-      <div style="border-left: 3.5px solid #b06000; padding-left: 1.2vw;">
+      <div class="umbral-step-focus" style="border-left: 3.5px solid #b06000; padding-left: 1.2vw;">
         <p class="footnote" style="text-transform: uppercase; font-weight: 700; color: #b06000;">Límite del Umbral Plano (&tau; = 0.255)</p>
         <div class="hero-metric" style="font-size: clamp(1.8rem, 2.8vw, 2.4rem); color: #b06000; margin-top: 0.6vh;">
           $27.52 &rarr; $27.00
@@ -638,7 +652,7 @@
       <div class="takeaway-bullet">
         <p><strong>Causa raíz:</strong> ratios con monto en numerador sesgaban los árboles hacia tickets altos.</p>
       </div>
-      <div class="takeaway-bullet">
+      <div class="takeaway-bullet step-bullet-focus">
         <p><strong>Solución semántica:</strong> clustering (k=50) aporta +61 bps Test, pero exige Curva S para ejecutarse.</p>
       </div>
     </div>
