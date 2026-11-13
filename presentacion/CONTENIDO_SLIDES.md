@@ -96,17 +96,20 @@
 
 ## Slide 5: Detección de Anomalías y Reglas de Asociación
 * **Quién expone:** Franco Esterellas
-* **Título propuesto:** *Isolation Forest y Reglas de Asociación aportan señales ortogonales al ensamble.*
+* **Título propuesto:** *Anomaly Detection y Reglas de Asociación aportan señales ortogonales al ensamble.*
 * **Eyebrow (ceja):** `5. ANOMALÍAS & REGLAS`
 * **Datos y evidencia oficial:**
-  * **Isolation Forest One-Class:** Entrenado exclusivamente sobre transacciones legítimas de Train. Detecta fraudes sin haber visto etiquetas de fraude.
-    * Rendimiento univariado aislado: **`0.1557` de PR-AUC** (3.4 veces superior a la prevalencia aleatoria de 4.5%).
+  * **Ensamble No Supervisado One-Class:** Entrenado exclusivamente sobre transacciones legítimas (`fraude == 0`) de Train utilizando variables crudas. Detecta anomalías geométricas sin haber visto etiquetas de fraude.
+    * Combina **Isolation Forest, PCA y LOF** (*Local Outlier Factor*) mediante una meta-regresión logística.
+    * Rendimiento univariado aislado: **`0.1970` de PR-AUC** en validación OOT (**+337 bps** sobre Isolation Forest puro de `0.1557`, y **4.4x** superior a la prevalencia aleatoria de 4.5%).
   * **Reglas de Asociación Heurísticas (CARs):**
     * Minería de reglas evaluadas mediante la métrica **WRAcc** (*Weighted Relative Accuracy*).
     * Generación de un panel de **10 reglas ortogonales de alto riesgo** que resumen patrones combinatorios para alimentar como features al Stacking.
-* **Visual:** `figures/fig_anomalias_comparativa.svg` (Capacidad discriminativa del Isolation Forest vs Azar).
-* **Notas / Qué decir:**
-  * [Franco: detallar cómo estas señales no supervisadas aportan información distinta a la que ven los árboles supervisados].
+* **Visual:** `figures/fig_anomalias_ensamble_prauc.svg` (Capacidad discriminativa del ensamble no supervisado frente al azar y al Isolation Forest puro).
+* **Notas / Qué decir (Franco Esterellas):**
+  * **1. Por qué no supervisado:** Explicar que los modelos supervisados se sobreajustan a los patrones de fraude conocidos en el pasado. El ensamble One-Class se entrena solo con compradores legítimos (`fraude == 0`); cualquier transacción que se desvíe en el espacio multidimensional es marcada como anómala.
+  * **2. Ensamble de 3 perspectivas geométricas:** Combinar Isolation Forest (cortes hiperrectangulares aleatorios), PCA (reconstrucción por varianza residual) y LOF (densidad local) aporta una señal de anomalía mucho más robusta (`0.1970` PR-AUC) que un solo algoritmo.
+  * **3. Reglas de Asociación CARs con WRAcc:** Detallar cómo las 10 reglas minadas no buscan predecir todo el dataset, sino atrapar combinaciones complejas de nicho con altísima pureza de fraude, entregando señales categóricas ortogonales a los árboles supervisados.
 
 ---
 
@@ -170,21 +173,29 @@
 ---
 
 ## Slide 7: Arquitectura de Stacking y el Récord
-* **Quién expone:** Ian Connon / Tomás Saldías
+* **Quién expone:** Ian Connon / Franco Esterellas / Tomás Saldías
 * **Título propuesto:** *Stacking de 4 modelos: 0.4922 en validación y récord de 0.4509 en Test.*
 * **Eyebrow (ceja):** `7. STACKING & RÉCORD`
 * **Datos y evidencia oficial (Interactivo en 2 pasos):**
   * **Paso 0 (Champion Oficial de Protocolo):**
-    * Metamodelo: Regresión Lasso ($C=0.20$) combinando LightGBM, CatBoost, Random Forest y XGBoost.
+    * Metamodelo: Regresión Lasso ($C=0.20$) combinando LightGBM, CatBoost, Random Forest y XGBoost con optimización CMA-ES.
     * Métrica Validación OOT: **`0.4922`** (el mejor modelo del equipo, congelado a ciegas).
     * Métrica en Test: **`0.4501`** (supera con rigor la barrera del 0.4500 sin test-snooping).
   * **Paso 1 (Hallazgo de Parsimonia L1 - Tocar flecha derecha):**
-    * ¿Qué pasa si forzamos a Lasso a apagar coeficientes ($C=0.10$)?
+    * ¿Qué pasa si forzamos a Lasso a apagar coeficientes redundantes ($C=0.10$)?
     * En Validación cae levemente a `0.4910` (-11 bps, pierde optimismo).
-    * En Test salta a **`0.4509` (+195.8 bps)**: récord histórico absoluto de todo el taller.
-* **Visual:** Tarjetas comparativas interactivas con números en grande (Knaflic style).
-* **Notas / Qué decir:**
-  * [Ian: destacar el rigor de respetar el modelo de validación sin hacer trampa en Test, y la lección de cómo la regularización L1 extrema mejora la generalización].
+    * En Test salta a **`0.4509` (+195.8 bps)**: récord histórico absoluto de todo el taller, traduciéndose en el **79.9% ($63.4k)** de capital recuperado.
+* **Visual:** Tarjetas comparativas interactivas con números en grande (`0.4501` vs `0.4509` / Knaflic style).
+* **Notas / Qué decir (Ian Connon & Franco Esterellas):**
+  * **1. Protocolo Ciego y Respeto a las Reglas:** Ian: Resaltar que el champion oficial seleccionado en Validación OOT fue el $C=0.20$ con `0.4922`, el cual cruzó la barrera de `0.4500` en Test (`0.4501`) de forma totalmente limpia, sin test-snooping ni data leakage.
+  * **2. La Lección de la Parsimonia L1 ($C=0.10$):** Franco: Explicar cómo la regularización extrema apaga predicciones colineales entre familias de árboles similares. Al sacrificar 11 bps de optimismo en validación (`0.4910`), el modelo gana robustez frente al drift temporal y alcanza el pico histórico del proyecto en Test (`0.4509`).
+  * **3. El Descarte Justificado: Ablación de 16 Modelos Multi-Loss:**
+    * *Anticipando la pregunta del jurado:* "¿Por qué no combinaron más funciones de pérdida?".
+    * Franco: Probamos una arquitectura de 16 inductores entrenando XGBoost, LightGBM, CatBoost y Random Forest bajo 4 loss functions: **Log-Loss, Weighted Loss, Focal-Loss y Reranker Loss**.
+    * Aplicamos Forward Selection de modelos con regularización; solo sobrevivieron 5 inductores.
+    * En Validación OOT subió de `0.4922` a `0.4950` (+3 milésimas / +0.6%), pero en Test OOT rindió exactamente lo mismo: **`0.4501` (+0.0%)**.
+    * Por la Navaja de Ockham y criterio de ingeniería en producción, descartamos el ensamble de 16 modelos para evitar costos de inferencia y deuda técnica innecesaria.
+  * **4. Experimento con Grafos Bipartitos (Auditoría adicional):** Franco exploró features relacionales de grafo usuario-producto (`in_degree_usuarios_producto_hist`) y dispersión de categorías. En Test rindió `0.4497`, por lo que se mantuvo el rollback al Champion de Parsimonia puro (`0.4509`).
 
 ---
 

@@ -468,36 +468,41 @@
   <p class="footnote">Priors bayesianos y normalizaciones ajustados estrictamente en Train para evitar cualquier data leakage.</p>
 </section>
 
+<!-- NOTAS FRANCO ESTERELLAS: Detallar cómo estas señales no supervisadas (entrenadas exclusivamente sobre fraude == 0 con variables crudas) y las 10 reglas ortogonales WRAcc aportan información geométrica y combinatoria complementaria a la que ven los árboles supervisados, alimentando al Stacking con señales ortogonales. -->
 <!-- SLIDE 4: DETECCIÓN DE ANOMALÍAS Y REGLAS DE ASOCIACIÓN -->
-<section class="slide" data-steps="2">
-  <h2>Modelos no supervisados y reglas de asociación aportan señales ortogonales</h2>
+<section class="slide">
+  <div>
+    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">4. ANOMALÍAS &amp; REGLAS</p>
+    <h2>Anomaly Detection y Reglas de Asociación aportan señales ortogonales al ensamble</h2>
+  </div>
   <div class="split">
     <div class="artefact-container">
-      <div class="focal-artefact-stack">
-        <img src="figures/fig_anomalias_comparativa_base.svg" alt="Capacidad Anomalías Base" class="focal-layer base">
-        <img src="figures/fig_anomalias_comparativa.svg" alt="Capacidad Aislada de Detección de Anomalías" class="focal-layer focus">
-      </div>
+      <img src="figures/fig_anomalias_ensamble_prauc.svg" alt="Rendimiento de modelos no supervisados en validación OOT">
     </div>
     <div class="context-pane">
       <div>
-        <span class="footnote" style="text-transform: uppercase;">Capacidad Univariada</span>
-        <div class="hero-metric"><span>0.1557</span></div>
-        <p class="metric-delta" style="color: var(--ink-secondary); font-weight: 700; font-size: 0.95em;">3.4x sobre la prevalencia base (4.5%)</p>
+        <span class="footnote" style="text-transform: uppercase;">Ensamble No Supervisado</span>
+        <div class="hero-metric"><span>0.1970</span></div>
+        <p class="footnote" style="color: var(--accent); font-weight: 700; font-size: 0.95em;">+337 bps sobre Isolation Forest puro (0.1557)</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Isolation Forest One-Class:</strong> entrenado solo sobre legítimos para aislar anomalías sin data leakage.</p>
+        <p><strong>One-Class puro:</strong> Isolation Forest, PCA y LOF entrenados sobre legítimos detectan anomalías sin etiquetas.</p>
       </div>
-      <div class="takeaway-bullet step-bullet-focus">
-        <p><strong>Reglas de asociación (WRAcc):</strong> panel de 10 reglas de alto impacto que resumen patrones de riesgo en Nivel 2.</p>
+      <div class="takeaway-bullet">
+        <p><strong>10 Reglas CARs (WRAcc):</strong> minería de patrones de alto riesgo que enriquecen el Stacking.</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Panel de 11 scores de anomalía y 10 reglas CARs evaluadas con Weighted Relative Accuracy (WRAcc).</p>
+  <p class="footnote">Validación OOT temporal; ensamble no supervisado combina Isolation Forest, PCA y LOF con meta-regresión logística.</p>
 </section>
 
+<!-- NOTAS TOMÁS SALDÍAS: 1. Diagnóstico: Al auditar residuos en Validación OOT, los fraudes detectados promediaban $97.96, pero los escapados tenían mediana de $22.76. 2. Causa raíz: Todas las variables de primera ola tenían monto en el numerador (ratio_monto_l, ratio_monto_e), sesgando los árboles hacia tickets altos. 3. Solución semántica: Agrupamos títulos en 50 clusters semánticos (TF-IDF + SVD d=30 + k-means en Train) y calculamos la mediana bayesiana de precio de cada cluster; creamos deficit_piso_cluster (+19 bps) y distancia_log_cluster (+25 bps), logrando +44 bps en Val y +61 bps en Test. 4. Casos reales rescatados: PSN Plus a $0.40 (mediana $14.41, déficit 97%), Spotify Premium a $2.22 (mediana $25.61, déficit 91%), Sims 4 / GTA 5 a $2.50 (mediana $15-20, déficit 87%), estéreos Fiat Palio a $1.89 (mediana $19.55, déficit 90%). 5. Puente a umbrales: Aún con este avance, con umbral fijo la mediana cazada apenas bajó a $27. Se requiere un umbral elástico. -->
 <!-- SLIDE 5: AUDITORÍA DE RESIDUOS Y SOLUCIÓN SEMÁNTICA (FRAUDE HORMIGA) -->
 <section class="slide" data-steps="2">
-  <h2>El fraude hormiga menor a $20 se resuelve con clustering semántico de precios</h2>
+  <div>
+    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">5. AUDITORÍA DE RESIDUOS</p>
+    <h2>El fraude hormiga menor a $20 se resuelve con clustering semántico de precios</h2>
+  </div>
   <div class="split">
     <div class="artefact-container">
       <div class="focal-artefact-stack">
@@ -507,7 +512,7 @@
     </div>
     <div class="context-pane">
       <div class="takeaway-bullet">
-        <p><strong>Punto ciego detectado:</strong> el modelo cazaba compras de $75, pero se le fugaban fraudes chicos con mediana de $22.</p>
+        <p><strong>Punto ciego detectado:</strong> el modelo cazaba compras de $75, pero se le fugaban fraudes con mediana de $22.</p>
       </div>
       <div class="takeaway-bullet step-bullet-focus">
         <p><strong>Solución semántica (13 vars):</strong> clustering de títulos (d=30, k=50) fija precios de referencia y rescata +26 bps.</p>
@@ -517,79 +522,117 @@
   <p class="footnote">Auditoría en validación OOT; variables aprobadas: deficit_piso_cluster (+19 bps) y distancia_log_cluster (+25 bps).</p>
 </section>
 
-<!-- SLIDE 6: EL CHAMPION (STACKING L1) -->
+<!-- NOTAS IAN CONNON & FRANCO ESTERELLAS: Ian: El modelo oficial congelado a ciegas en Validación OOT fue Lasso C=0.20 (0.4922) combinando LightGBM, CatBoost, RF y XGBoost; en Test OOT cruzó la barrera de 0.4500 (0.4501) sin test-snooping. Franco: Al incrementar la regularización L1 a C=0.10, Lasso apaga coeficientes colineales redundantes entre familias de árboles; sacrifica 11 bps de optimismo en validación (0.4910), pero alcanza el récord histórico absoluto del taller en Test con 0.4509 (+195.8 bps), capturando 79.9% ($63.4k) de capital. -->
+<!-- SLIDE 6: ARQUITECTURA DE STACKING Y EL RÉCORD -->
 <section class="slide" data-steps="2">
-  <h2>El Champion elegido en validación supera 0.4500 y la parsimonia L1 fija el récord</h2>
-  <div class="split">
-    <div style="display: flex; flex-direction: column; gap: 2.5vh; justify-content: center;">
-      <!-- BLOQUE 1: CHAMPION DE PROTOCOLO (PASO 0) -->
-      <div style="border-left: 3.5px solid var(--accent); padding-left: 1.2vw;">
-        <p class="footnote" style="text-transform: uppercase; color: var(--accent); font-weight: 700;">1. Champion Oficial de Protocolo (Lasso C=0.20)</p>
-        <div style="display: flex; gap: 2.8vw; align-items: baseline; margin-top: 0.6vh;">
-          <div>
-            <div style="font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; color: var(--accent); line-height: 1.1;">0.4922</div>
-            <p class="footnote">Récord en Validación OOT</p>
-          </div>
-          <div style="font-size: 1.4rem; color: var(--ink-muted);">&rarr;</div>
-          <div>
-            <div style="font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; color: var(--ink-secondary); line-height: 1.1;">0.4501</div>
-            <p class="footnote">Supera 0.4500 en Test</p>
-          </div>
-        </div>
-        <p class="footnote" style="margin-top: 0.4vh; color: var(--ink-muted);">Elegido formalmente a ciegas en validación antes de abrir Test.</p>
+  <div>
+    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">6. STACKING &amp; RÉCORD</p>
+    <h2>Stacking de 4 modelos: 0.4922 en validación y récord de 0.4509 en Test</h2>
+  </div>
+  <div class="stacking-compare">
+    <div class="stacking-col left">
+      <div>
+        <p class="footnote col-title">Champion Oficial de Protocolo</p>
+        <p class="footnote col-sub" style="margin-top: 0.4vh;">Lasso C=0.20 sobre LightGBM, CatBoost, RF y XGBoost</p>
       </div>
-
-      <!-- BLOQUE 2: EXPERIMENTO PARSIMONIA (PASO 1) -->
-      <div class="step-bullet-focus" style="border-left: 3.5px solid #FFD100; padding-left: 1.2vw;">
-        <p class="footnote" style="text-transform: uppercase; color: var(--accent); font-weight: 700;">2. Hallazgo: ¿Forzar a Lasso a apagar coeficientes? (C=0.10)</p>
-        <div style="display: flex; gap: 2.8vw; align-items: baseline; margin-top: 0.6vh;">
-          <div>
-            <div style="font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; color: #d93025; line-height: 1.1;">0.4910</div>
-            <p class="footnote">Empeora en Val (-11 bps)</p>
-          </div>
-          <div style="font-size: 1.4rem; color: var(--accent);">&rarr;</div>
-          <div>
-            <div class="hero-metric" style="font-size: clamp(2rem, 3.4vw, 2.8rem);"><span style="background: linear-gradient(180deg, transparent 65%, #FFE600 65%);">0.4509</span></div>
-            <p class="footnote" style="color: var(--accent); font-weight: 700;">Récord Test (+195.8 bps)</p>
-          </div>
+      <div style="display: flex; gap: 3vw; align-items: baseline;">
+        <div>
+          <p class="footnote" style="text-transform: uppercase;">Test OOT</p>
+          <div class="hero-metric"><span>0.4501</span></div>
         </div>
-        <p class="footnote" style="margin-top: 0.4vh; color: var(--ink-muted);">Esparcidad extrema: sacrifica optimismo y maximiza generalización.</p>
+        <div>
+          <p class="footnote" style="text-transform: uppercase;">Validación OOT</p>
+          <div class="val-secondary" style="font-size: clamp(1.6rem, 2.6vw, 2.2rem); font-weight: 700; color: #3c4043; line-height: 1.1;">0.4922</div>
+        </div>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>Cero test-snooping:</strong> mejor modelo congelado a ciegas; supera 0.4500 en Test.</p>
       </div>
     </div>
-    <div class="context-pane">
-      <div class="takeaway-bullet">
-        <p><strong>Rigor de cátedra:</strong> el modelo oficial es el de validación (0.4922), respetando el protocolo sin test snooping.</p>
+
+    <div class="stacking-col right">
+      <div>
+        <p class="footnote col-title">Hallazgo de Parsimonia L1</p>
+        <p class="footnote col-sub" style="margin-top: 0.4vh;">Regularización C=0.10 apaga coeficientes redundantes</p>
       </div>
-      <div class="takeaway-bullet step-bullet-focus">
-        <p><strong>Lección metodológica:</strong> forzar coeficientes a cero reduce overfitting y logra la mejor transferencia fuera de muestra.</p>
+      <div style="display: flex; gap: 3vw; align-items: baseline;">
+        <div>
+          <p class="footnote" style="text-transform: uppercase;">Récord Test OOT</p>
+          <div class="hero-metric"><span>0.4509</span></div>
+          <p class="footnote" style="color: var(--accent); font-weight: 700; font-size: 0.9em; margin-top: 0.3vh;">+195.8 bps (+1.96% PR-AUC)</p>
+        </div>
+        <div>
+          <p class="footnote" style="text-transform: uppercase;">Validación OOT</p>
+          <div class="val-secondary" style="font-size: clamp(1.6rem, 2.6vw, 2.2rem); font-weight: 700; color: #5f6368; line-height: 1.1;">0.4910</div>
+          <p class="footnote" style="font-size: 0.85em; color: var(--ink-muted); margin-top: 0.3vh;">-11 bps (-0.11%, menos optimismo)</p>
+        </div>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>Récord del taller:</strong> mayor regularización elimina colinealidad y alcanza 79.9% de recupero.</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Validación Out-of-Time (OOT) temporal de 22.500 casos de Test; superación probada de 0.4500 sin tocar Test.</p>
+  <p class="footnote">Metamodelo Nivel 1 evaluado sobre 22.500 transacciones de Test OOT; parsimonia L1 elimina colinealidad entre árboles.</p>
 </section>
 
-<!-- SLIDE 7: LA DECISIÓN DEL UMBRAL (CURVA S) -->
+<!-- NOTAS FRANCO ESTERELLAS: Explicar que probamos ampliar el stacking a 16 modelos entrenando XGBoost, LightGBM, CatBoost y Random Forest bajo 4 loss functions distintas (Log-Loss, Weighted Loss, Focal-Loss y Reranker Loss). Tras aplicar Forward Selection de modelos y regularización, solo sobrevivieron XGBoost y LightGBM (Log-Loss y Focal-Loss) junto con CatBoost (Reranker Loss). Aunque en validación OOT subió de 0.4922 a 0.4950 (+0.6%, 3 milésimas), en Test OOT no hubo diferencia (0.4501), por lo que se omitió esa complejidad adicional aplicando la Navaja de Ockham. -->
+<!-- SLIDE 7: ABLACIÓN MULTI-LOSS -->
 <section class="slide">
-  <h2>Adaptar el umbral al ticket rescata +8.5 puntos de capital sin elevar rechazos</h2>
+  <div>
+    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">7. ABLACIÓN MULTI-LOSS</p>
+    <h2>Stacking de 16 modelos: ganancia en validación sin mejora en Test</h2>
+  </div>
+  <div class="split">
+    <div class="artefact-container">
+      <img src="figures/fig_stacking_16_vs_4_prauc.svg" alt="Comparativa PR-AUC entre Stacking de 4 modelos y Stacking de 16 modelos en Validación y Test">
+    </div>
+    <div class="context-pane">
+      <div>
+        <span class="footnote" style="text-transform: uppercase;">Delta en Test OOT</span>
+        <div class="hero-metric"><span>+0.0%</span></div>
+        <p class="footnote" style="color: var(--ink-muted); font-weight: 700; font-size: 0.95em;">Frente a +0.6% (+3 milésimas) en Validación</p>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>16 candidatos (4 pérdidas):</strong> modelos optimizados con Log-Loss, Weighted, Focal y Reranker.</p>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>Descarte por parsimonia:</strong> Forward Selection retiene 5 modelos pero no supera al cuatri-modelo.</p>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">Ablación en Validación y Test OOT (22.500 transacciones); modelo de 16 candidatos omitido por parsimonia al no generalizar en Test.</p>
+</section>
+
+<!-- NOTAS TOMÁS SALDÍAS: 1. Problema del umbral plano: tau=0.255 ignora que un FP cuesta $5 pero un FN cuesta el ticket ($15 vs $400). 2. Sigmoide decreciente: tau_S(monto) entre 0.18 y 0.40 centrada en M0=$23 con suavidad sigma=35. En tickets altos baja a 0.18 para cerrojo estricto; en tickets bajos sube a 0.40 para no quemar presupuesto de FP. 3. Restricción estricta de FPs: Calibrada bajo FP <= 100 en Validación (504 bloqueos duros en Test). 4. Impacto neto: Con los mismos ~500 bloqueos duros, reasigna presupuesto hacia tickets caros y rescata +$6.744 adicionales ($44.1k -> $50.9k), subiendo el recupero de 55.6% a 64.1% a costo cero en experiencia de usuario. -->
+<!-- SLIDE 8: LA DECISIÓN DEL UMBRAL (CURVA S) -->
+<section class="slide">
+  <div>
+    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">8. CURVA S (BACKEND)</p>
+    <h2>Adaptar el umbral al ticket rescata +$6.7k de capital sin elevar rechazos</h2>
+  </div>
   <div class="split">
     <div class="artefact-container">
       <img src="figures/fig3_curva_s_umbral.svg" alt="Función Curva S Sigmoidea">
     </div>
     <div class="context-pane">
       <div class="takeaway-bullet">
-        <p><strong>Elasticidad al ticket:</strong> modula tau entre 0.18 y 0.40 según el importe monetario de la operación.</p>
+        <p><strong>Elasticidad al ticket:</strong> modula tau entre 0.18 y 0.40 según el importe monetario.</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>+$7.200 netos rescatados:</strong> sube el recupero al 64.1% con exactamente los mismos ~500 bloqueos duros.</p>
+        <p><strong>+$6.744 netos rescatados:</strong> sube el recupero al 64.1% con los mismos 504 bloqueos duros.</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Parámetros sigmoideos: t_max=0.40, t_min=0.18, inflexión M0=$23.02, dispersión sigma=35.</p>
+  <p class="footnote">Parámetros sigmoideos: tau_max=0.40, tau_min=0.18, inflexión M0=$23.02, dispersión sigma=35 (504 FP en Test).</p>
 </section>
 
-<!-- SLIDE 8: LA ARQUITECTURA TRIPARTITA (SEMÁFORO 2FA) -->
+<!-- NOTAS TOMÁS SALDÍAS: 1. Por qué 2FA: La Curva S deja pasar compras chicas para no quemar FPs. Para frenarlas sin fricción masiva creamos un tercer carril: Verde (<0.18, 94.2% aprobación directa 200ms), Amarillo (0.18 <= p < tau_2D, 4.8% reto suave WhatsApp/Push ~$0.05), Rojo (p >= tau_2D, 1.0% bloqueo duro). 2. Calibración beta=0.40: Grid search minimiza costo formal bajo FP_bloqueo <= 100. Absorbe 1.077 transacciones (4.8%), cumpliendo la regla de oro de pasarelas de pago de no superar el 5% de fricción en checkout. 3. Salto financiero en Test: Captura 199 fraudes extra (Recall 43.2% -> 62.5%), eleva capital recuperado al 79.9% ($63.4k) y reduce costo formal en ~$40k ($119.9k -> $80.4k). 4. Blindaje stress test: Bajo caída de efectividad al 50%, sostiene 71.6% ($56.9k). Si el 2FA colapsa al 100%, degrada automáticamente a la Curva S garantizando un piso de 63.3% ($50.2k). 5. Viabilidad operativa: 504 FPs en 5.38 días representa menos de 94 bloqueos diarios (2.3% de tasa de FP; 97.7% de legítimos pasan limpios e instantáneos). -->
+<!-- SLIDE 9: LA ARQUITECTURA TRIPARTITA (SEMÁFORO 2FA) -->
 <section class="slide">
-  <h2>La autenticación 2FA alcanza el 80% de recupero con resiliencia probada</h2>
+  <div>
+    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">9. SEMÁFORO 2FA (CHECKOUT)</p>
+    <h2>La autenticación 2FA alcanza el 80% de recupero con resiliencia probada</h2>
+  </div>
   <div class="split">
     <div class="artefact-container">
       <img src="figures/fig4_arquitectura_tripartita.svg" alt="Arquitectura Tripartita 2FA">
@@ -600,155 +643,42 @@
         <p class="footnote" style="font-weight: 700; color: var(--ink-secondary); font-size: 0.95em; margin-top: 0.5vh;">Piso garantizado ($50.2k) si colapsa el 2FA</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Carril 2FA (4.8% txs):</strong> recupera 79.9% y baja el bloqueo formal un 33%.</p>
+        <p><strong>Carril 2FA (4.8% txs):</strong> recupera 79.9% y reduce un 33% el costo formal.</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Resiliencia probada:</strong> tolera fricción y latencia en 5 escenarios adversos.</p>
+        <p><strong>Resiliencia operativa:</strong> tolera fallas de canal y mantiene &lt;94 falsos positivos diarios.</p>
       </div>
     </div>
   </div>
   <p class="footnote">Evaluación sobre 22.500 casos de Test con semáforo tripartito y fallback automático a Curva S.</p>
 </section>
 
-<!-- SLIDE 9: ANOMALY DETECTION & REGLAS DE ASOCIACIÓN -->
+<!-- NOTAS CIERRE CONJUNTO (IAN / FRANCO / TOMÁS): Fase 1 Inmediata: Activar Curva S en motor de reglas backend sin tocar experiencia de usuario (+ $6.7k netos inmediatos a costo cero). Fase 2 Checkout: Desplegar carril 2FA WhatsApp/Push para compras dudosas; consolida 79.9% de capital salvado ($63.4k protegidos). Resumen económico de la consigna: Costo inicial $140.435 -> Costo final $80.385 (Ahorro neto de $60.050 / -42.7%). Viabilidad de operación probada: menos de 94 bloqueos diarios (2.3% FP rate; 97.7% de transacciones legítimas aprobadas en 200 ms). Cierre contundente y apertura a preguntas de la cátedra. -->
+<!-- SLIDE 10: THE ASK (PROPUESTA FINAL Y CIERRE) -->
 <section class="slide">
-  <!-- NOTAS FRANCO ESTERELLAS: Detallar cómo estas señales no supervisadas (entrenadas exclusivamente sobre fraude == 0 con variables crudas) y las 10 reglas ortogonales WRAcc aportan información geométrica y combinatoria distinta a la que ven los árboles supervisados, alimentando al Stacking con señales complementarias. -->
   <div>
-    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">5. ANOMALÍAS &amp; REGLAS</p>
-    <h2>Anomaly Detection y Reglas de Asociación aportan señales ortogonales al ensamble</h2>
+    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">10. PROPUESTA FINAL</p>
+    <h2>Proponemos activar la Curva S en backend y desplegar 2FA en checkout</h2>
   </div>
   <div class="split">
-    <div class="artefact-container">
-      <img src="figures/fig_anomalias_ensamble_prauc.svg" alt="Comparativa PR-AUC entre modelos individuales de Detección de Anomalías y el Ensemble">
-    </div>
-    <div class="context-pane">
-      <div>
-        <span class="footnote" style="text-transform: uppercase;">Ensemble Anomalías</span>
-        <div class="hero-metric"><span>0.1970</span></div>
-        <p class="metric-delta" style="color: var(--accent); font-weight: 700; font-size: 0.95em;">4.3x sobre prevalencia base (4.53%)</p>
-      </div>
-      <div class="takeaway-bullet">
-        <p><strong>Entrenamiento limpio (<span style="font-size: 0.85rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.1rem 0.45rem; border-radius: 6px;">fraude == 0</span>):</strong> PCA (T², Q, Norma²), IF (Extended y Ortogonal), LOF, OCSVM y GMM ajustados con variables crudas originales.</p>
-      </div>
-      <div class="takeaway-bullet">
-        <p><strong>Reglas de Asociación (WRAcc):</strong> panel de <strong>10 reglas ortogonales de alto riesgo</strong> (Lift e incidencia) que nutren al Stacking.</p>
-      </div>
-    </div>
-  </div>
-  <p class="footnote">Evaluación OOT sobre 22.500 transacciones; señales no supervisadas y reglas WRAcc integradas como features al Stacking.</p>
-</section>
-
-<!-- SLIDE 10: ARQUITECTURA DE STACKING Y EL RÉCORD -->
-<section class="slide" data-steps="2">
-  <!-- NOTAS IAN CONNON / TOMÁS SALDÍAS: Destacar el rigor metodológico de respetar el modelo congelado en validación (Lasso C=0.20, Val 0.4922 -> Test 0.4501) sin hacer trampa ni test-snooping en Test, y la lección empírica de cómo la regularización L1 extrema (C=0.10) apaga coeficientes redundantes para mejorar la generalización fuera de muestra al récord de 0.4509. -->
-  <div>
-    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">7. STACKING &amp; RÉCORD</p>
-    <h2>Stacking de 4 modelos: 0.4922 en validación y récord de 0.4509 en Test</h2>
-  </div>
-  <div class="stacking-compare">
-    <div class="stacking-col left">
-      <div>
-        <span class="footnote col-title">Champion Oficial de Protocolo</span>
-        <p class="col-sub" style="font-size: 0.95rem; color: var(--ink-muted); margin-top: 0.5vh;">
-          Lasso <span style="font-size: 0.85rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.1rem 0.45rem; border-radius: 6px;">C=0.20</span> sobre LightGBM, CatBoost, RF y XGBoost
-        </p>
-      </div>
-      <div style="display: flex; gap: 3vw; align-items: baseline;">
-        <div>
-          <span class="footnote" style="text-transform: uppercase;">Test OOT</span>
-          <div class="hero-metric"><span>0.4501</span></div>
-        </div>
-        <div>
-          <span class="footnote" style="text-transform: uppercase;">Validación OOT</span>
-          <div class="val-secondary" style="font-size: clamp(1.6rem, 2.6vw, 2.2rem); font-weight: 700; color: #3c4043; line-height: 1.1;">0.4922</div>
-        </div>
-      </div>
-      <div class="takeaway-bullet">
-        <p><strong>Cero test-snooping:</strong> mejor modelo congelado a ciegas en validación; supera con rigor la barrera de 0.4500 en Test.</p>
-      </div>
-    </div>
-
-    <div class="stacking-col right">
-      <div>
-        <span class="footnote col-title">Hallazgo de Parsimonia L1</span>
-        <p class="col-sub" style="font-size: 0.95rem; color: var(--ink-muted); margin-top: 0.5vh;">
-          Regularización extrema <span style="font-size: 0.85rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.1rem 0.45rem; border-radius: 6px;">C=0.10</span> apaga coeficientes redundantes
-        </p>
-      </div>
-      <div style="display: flex; gap: 3vw; align-items: baseline;">
-        <div>
-          <span class="footnote" style="text-transform: uppercase;">Récord Test OOT</span>
-          <div class="hero-metric"><span>0.4509</span></div>
-          <p class="metric-delta" style="color: var(--accent); font-weight: 700; font-size: 0.9em; margin-top: 0.3vh;">+195.8 bps (+1.96% PR-AUC)</p>
-        </div>
-        <div>
-          <span class="footnote" style="text-transform: uppercase;">Validación OOT</span>
-          <div class="val-secondary" style="font-size: clamp(1.6rem, 2.6vw, 2.2rem); font-weight: 700; color: #5f6368; line-height: 1.1;">0.4910</div>
-          <p class="col-sub" style="font-size: 0.85em; color: var(--ink-muted); margin-top: 0.3vh;">-11 bps (-0.11%, menos optimismo)</p>
-        </div>
-      </div>
-      <div class="takeaway-bullet">
-        <p><strong>Récord histórico del taller:</strong> menor sobreajuste en validación se traduce en mejor generalización y 79.9% ($63.4k) de recupero.</p>
-      </div>
-    </div>
-  </div>
-  <p class="footnote">Metamodelo Nivel 1 evaluado sobre 22.500 transacciones de Test OOT; parsimonia L1 elimina colinealidad entre familias de árboles.</p>
-</section>
-
-<!-- SLIDE 11: ARQUITECTURA DE STACKING Y EL MODELO OMITIDO -->
-<section class="slide">
-  <!-- NOTAS FRANCO ESTERELLAS: Explicar que probamos ampliar el stacking a 16 modelos entrenando XGBoost, LightGBM, CatBoost y Random Forest bajo 4 loss-functions distintas (Log-Loss, Weighted Loss, Focal-Loss y Reranker Loss). Tras aplicar Forward Selection de modelos y regularización, solo sobrevivieron XGBoost y LightGBM (Log-Loss y Focal-Loss) junto con CatBoost (Reranker Loss). Aunque en validación OOT subió de 0.4922 a 0.4950 (+0.6%, 3 milésimas), en Test OOT no hubo diferencia (0.4501), por lo que se omitió esa complejidad adicional. -->
-  <div>
-    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">7. STACKING &amp; RÉCORD</p>
-    <h2>Stacking de 16 modelos: ganancia de 3 milésimas en validación, pero sin ganancia en Test</h2>
-  </div>
-  <div class="split">
-    <div class="artefact-container">
-      <img src="figures/fig_stacking_16_vs_4_prauc.svg" alt="Comparativa PR-AUC entre Stacking de 4 modelos y Stacking de 16 modelos en Validación y Test">
-    </div>
-    <div class="context-pane">
-      <div>
-        <span class="footnote" style="text-transform: uppercase;">Delta en Test OOT</span>
-        <div class="hero-metric"><span>+0.0%</span></div>
-        <p class="metric-delta" style="color: var(--ink-muted); font-weight: 700; font-size: 0.95em;">Frente a +0.6% (+3 milésimas) en Validación</p>
-      </div>
-      <div class="takeaway-bullet">
-        <p><strong>16 candidatos (4 loss-functions):</strong> modelos base optimizados con <span style="font-size: 0.83rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.08rem 0.4rem; border-radius: 6px;">Log-Loss</span>, <span style="font-size: 0.83rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.08rem 0.4rem; border-radius: 6px;">Weighted</span>, <span style="font-size: 0.83rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.08rem 0.4rem; border-radius: 6px;">Focal-Loss</span> y <span style="font-size: 0.83rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.08rem 0.4rem; border-radius: 6px;">Reranker</span>.</p>
-      </div>
-      <div class="takeaway-bullet">
-        <p><strong>Forward Selection + regularización:</strong> solo retiene XGBoost y LightGBM (Log-Loss y Focal-Loss) y CatBoost (Reranker Loss), sin mejorar Test.</p>
-      </div>
-    </div>
-  </div>
-  <p class="footnote">Ablación en Validación y Test OOT (22.500 transacciones); modelo de 16 candidatos omitido por parsimonia al no generalizar en Test.</p>
-</section>
-
-<!-- SLIDE 12: THE ASK (DECISIÓN Y CIERRE) -->
-<section class="slide">
-  <h2>Proponemos activar la Curva S en backend y desplegar 2FA en checkout</h2>
-  <div class="split">
-    <div class="context-pane" style="gap: 2.5vh;">
+    <div class="context-pane" style="gap: 2vh;">
       <div>
         <span class="footnote" style="text-transform: uppercase; color: var(--accent); font-weight: 700;">Fase 1: Inmediata</span>
-        <h2 style="font-size: 1.25rem; margin: 0.5vh 0;">Curva S en Backend</h2>
-        <p style="font-size: 0.95em;">
-          Inversión cero: rescata +$7.200 netos inmediatos en motor de reglas.
-        </p>
+        <h3 style="font-size: 1.15rem; margin: 0.4vh 0;">Curva S en Backend</h3>
+        <p>Inversión cero: rescata +$6.7k netos inmediatos en motor de reglas.</p>
       </div>
       <div>
         <span class="footnote" style="text-transform: uppercase; color: var(--accent); font-weight: 700;">Fase 2: Expansión</span>
-        <h2 style="font-size: 1.25rem; margin: 0.5vh 0;">Carril 2FA en Checkout</h2>
-        <p style="font-size: 0.95em;">
-          Desafío WhatsApp/Push para consolidar el 80% de recupero sin fricción innecesaria.
-        </p>
+        <h3 style="font-size: 1.15rem; margin: 0.4vh 0;">Carril 2FA en Checkout</h3>
+        <p>Consolida 79.9% de recupero con menos de 94 bloqueos diarios.</p>
       </div>
     </div>
     <div class="context-pane" style="border-left: 2px solid #e8eaed; padding-left: 3vw;">
       <span class="footnote" style="text-transform: uppercase; font-weight: 700;">Retorno Financiero Consolidado</span>
       <div class="hero-metric"><span style="background: linear-gradient(180deg, transparent 65%, #FFE600 65%);">$63.4k</span></div>
-      <p style="font-weight: 700; color: var(--ink-secondary);">Protección patrimonial efectiva</p>
-      <p style="font-size: 0.92em; color: var(--ink-muted); margin-top: 1vh;">
-        Arquitectura probada para estándares globales de pasarelas fintech.
+      <p class="footnote" style="font-weight: 700; color: var(--ink-secondary); font-size: 1rem; margin-top: 0.5vh;">Ahorro neto de $60.050 (-42.7% de costo)</p>
+      <p class="footnote" style="font-size: 0.88em; color: var(--ink-muted); margin-top: 0.8vh;">
+        97.7% de compradores legítimos aprobados en 200 ms sin fricción.
       </p>
     </div>
   </div>
