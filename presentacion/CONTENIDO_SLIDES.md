@@ -195,7 +195,7 @@
 * **Datos y evidencia oficial (Interactivo en 2 pasos):**
   * **Paso 0 (Curva S en Backend - Costo Cero):**
     * Umbral elástico según ticket: $\tau(monto) \in [0.18, 0.40]$ con sigmoide centrada en $M_0 = \$23$.
-    * Resultado: Rescata **+$7.200 netos** e incrementa el recupero al **64.1%** con exactamente los mismos ~500 bloqueos duros.
+    * Resultado: Rescata **$50.875 de capital (+$6.744 netos)** e incrementa el recupero al **64.1%** con exactamente los mismos ~500 bloqueos duros.
   * **Paso 1 (Semáforo 2FA - Tocar flecha derecha):**
     * Tres carriles de decisión:
       * **Verde (94.2%):** Aprobación directa sin fricción ($\hat{p} < 0.18$).
@@ -206,6 +206,38 @@
 * **Visual:** Gráfico de la Curva S sigmoidea y transición al diagrama de 3 carriles del Semáforo.
 * **Notas / Qué decir:**
   * [Tomi: explicar cómo la combinación de ambas cosas protege al negocio de fraudes grandes sin generar fricción en compras chicas].
+  Acá tenés las **notas del orador** integradas (Curva S + Semáforo 2FA + Stress Test) listas para leer de reojo durante la presentación, manteniendo la coherencia matemática y económica entre las dos slides.
+
+---
+
+### Guion para Notas del Orador: Política de Decisión (Curva S + Semáforo 2FA)
+
+**1. El problema del umbral fijo y la Curva S (Fase 1 - Backend)**
+
+* Un umbral plano ($\tau = 0.255$) ignora la asimetría financiera del negocio: un Falso Positivo cuesta siempre **$5**, pero un Falso Negativo cuesta el **monto del ticket** ($15 vs. $400).
+* Diseñamos una **sigmoide decreciente** $\tau_S(\text{monto}) \in [0.18, 0.40]$ calibrada con punto de inflexión en la mediana de fraude ($M_0 = \$23$) y suavidad $\sigma = 35$:
+* **Tickets altos:** umbral baja a **0.18** (cerrojo estricto para proteger el patrimonio).
+* **Tickets bajos:** umbral sube a **0.40** (no quemamos el cupo de ~500 bloqueos duros en compras chicas donde la relación riesgo/costo es baja).
+
+
+* **Impacto puro de la Curva S:** Con los mismos ~500 bloqueos duros, reasigna el presupuesto de riesgo hacia tickets caros y rescata **+$6.744 / +$7.208 adicionales** (subiendo el recupero de **55.6% a 64.1%**).
+
+**2. Cómo resolvemos el fraude de ticket bajo: Semáforo Tripartito 2FA (Fase 2 - Checkout)**
+
+* *Anticipando la crítica:* La Curva S pura deja pasar compras chicas dudosas para no generar FPs duros de $5. Para capturarlas sin fricción masiva, rompemos la decisión binaria con un **tercer carril**:
+* 🟢 **Carril Verde ($\hat{p} < 0.18$ — 94.2%):** Aprobación directa en 200 ms. Fricción cero para el usuario.
+* 🟡 **Carril Amarillo ($0.18 \le \hat{p} < \tau_{2D}(\text{monto}, \text{déficit})$ — 4.8%):** Reto suave **2FA** (Push/WhatsApp a ~$0.05). El cliente legítimo valida en 5 segundos; el estafador sin acceso físico al dispositivo queda frenado. *(Nota: si el ticket es chico pero tiene alto déficit de precio/ganga irreal, el ajuste 2D baja el umbral y lo empuja directo al reto).*
+* 🔴 **Carril Rojo ($\hat{p} \ge \tau_{2D}$ — 1.0%):** Bloqueo duro inmediato.
+
+
+* **Salto financiero en Test ($N = 22.500$):** Capturamos **199 fraudes adicionales** (Recall sube de **43.2% a 62.5%**), llevamos el capital recuperado al **79.9% ($63.398)** y reducimos el costo formal de la consigna en **~$40.000** ($119.9k $\rightarrow$ $80.4k).
+
+**3. Blindaje ante fallos operativos: Stress Test (Cierre)**
+
+* Evaluamos 5 escenarios adversos (caída de conversión de usuarios, *SIM swapping* o ataques de phishing en el canal 2FA).
+* Incluso bajo fricción severa o ataque bot (solo 50% de freno en 2FA), el recupero se sostiene en **71.6% ($56.9k)**.
+* **Peor caso absoluto (caída total del servicio 2FA):** El Carril Rojo gobernado por la Curva S actúa como *fallback* automático, garantizando un piso de **63.3% ($50.2k)** —siempre muy por encima del 55.6% del umbral estático.
+
 
 ---
 
