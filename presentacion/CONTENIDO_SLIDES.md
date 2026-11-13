@@ -58,19 +58,25 @@
 
 ## Slide 3: Poda y Selección de Variables (Feature Engineering 1)
 * **Quién expone:** Tomi
-* **Título propuesto:** *Feature Engineering: de 51 variables candidatas a un núcleo limpio de 11.*
-* **Eyebrow (ceja):** `3. SELECCIÓN DE VARIABLES`
+* **Título propuesto:** *De 51 variables a 11: ratios de monto y quiebre de colinealidad.*
+* **Eyebrow (ceja):** `3. SELECCIÓN DE VARIABLES & RATIOS`
 * **Datos y evidencia oficial:**
   * Se formularon más de 50 hipótesis de negocio (temporales, agregadas, ratios, interacciones).
   * **Algoritmo:** Forward Stepwise Selection con paciencia $k=2$ y tolerancia mínima de $\Delta\text{PR-AUC} > 0.0003$ sobre validación temporal.
-  * **Resultado:** Se descartó el 78% de las variables por ser ruido o generar sobreajuste; sobrevivieron 11 variables blindadas (4 nativas + 7 ingenierizadas).
-  * **Salto de rendimiento:** El PR-AUC subió de inmediato a **`0.4443` (+130 bps)** en validación temporal.
-* **Visual:** `figures/fig1_embudo_seleccion.svg` (Embudo del algoritmo de Forward Selection).
+  * **Números Big Numbers en pantalla:**
+    * **51 &rarr; 11:** Se descartó el 78% de las variables por ser ruido o generar sobreajuste; sobrevivieron 11 variables blindadas (4 nativas + 7 ingenierizadas).
+    * **0.4443 (+130 bps):** Salto de generalización inmediato en validación temporal sin sobreajuste.
+  * **Monto crudo descartado vs Ratios creados:**
+    * El algoritmo descartó `monto` plano porque aislado no predecía.
+    * `ratio_monto_l` (monto relativo a la escala $l$) se convirtió en la variable ingenierizada #1 de todo el modelo (**Gain de 9.330**), complementada con `ratio_monto_e`.
+  * **Quiebre de colinealidad `d` vs `m` (`ratio_d_m`):**
+    * En el EDA $d$ y $m$ crecen fuertemente juntas (**Spearman $r_s = 0.735$**).
+    * `ratio_d_m` (+132 bps) atrapa las operaciones atípicas donde esa relación se rompe ($d \gg m$), donde la probabilidad de fraude salta de 4.2% a 11.0% y hasta **28.8% en quiebre extremo (multiplica el fraude x5 a x7)**.
+* **Visual:** `figures/fig_ratio_d_m.svg` (Panel 1: Scatter y diagonal de colinealidad Spearman 0.735; Panel 2: Explosión de tasa de fraude a 28.8% al romperse la relación).
 * **Notas / Qué decir:**
-  * [Mencionar el rigor: cada variable tuvo que ganarse su lugar compitiendo individualmente].
-  * **La tabla en pantalla:** Mostrar la lista de las 11 variables seleccionadas (4 nativas y 7 ingenierizadas) para que el profesor vea la transparencia total del proceso.
-  * **Por qué descartamos el 78%:** Explicar que el Forward Selection con paciencia k=2 actuó como un filtro anti-ruido implacable.
-  * **El monto crudo quedó afuera:** Remarcar que el algoritmo descartó la variable `monto` cruda porque de forma aislada no predecía; lo que predecía era el monto relativo a otras variables (los ratios). Mostrar cómo `ratio_monto_l` (monto relativo a la escala l) y `ratio_monto_e` reemplazaron al monto plano. De hecho, `ratio_monto_l` se convirtió en la variable creada más importante de todo el modelo (Gain de 9.330). También sumamos `ratio_d_m` (+132 bps) para desarmar la colinealidad entre d y m. Vimos en el EDA que d y m crecen fuertemente juntas (Spearman 0.735). Por eso creamos ratio_d_m: para atrapar las operaciones atípicas donde esa correlación se quiebra, donde la probabilidad de fraude se multiplica por 5. (Mostrarlo en un grafico)
+  * **Rigor y Poda:** Destacar que en vez de dos gráficos de barras genéricos, los números hablan por sí solos: podar 78% del ruido llevó el PR-AUC a 0.4443 (+130 bps).
+  * **Monto relativo:** Mostrar la tabla en pantalla de las 11 variables y remarcar que `ratio_monto_l` es la variable #1 creada del modelo (Gain 9.330).
+  * **Quiebre de colinealidad con el gráfico:** Señalar la figura de `ratio_d_m`: cómo el modelo aprovecha la ruptura de la correlación de Spearman de 0.735 para atrapar fraudes que se multiplican por 5 o más.
 
 ---
 

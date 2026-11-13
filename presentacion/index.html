@@ -430,53 +430,65 @@
   <p class="footnote">Evaluación fuera de muestra out-of-time (OOT) sobre 22.500 casos de Test (16 a 21 de abril).</p>
 </section>
 
-<!-- NOTAS TOMÁS SALDÍAS: 1. Algoritmo y Rigor: Formular más de 50 hipótesis de negocio y pasar por Forward Stepwise Selection con paciencia k=2 y tolerancia de delta PR-AUC > 0.0003 en validación temporal. Poda el 78% de ruido y retiene 11 variables blindadas (4 nativas + 7 creadas). Salto inmediato a 0.4443 (+130 bps). 2. Monto crudo descartado: El monto plano de forma aislada no predecía; lo que predecía era el monto relativo a otras variables. ratio_monto_l (monto relativo a la escala l) se convirtió en la variable más potente de todo el modelo (Gain de 9.330). Sumamos ratio_d_m (+132 bps) para desarmar la correlación de Spearman de 0.735 entre d y m; cuando esa correlación se quiebra, la tasa de fraude se multiplica por 5. -->
-<!-- SLIDE 2: FEATURE ENGINEERING 1 (FORWARD SELECTION) -->
+<!-- NOTAS TOMÁS SALDÍAS: 1. Poda y Rigor: Formular más de 50 hipótesis de negocio y pasar por Forward Stepwise Selection con paciencia k=2 y tolerancia de delta PR-AUC > 0.0003 en validación temporal. Poda el 78% de ruido (51 -> 11 variables) y salta a 0.4443 (+130 bps). 2. Monto crudo descartado: El monto plano de forma aislada no predecía; lo que predecía era el monto relativo a otras variables. ratio_monto_l (monto relativo a la escala l) se convirtió en la variable más potente de todo el modelo (Gain de 9.330) y ratio_monto_e reemplazó al monto plano. 3. Desarme de colinealidad (ratio_d_m): Vimos en el EDA que d y m crecen fuertemente juntas (Spearman 0.735). Por eso creamos ratio_d_m (+132 bps): para atrapar las operaciones atípicas donde esa correlación se quiebra, donde la probabilidad de fraude se multiplica por 5 a casi 7 veces (28.8%). -->
+<!-- SLIDE 2: FEATURE ENGINEERING 1 (FORWARD SELECTION & RATIOS) -->
 <section class="slide">
   <div>
-    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">2. SELECCIÓN DE VARIABLES</p>
-    <h2>El Forward Selection depura 51 candidatas y aporta +130 bps al modelo</h2>
+    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">2. SELECCIÓN DE VARIABLES &amp; RATIOS</p>
+    <h2>De 51 variables a 11: ratios de monto y quiebre de colinealidad</h2>
   </div>
   <div class="split">
-    <div class="artefact-container" style="flex-direction: column; gap: 1.5vh;">
-      <img src="figures/fig1_embudo_seleccion.svg" alt="Embudo de Selección de Variables Ola 1" style="max-height: 38vh;">
-      <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse; margin-top: 0.5vh;">
+    <div class="artefact-container" style="flex-direction: column; gap: 1vh;">
+      <div style="display: flex; gap: 3.5vw; width: 100%; justify-content: flex-start; align-items: baseline; border-bottom: 1px solid #e8eaed; padding-bottom: 0.8vh;">
+        <div>
+          <p class="footnote" style="text-transform: uppercase;">Poda de Ruido</p>
+          <div class="hero-metric" style="font-size: clamp(1.8rem, 2.8vw, 2.4rem);"><span style="background: linear-gradient(180deg, transparent 65%, #FFE600 65%);">51 &rarr; 11</span></div>
+          <p class="footnote" style="color: var(--ink-secondary); font-weight: 700;">-78% descartado (k=2)</p>
+        </div>
+        <div>
+          <p class="footnote" style="text-transform: uppercase;">Salto en Validación</p>
+          <div class="hero-metric" style="font-size: clamp(1.8rem, 2.8vw, 2.4rem);"><span>0.4443</span></div>
+          <p class="footnote" style="color: var(--accent); font-weight: 700;">+130.0 bps sin sobreajuste</p>
+        </div>
+      </div>
+      <img src="figures/fig_ratio_d_m.svg" alt="Colinealidad d vs m y Quiebre de Fraude con ratio_d_m" style="max-height: 42vh; width: 100%; object-fit: contain;">
+    </div>
+    <div class="context-pane">
+      <table style="width: 100%; font-size: 0.78rem; border-collapse: collapse; margin-bottom: 1.5vh;">
         <thead>
-          <tr style="border-bottom: 2px solid #dadce0; text-align: left; color: var(--ink-muted);">
-            <th style="padding: 0.2rem 0.4rem;">Tipo</th>
-            <th style="padding: 0.2rem 0.4rem;">Variables Seleccionadas</th>
-            <th style="padding: 0.2rem 0.4rem;">Impacto Clave</th>
+          <tr style="border-bottom: 1px solid #dadce0; text-align: left; color: var(--ink-muted);">
+            <th style="padding: 0.2rem 0.3rem;">Grupo</th>
+            <th style="padding: 0.2rem 0.3rem;">Variables Núcleo</th>
+            <th style="padding: 0.2rem 0.3rem;">Impacto Directo</th>
           </tr>
         </thead>
         <tbody>
           <tr style="border-bottom: 1px solid #f1f3f4;">
-            <td style="padding: 0.2rem 0.4rem; font-weight: 700; color: #174ea6;">Nativas (4)</td>
-            <td style="padding: 0.2rem 0.4rem; font-family: monospace;">b, c, d, m</td>
-            <td style="padding: 0.2rem 0.4rem; color: #5f6368;">Núcleo base de comportamiento</td>
+            <td style="padding: 0.2rem 0.3rem; font-weight: 700; color: #174ea6;">Nativas (4)</td>
+            <td style="padding: 0.2rem 0.3rem; font-family: monospace;">b, c, d, m</td>
+            <td style="padding: 0.2rem 0.3rem; color: #5f6368;">Núcleo de comportamiento</td>
           </tr>
           <tr style="border-bottom: 1px solid #f1f3f4; background: #eef4fc;">
-            <td style="padding: 0.2rem 0.4rem; font-weight: 700; color: #174ea6;">Ratios (3)</td>
-            <td style="padding: 0.2rem 0.4rem; font-family: monospace;">ratio_monto_l, ratio_monto_e, ratio_d_m</td>
-            <td style="padding: 0.2rem 0.4rem; font-weight: 600; color: #174ea6;">Gain 9.330 (#1 del modelo) y +132 bps</td>
+            <td style="padding: 0.2rem 0.3rem; font-weight: 700; color: #174ea6;">Ratios (3)</td>
+            <td style="padding: 0.2rem 0.3rem; font-family: monospace;">ratio_monto_l, ratio_monto_e, ratio_d_m</td>
+            <td style="padding: 0.2rem 0.3rem; font-weight: 700; color: #174ea6;">Gain 9.330 (#1) y +132 bps</td>
           </tr>
           <tr>
-            <td style="padding: 0.2rem 0.4rem; font-weight: 700; color: #b06000;">Complejas (4)</td>
-            <td style="padding: 0.2rem 0.4rem; font-family: monospace;">es_madrugada, score_texto_nb, prod_b_log_c, is_h_cero</td>
-            <td style="padding: 0.2rem 0.4rem; color: #5f6368;">Señal circadiana, NLP y no lineal</td>
+            <td style="padding: 0.2rem 0.3rem; font-weight: 700; color: #b06000;">Complejas (4)</td>
+            <td style="padding: 0.2rem 0.3rem; font-family: monospace;">es_madrugada, score_texto_nb, prod_b_log_c, is_h_cero</td>
+            <td style="padding: 0.2rem 0.3rem; color: #5f6368;">Circadiano, NLP y no lineal</td>
           </tr>
         </tbody>
       </table>
-    </div>
-    <div class="context-pane">
       <div class="takeaway-bullet">
-        <p><strong>Poda de 51 a 11:</strong> Forward Selection elimina 78% del ruido y alcanza PR-AUC 0.4443 (+130 bps).</p>
+        <p><strong>Monto relativo:</strong> ratio_monto_l (Gain 9.330) y ratio_monto_e reemplazan al monto plano descartado.</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Monto relativo:</strong> ratio_monto_l reemplaza al monto crudo como variable estrella (Gain 9.330).</p>
+        <p><strong>Quiebre d vs m:</strong> ratio_d_m descolapsa Spearman 0.735 y multiplica el fraude x5 (+132 bps).</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Filtro con tolerancia delta PR-AUC mayor a 0.0003 y paciencia k=2 ajustado en validación temporal.</p>
+  <p class="footnote">Forward Selection con paciencia k=2; correlación d vs m (Spearman 0.735) y explosión atípica evaluada en 150.000 transacciones.</p>
 </section>
 
 <!-- NOTAS TOMÁS SALDÍAS: 1. Reloj Circadiano: De día el fraude está en 4.1%, pero de madrugada (01:00 a 05:00 UTC) se dispara a 17.2% a las 02:00 UTC (3.8x prevalencia). Los estafadores aprovechan la baja supervisión nocturna. 2. Text-Mining Bayesiano (score_texto_nb): Condensamos 5.000 términos (unigramas y bigramas) en una probabilidad continua entre 0 y 1. TF-IDF con min_df=30 y prior Dirichlet alpha=2.0. Blindaje anti-leakage: TimeSeriesSplit en 5 particiones temporales OOF; recién al final reentrena en 100% Train para Test. 3. Interacción no lineal (prod_b_log_c): Multiplicar b por log(c+1) aporta curvatura (+91 bps). Clientes con b alto y c bajo exhiben 12.8% de fraude frente a 4.1% de la plataforma (3.1x lift). -->
