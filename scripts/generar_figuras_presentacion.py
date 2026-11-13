@@ -256,4 +256,76 @@ plt.tight_layout()
 plt.savefig(out_dir / "fig_fe_complejidad.svg", format='svg', bbox_inches='tight', transparent=True)
 plt.close()
 
+# =============================================================
+# FIGURA 5: Stacking Cuatri-Modelo y Récord de Test
+# =============================================================
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.8, 4.2), dpi=150)
+fig.patch.set_facecolor('none')
+for a in (ax1, ax2): a.set_facecolor('none')
+
+# Panel 1: Nivel 1 - Cuatro Familias de Árboles
+models_n1 = [
+    'Random Forest (Bagging)',
+    'CatBoost (Simétricos)',
+    'Control Ian (LightGBM 11v)',
+    'XGBoost (Profundidad)',
+    'Challenger v3 (LightGBM 13v)'
+]
+scores_n1 = [0.40268, 0.44142, 0.44435, 0.44592, 0.44644]
+colors_n1 = [GRAY_MUTED, GRAY_MUTED, GRAY_MUTED, '#7277b5', '#2D3277']
+
+bars_n1 = ax1.barh(models_n1, scores_n1, color=colors_n1, height=0.52)
+for b, sc in zip(bars_n1, scores_n1):
+    c = NAVY if sc == max(scores_n1) else GRAY_TEXT
+    w = '700' if sc == max(scores_n1) else '600'
+    ax1.text(sc + 0.0012, b.get_y() + b.get_height()/2, f'{sc:.4f}', va='center', fontsize=9.5, fontweight=w, color=c)
+
+ax1.set_xlim(0.380, 0.465)
+ax1.set_xlabel('PR-AUC Test OOT', fontsize=10, color=NAVY)
+ax1.set_title('Nivel 1: Modelos Monomodales (Techo ~0.446)', fontsize=11.5, fontweight='700', loc='left', color=NAVY)
+ax1.spines['top'].set_visible(False)
+ax1.spines['right'].set_visible(False)
+ax1.spines['bottom'].set_color('#dadce0')
+ax1.spines['left'].set_color('#dadce0')
+
+# Panel 2: Nivel 2 - Ensamble y Quiebre de Barrera
+models_n2 = [
+    'Challenger v3\n(Mejor Monomodal)',
+    'Champion Protocolo\n(Val: 0.4922 | C=0.20)',
+    'Récord Parsimonia\n(Lasso L1 | C=0.10)'
+]
+scores_n2 = [0.44644, 0.45014, 0.45093]
+colors_n2 = [GRAY_MUTED, NAVY, MELI_YELLOW]
+edges_n2 = ['none', 'none', NAVY]
+lws_n2 = [0, 0, 2.2]
+
+bars_n2 = ax2.barh(models_n2, scores_n2, color=colors_n2, edgecolor=edges_n2, linewidth=lws_n2, height=0.52)
+for b, sc in zip(bars_n2, scores_n2):
+    c = NAVY if sc >= 0.4500 else GRAY_TEXT
+    w = '700' if sc >= 0.4500 else '600'
+    ax2.text(sc + 0.0004, b.get_y() + b.get_height()/2, f'{sc:.4f}', va='center', fontsize=10, fontweight=w, color=c)
+
+# Línea vertical de la barrera de 0.4500
+ax2.axvline(0.4500, color='#d93025', linestyle='--', linewidth=1.5, alpha=0.8)
+ax2.text(0.45005, -0.38, 'Barrera 0.4500', color='#d93025', fontsize=8.5, fontweight='700')
+
+# Anotación directa al campeón de parsimonia
+ax2.annotate('Récord Histórico\n(+195.8 bps en Test)', 
+             xy=(0.45093, 2), xytext=(0.444, 2.25),
+             arrowprops=dict(arrowstyle="->", color=NAVY, lw=1.5),
+             fontsize=9.5, fontweight='700', color=NAVY)
+
+ax2.set_xlim(0.440, 0.456)
+ax2.set_xlabel('PR-AUC Test OOT', fontsize=10, color=NAVY)
+ax2.set_title('Nivel 2: Stacking y Regularización L1', fontsize=11.5, fontweight='700', loc='left', color=NAVY)
+ax2.spines['top'].set_visible(False)
+ax2.spines['right'].set_visible(False)
+ax2.spines['bottom'].set_color('#dadce0')
+ax2.spines['left'].set_color('#dadce0')
+
+plt.tight_layout()
+plt.savefig(out_dir / "fig_pr_comparativa_test.svg", format='svg', bbox_inches='tight', transparent=True)
+plt.savefig(out_dir / "fig_stacking_arquitectura_resultado.svg", format='svg', bbox_inches='tight', transparent=True)
+plt.close()
+
 print("Figuras de presentación generadas exitosamente en presentacion/figures/.")

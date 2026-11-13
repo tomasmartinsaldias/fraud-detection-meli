@@ -30,16 +30,16 @@ Para trasladar las probabilidades continuas $\hat{p} \in [0, 1]$ del Champion Of
 | Nivel | Política Operativa | Rol Metodológico | Qué Demuestra |
 | :---: | :--- | :--- | :--- |
 | **1** | **0. Umbral Estático Consigna** ($\tau=0.2550$) | **El Contrato Académico** | **Rigor absoluto.** Cumple al 100% la consigna formal ($\text{FP} \le 100$ en validación `val_policy`) con un costo formal de **$119.985**. Garantiza el cumplimiento estricto de las reglas obligatorias de la cátedra. |
-| **2** | **2. Curva S Sigmoidea Acotada** ($\tau \in [0.18, 0.40]$) | **La Optimización Matemática Pura** | **El puente analítico clave.** Mantiene una decisión binaria clásica (aprobar o bloquear) sin ningún supuesto de 2FA. Con los mismos ~500 bloqueos duros, rescata **+8.5 pp de capital** ($54.372 vs $47.164) eliminando la paranoia de colas de Elkan. |
+| **2** | **2. Curva S Sigmoidea Acotada** ($\tau \in [0.18, 0.40]$) | **La Optimización Matemática Pura** | **El puente analítico clave.** Mantiene una decisión binaria clásica (aprobar o bloquear) sin ningún supuesto de 2FA. Con los mismos ~500 bloqueos duros, rescata **+8.5 pp de capital** ($50.875 vs $44.132) eliminando la paranoia de colas de Elkan. |
 | **3** | **4. Decisión Tripartita con 2FA** (Verde / Amarillo / Rojo) | **La Visión Estratégica de Producto** | **Simulación de despliegue fintech.** Muestra cómo romper el techo operativo de los ~500 FPs mediante autenticación escalonada (Step-up Auth), trepando al **75.8% - 79.9% de recupero de capital** con costo marginal de fricción. |
 
 #### Comparativa Cuantitativa en Test Final ($N=22.500$)
 
 | Nivel / Política | Criterio de Corte y Acción | FP Duro (Rechazos) | FN | Recall Fraude | Costo Formal Consigna | Pérdida Financiera Real | Capital Salvado ($) | Tasa de Recupero |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Nivel 1: Umbral Estático** | $\tau = 0.2550$ (Fijo para todo ticket) | 477 | 588 | 43.24% | $119.985 | $37.633 | $47.164 | 55.60% |
-| **Nivel 2: Curva S Acotada** | $\tau_S(\text{monto}) \in [0.18, 0.40]$ | 496 | 578 | 44.21% | $118.080 | $30.985 | $54.372 | **64.09% (+8.5 pp)** |
-| **Nivel 3: Decisión Tripartita** | Verde / 2FA ($\beta=0.40$) / Bloqueo | **504** | **389** | **62.45% (+19.2 pp)** | **$80.385 (-33.0%)** | **$28.647 (-23.9%)** | **$67.747** | **`79.87%` (+24.3 pp)** |
+| **Nivel 1: Umbral Estático** | $\tau = 0.2550$ (Fijo para todo ticket) | 477 | 588 | 43.24% | $119.985 | $37.633 | $44.132 | 55.60% |
+| **Nivel 2: Curva S Acotada** | $\tau_S(\text{monto}) \in [0.18, 0.40]$ | 496 | 578 | 44.21% | $118.080 | $30.985 | $50.875 | **64.09% (+8.5 pp)** |
+| **Nivel 3: Decisión Tripartita** | Verde / 2FA ($\beta=0.40$) / Bloqueo | **504** | **389** | **62.45% (+19.2 pp)** | **$80.385 (-33.0%)** | **$28.647 (-23.9%)** | **$63.399** | **`79.87%` (+24.3 pp)** |
 
 #### Auditoría de Robustez y Stress Test (Análisis de Sensibilidad de la Decisión Tripartita)
 
