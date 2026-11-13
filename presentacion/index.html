@@ -809,69 +809,30 @@
       <img src="figures/fig4_semaforo_3zonas.svg" alt="Espacio 2D de Decisión: Semáforo Tripartito y Curva S">
     </div>
     <div class="context-pane">
-      <div style="display: flex; gap: 2.5vw; align-items: baseline; border-bottom: 1px solid #e8eaed; padding-bottom: 0.8vh; margin-bottom: 0.8vh;">
+      <div style="display: flex; gap: 2.5vw; align-items: baseline; border-bottom: 1px solid #e8eaed; padding-bottom: 1vh; margin-bottom: 1.5vh;">
         <div>
           <p class="footnote" style="text-transform: uppercase;">Recupero Total</p>
           <div class="hero-metric" style="font-size: clamp(1.8rem, 2.6vw, 2.2rem);"><span style="background: linear-gradient(180deg, transparent 65%, #FFE600 65%);">79.9%</span></div>
-          <p class="footnote" style="color: var(--accent); font-weight: 700;">$63.4k salvados (+199 fraudes)</p>
+          <p class="footnote" style="color: var(--accent); font-weight: 700;">$63.4k (+199 fraudes)</p>
         </div>
         <div>
           <p class="footnote" style="text-transform: uppercase;">Piso Garantizado</p>
           <div class="hero-metric" style="font-size: clamp(1.8rem, 2.6vw, 2.2rem); color: #5f6368;">63.3%</div>
-          <p class="footnote" style="color: #5f6368; font-weight: 600;">Fallback Curva S si 2FA colapsa</p>
+          <p class="footnote" style="color: #5f6368; font-weight: 600;">Fallback ante colapso 2FA</p>
         </div>
       </div>
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.76rem; margin-bottom: 1vh;">
-        <thead>
-          <tr style="border-bottom: 1px solid #dadce0; color: var(--ink-muted); text-align: left;">
-            <th style="padding: 0.18rem 0.25rem;">Escenario Simulado (Stress Test)</th>
-            <th style="padding: 0.18rem 0.25rem; text-align: center;">Captura 2FA</th>
-            <th style="padding: 0.18rem 0.25rem; text-align: right;">Salvado</th>
-            <th style="padding: 0.18rem 0.25rem; text-align: right;">Recupero</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style="border-bottom: 1px solid #f1f3f4;">
-            <td style="padding: 0.18rem 0.25rem; font-weight: 600;">1. Base (Push App / FaceID)</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: center;">90%</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: right; color: #5f6368;">$62.2k</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: right; font-weight: 600;">78.3%</td>
-          </tr>
-          <tr style="border-bottom: 1px solid #f1f3f4; background: #eef4fc;">
-            <td style="padding: 0.18rem 0.25rem; font-weight: 700; color: #174ea6;">2. Realista (WhatsApp / SMS)</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: center; font-weight: 700; color: #174ea6;">75%</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: right; font-weight: 700; color: #174ea6;">$60.2k</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: right; font-weight: 700; color: #174ea6;">75.8%</td>
-          </tr>
-          <tr style="border-bottom: 1px solid #f1f3f4;">
-            <td style="padding: 0.18rem 0.25rem; color: #5f6368;">3. Fricción severa (caída de paso)</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: center;">60%</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: right; color: #5f6368;">$58.2k</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: right;">73.3%</td>
-          </tr>
-          <tr style="border-bottom: 1px solid #f1f3f4;">
-            <td style="padding: 0.18rem 0.25rem; color: #b06000;">4. Ataque Bot / Phishing</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: center; color: #b06000;">50%</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: right; color: #b06000;">$56.9k</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: right; font-weight: 600; color: #b06000;">71.6%</td>
-          </tr>
-          <tr style="background: #fce8e6;">
-            <td style="padding: 0.18rem 0.25rem; font-weight: 700; color: #d93025;">5. Caída total de API (Colapso 2FA)</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: center; font-weight: 700; color: #d93025;">0%</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: right; font-weight: 700; color: #d93025;">$50.2k</td>
-            <td style="padding: 0.18rem 0.25rem; text-align: right; font-weight: 700; color: #d93025;">63.3%</td>
-          </tr>
-        </tbody>
-      </table>
       <div class="takeaway-bullet">
-        <p><strong>Tolerancia a ataques:</strong> bajo phishing o botnets (50% de fuga en 2FA), sostiene 71.6% del capital.</p>
+        <p><strong>Fricci&oacute;n &le; 4.8%:</strong> 94.2% pasa directo en 200 ms; reto 2FA acotado a compras dudosas.</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Fail-safe automático:</strong> si el servicio 2FA colapsa al 100%, el carril rojo garantiza un piso del 63.3%.</p>
+        <p><strong>Stress test superado:</strong> retiene 75.8% con WhatsApp y 71.6% bajo phishing o botnets.</p>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>Piso fail-safe:</strong> si 2FA colapsa al 100%, el carril rojo sostiene 63.3% ($50.2k).</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Fronteras calibradas en Validación: tau_block = tau_S - 0.025&middot;d&eacute;ficit (FP&le;100); tau_chal = 0.40&middot;tau_block (grid search min costo con fricci&oacute;n &le; 5%).</p>
+  <p class="footnote">&beta;* = 0.40 calibrado por grid search con fricción &le; 5%; fallback automático a Curva S en carril rojo.</p>
 </section>
 
 <!-- NOTAS CIERRE CONJUNTO (IAN / FRANCO / TOMÁS): Fase 1 Inmediata: Activar Curva S en motor de reglas backend sin tocar experiencia de usuario (+ $6.7k netos inmediatos a costo cero). Fase 2 Checkout: Desplegar carril 2FA WhatsApp/Push para compras dudosas; consolida 79.9% de capital salvado ($63.4k protegidos). Resumen económico de la consigna: Costo inicial $140.435 -> Costo final $80.385 (Ahorro neto de $60.050 / -42.7%). Viabilidad de operación probada: menos de 94 bloqueos diarios (2.3% FP rate; 97.7% de transacciones legítimas aprobadas en 200 ms). Cierre contundente y apertura a preguntas de la cátedra. -->
