@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 340" width="100%" height="100%" role="img" aria-label="Comparativa PR-AUC OOT entre modelos individuales de detección de anomalías y el Ensemble">
+  <style>
+    .title { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: 700; fill: #1f2328; }
+    .label { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 500; fill: #3c4043; }
+    .label-accent { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 12.5px; font-weight: 700; fill: #2D3277; }
+    .val { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 11.5px; font-weight: 600; fill: #5f6368; }
+    .val-accent { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 12.5px; font-weight: 700; fill: #2D3277; }
+    .ref-text { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 10.5px; font-weight: 500; fill: #5f6368; }
+  </style>
+
+  <!-- Chart Header (Storytelling with Data) -->
+  <text x="16" y="22" class="title">PR-AUC for Anomaly Detections Algorithms, tested on Validation set</text>
+
+  <!-- Baseline Reference Line (0.0453) -->
+  <line x1="265.9" y1="54" x2="265.9" y2="318" stroke="#9aa0a6" stroke-width="1.2" stroke-dasharray="4,4" />
+  <text x="270" y="62" class="ref-text">Azar: 0.0453</text>
+
+  <!-- 1. Ensemble (PCA + IF + LOF): 0.1970 -->
+  <text x="185" y="93" text-anchor="end" class="label-accent">Ensemble Anomalías</text>
+  <rect x="195" y="76" width="308.3" height="26" rx="4" fill="#2D3277" />
+  <text x="511.3" y="93.5" class="val-accent">0.1970 (4.3x)</text>
+
+  <!-- Subtle separator after Ensemble -->
+  <line x1="16" y1="114" x2="650" y2="114" stroke="#e8eaed" stroke-width="1" />
+
+  <!-- Individual Models (80% Neutral Gray, descending order) -->
+  <!-- 2. PCA (3 scores): 0.1698 -->
+  <text x="185" y="142" text-anchor="end" class="label">PCA (3 scores: T², Q, Norma²)</text>
+  <rect x="195" y="126" width="265.8" height="22" rx="3" fill="#cfd4dc" />
+  <text x="468.8" y="141.5" class="val">0.1698 (3.7x)</text>
+
+  <!-- 3. IF Extended: 0.1557 -->
+  <text x="185" y="174" text-anchor="end" class="label">IF Extended (Diagonal)</text>
+  <rect x="195" y="158" width="243.7" height="22" rx="3" fill="#cfd4dc" />
+  <text x="446.7" y="173.5" class="val">0.1557 (3.4x)</text>
+
+  <!-- 4. IF Ortogonal: 0.1162 -->
+  <text x="185" y="206" text-anchor="end" class="label">IF Ortogonal (Axis-Aligned)</text>
+  <rect x="195" y="190" width="181.9" height="22" rx="3" fill="#cfd4dc" />
+  <text x="384.9" y="205.5" class="val">0.1162 (2.6x)</text>
+
+  <!-- 5. OCSVM (Nystroem RBF): 0.0986 -->
+  <text x="185" y="238" text-anchor="end" class="label">OCSVM (Nystroem RBF)</text>
+  <rect x="195" y="222" width="154.3" height="22" rx="3" fill="#cfd4dc" />
+  <text x="357.3" y="237.5" class="val">0.0986 (2.2x)</text>
+
+  <!-- 6. GMM (k=5): 0.0984 -->
+  <text x="185" y="270" text-anchor="end" class="label">GMM (k=5)</text>
+  <rect x="195" y="254" width="154.0" height="22" rx="3" fill="#cfd4dc" />
+  <text x="357" y="269.5" class="val">0.0984 (2.2x)</text>
+
+  <!-- 7. LOF (Manhattan k=20): 0.0792 -->
+  <text x="185" y="302" text-anchor="end" class="label">LOF (Manhattan k=20)</text>
+  <rect x="195" y="286" width="124.0" height="22" rx="3" fill="#cfd4dc" />
+  <text x="327" y="301.5" class="val">0.0792 (1.7x)</text>
+</svg>

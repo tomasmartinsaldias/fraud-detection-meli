@@ -34,6 +34,7 @@ def main():
         ("4. Récord Parsimonia (Cuatri-Modelo L1 C=0.10)", "0.49101", "0.45093", "+65.8 bps", "🏆 CHAMPION"),
         ("5. PoC Focal Loss Stacking (LGBM Focal)", "0.49280", "0.45117", "+68.2 bps", "Exploratorio"),
         ("6. Forward Selection Multi-Loss (5 modelos)", "0.49502", "0.45010", "+57.5 bps", "🔬 Multi-Loss"),
+        ("7. Stacking Cuatri + Grafo (L1 C=0.10)", "0.49128", "0.44972", "+53.7 bps", "Descartado"),
     ]
 
     for nombre, v_auc, t_auc, delta, estado in hitos:

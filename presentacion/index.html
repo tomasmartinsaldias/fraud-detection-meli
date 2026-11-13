@@ -179,6 +179,110 @@
     opacity: 1;
     transition: opacity 350ms var(--ease);
   }
+
+  /* Two-step flat-canvas comparison (Stacking C=0.20 vs C=0.10) */
+  .stacking-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4vw;
+    align-items: center;
+    flex: 1;
+    min-height: 0;
+  }
+  .stacking-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+    transition: opacity 350ms var(--ease), color 350ms var(--ease);
+  }
+  .stacking-col.right {
+    border-left: 1px solid #e8eaed;
+    padding-left: 4vw;
+  }
+  .stacking-col .col-title {
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink-muted);
+    transition: color 350ms var(--ease);
+  }
+  .stacking-col .col-sub,
+  .stacking-col .val-secondary,
+  .stacking-col .takeaway-bullet p {
+    transition: color 350ms var(--ease);
+  }
+  .stacking-col .takeaway-bullet {
+    transition: border-color 350ms var(--ease), opacity 350ms var(--ease);
+  }
+
+  /* Active state: left (step-0) */
+  .slide[data-steps="2"].step-0 .stacking-col.left {
+    opacity: 1;
+  }
+  .slide[data-steps="2"].step-0 .stacking-col.left .col-title,
+  .slide[data-steps="2"].step-0 .stacking-col.left .hero-metric {
+    color: var(--accent);
+  }
+  .slide[data-steps="2"].step-0 .stacking-col.left .col-sub,
+  .slide[data-steps="2"].step-0 .stacking-col.left .val-secondary,
+  .slide[data-steps="2"].step-0 .stacking-col.left .takeaway-bullet p {
+    color: #1f2328;
+  }
+  .slide[data-steps="2"].step-0 .stacking-col.left .takeaway-bullet {
+    border-left-color: var(--accent);
+    opacity: 1;
+  }
+
+  /* Inactive state: right (step-0) */
+  .slide[data-steps="2"].step-0 .stacking-col.right {
+    opacity: 0.35;
+  }
+  .slide[data-steps="2"].step-0 .stacking-col.right .col-title,
+  .slide[data-steps="2"].step-0 .stacking-col.right .hero-metric,
+  .slide[data-steps="2"].step-0 .stacking-col.right .val-secondary,
+  .slide[data-steps="2"].step-0 .stacking-col.right .metric-delta,
+  .slide[data-steps="2"].step-0 .stacking-col.right .col-sub,
+  .slide[data-steps="2"].step-0 .stacking-col.right .takeaway-bullet p {
+    color: var(--neutral) !important;
+  }
+  .slide[data-steps="2"].step-0 .stacking-col.right .takeaway-bullet {
+    border-left-color: #dadce0;
+    opacity: 1;
+  }
+
+  /* Inactive state: left (step-1) */
+  .slide[data-steps="2"].step-1 .stacking-col.left {
+    opacity: 0.35;
+  }
+  .slide[data-steps="2"].step-1 .stacking-col.left .col-title,
+  .slide[data-steps="2"].step-1 .stacking-col.left .hero-metric,
+  .slide[data-steps="2"].step-1 .stacking-col.left .val-secondary,
+  .slide[data-steps="2"].step-1 .stacking-col.left .col-sub,
+  .slide[data-steps="2"].step-1 .stacking-col.left .takeaway-bullet p {
+    color: var(--neutral) !important;
+  }
+  .slide[data-steps="2"].step-1 .stacking-col.left .takeaway-bullet {
+    border-left-color: #dadce0;
+    opacity: 1;
+  }
+
+  /* Active state: right (step-1) */
+  .slide[data-steps="2"].step-1 .stacking-col.right {
+    opacity: 1;
+  }
+  .slide[data-steps="2"].step-1 .stacking-col.right .col-title,
+  .slide[data-steps="2"].step-1 .stacking-col.right .hero-metric,
+  .slide[data-steps="2"].step-1 .stacking-col.right .metric-delta {
+    color: var(--accent) !important;
+  }
+  .slide[data-steps="2"].step-1 .stacking-col.right .col-sub,
+  .slide[data-steps="2"].step-1 .stacking-col.right .val-secondary,
+  .slide[data-steps="2"].step-1 .stacking-col.right .takeaway-bullet p {
+    color: #1f2328 !important;
+  }
+  .slide[data-steps="2"].step-1 .stacking-col.right .takeaway-bullet {
+    border-left-color: var(--accent);
+    opacity: 1;
+  }
   .context-pane {
     display: flex;
     flex-direction: column;
@@ -474,7 +578,120 @@
   <p class="footnote">Evaluación sobre 22.500 casos de Test con semáforo tripartito y fallback automático a Curva S.</p>
 </section>
 
-<!-- SLIDE 9: THE ASK (DECISIÓN Y CIERRE) -->
+<!-- SLIDE 9: ANOMALY DETECTION & REGLAS DE ASOCIACIÓN -->
+<section class="slide">
+  <!-- NOTAS FRANCO ESTERELLAS: Detallar cómo estas señales no supervisadas (entrenadas exclusivamente sobre fraude == 0 con variables crudas) y las 10 reglas ortogonales WRAcc aportan información geométrica y combinatoria distinta a la que ven los árboles supervisados, alimentando al Stacking con señales complementarias. -->
+  <div>
+    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">5. ANOMALÍAS &amp; REGLAS</p>
+    <h2>Anomaly Detection y Reglas de Asociación aportan señales ortogonales al ensamble</h2>
+  </div>
+  <div class="split">
+    <div class="artefact-container">
+      <img src="figures/fig_anomalias_ensamble_prauc.svg" alt="Comparativa PR-AUC entre modelos individuales de Detección de Anomalías y el Ensemble">
+    </div>
+    <div class="context-pane">
+      <div>
+        <span class="footnote" style="text-transform: uppercase;">Ensemble Anomalías</span>
+        <div class="hero-metric"><span>0.1970</span></div>
+        <p class="metric-delta" style="color: var(--accent); font-weight: 700; font-size: 0.95em;">4.3x sobre prevalencia base (4.53%)</p>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>Entrenamiento limpio (<span style="font-size: 0.85rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.1rem 0.45rem; border-radius: 6px;">fraude == 0</span>):</strong> PCA (T², Q, Norma²), IF (Extended y Ortogonal), LOF, OCSVM y GMM ajustados con variables crudas originales.</p>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>Reglas de Asociación (WRAcc):</strong> panel de <strong>10 reglas ortogonales de alto riesgo</strong> (Lift e incidencia) que nutren al Stacking.</p>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">Evaluación OOT sobre 22.500 transacciones; señales no supervisadas y reglas WRAcc integradas como features al Stacking.</p>
+</section>
+
+<!-- SLIDE 10: ARQUITECTURA DE STACKING Y EL RÉCORD -->
+<section class="slide" data-steps="2">
+  <!-- NOTAS IAN CONNON / TOMÁS SALDÍAS: Destacar el rigor metodológico de respetar el modelo congelado en validación (Lasso C=0.20, Val 0.4922 -> Test 0.4501) sin hacer trampa ni test-snooping en Test, y la lección empírica de cómo la regularización L1 extrema (C=0.10) apaga coeficientes redundantes para mejorar la generalización fuera de muestra al récord de 0.4509. -->
+  <div>
+    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">7. STACKING &amp; RÉCORD</p>
+    <h2>Stacking de 4 modelos: 0.4922 en validación y récord de 0.4509 en Test</h2>
+  </div>
+  <div class="stacking-compare">
+    <div class="stacking-col left">
+      <div>
+        <span class="footnote col-title">Champion Oficial de Protocolo</span>
+        <p class="col-sub" style="font-size: 0.95rem; color: var(--ink-muted); margin-top: 0.5vh;">
+          Lasso <span style="font-size: 0.85rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.1rem 0.45rem; border-radius: 6px;">C=0.20</span> sobre LightGBM, CatBoost, RF y XGBoost
+        </p>
+      </div>
+      <div style="display: flex; gap: 3vw; align-items: baseline;">
+        <div>
+          <span class="footnote" style="text-transform: uppercase;">Test OOT</span>
+          <div class="hero-metric"><span>0.4501</span></div>
+        </div>
+        <div>
+          <span class="footnote" style="text-transform: uppercase;">Validación OOT</span>
+          <div class="val-secondary" style="font-size: clamp(1.6rem, 2.6vw, 2.2rem); font-weight: 700; color: #3c4043; line-height: 1.1;">0.4922</div>
+        </div>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>Cero test-snooping:</strong> mejor modelo congelado a ciegas en validación; supera con rigor la barrera de 0.4500 en Test.</p>
+      </div>
+    </div>
+
+    <div class="stacking-col right">
+      <div>
+        <span class="footnote col-title">Hallazgo de Parsimonia L1</span>
+        <p class="col-sub" style="font-size: 0.95rem; color: var(--ink-muted); margin-top: 0.5vh;">
+          Regularización extrema <span style="font-size: 0.85rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.1rem 0.45rem; border-radius: 6px;">C=0.10</span> apaga coeficientes redundantes
+        </p>
+      </div>
+      <div style="display: flex; gap: 3vw; align-items: baseline;">
+        <div>
+          <span class="footnote" style="text-transform: uppercase;">Récord Test OOT</span>
+          <div class="hero-metric"><span>0.4509</span></div>
+          <p class="metric-delta" style="color: var(--accent); font-weight: 700; font-size: 0.9em; margin-top: 0.3vh;">+195.8 bps (+1.96% PR-AUC)</p>
+        </div>
+        <div>
+          <span class="footnote" style="text-transform: uppercase;">Validación OOT</span>
+          <div class="val-secondary" style="font-size: clamp(1.6rem, 2.6vw, 2.2rem); font-weight: 700; color: #5f6368; line-height: 1.1;">0.4910</div>
+          <p class="col-sub" style="font-size: 0.85em; color: var(--ink-muted); margin-top: 0.3vh;">-11 bps (-0.11%, menos optimismo)</p>
+        </div>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>Récord histórico del taller:</strong> menor sobreajuste en validación se traduce en mejor generalización y 79.9% ($63.4k) de recupero.</p>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">Metamodelo Nivel 1 evaluado sobre 22.500 transacciones de Test OOT; parsimonia L1 elimina colinealidad entre familias de árboles.</p>
+</section>
+
+<!-- SLIDE 11: ARQUITECTURA DE STACKING Y EL MODELO OMITIDO -->
+<section class="slide">
+  <!-- NOTAS FRANCO ESTERELLAS: Explicar que probamos ampliar el stacking a 16 modelos entrenando XGBoost, LightGBM, CatBoost y Random Forest bajo 4 loss-functions distintas (Log-Loss, Weighted Loss, Focal-Loss y Reranker Loss). Tras aplicar Forward Selection de modelos y regularización, solo sobrevivieron XGBoost y LightGBM (Log-Loss y Focal-Loss) junto con CatBoost (Reranker Loss). Aunque en validación OOT subió de 0.4922 a 0.4950 (+0.6%, 3 milésimas), en Test OOT no hubo diferencia (0.4501), por lo que se omitió esa complejidad adicional. -->
+  <div>
+    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">7. STACKING &amp; RÉCORD</p>
+    <h2>Stacking de 16 modelos: ganancia de 3 milésimas en validación, pero sin ganancia en Test</h2>
+  </div>
+  <div class="split">
+    <div class="artefact-container">
+      <img src="figures/fig_stacking_16_vs_4_prauc.svg" alt="Comparativa PR-AUC entre Stacking de 4 modelos y Stacking de 16 modelos en Validación y Test">
+    </div>
+    <div class="context-pane">
+      <div>
+        <span class="footnote" style="text-transform: uppercase;">Delta en Test OOT</span>
+        <div class="hero-metric"><span>+0.0%</span></div>
+        <p class="metric-delta" style="color: var(--ink-muted); font-weight: 700; font-size: 0.95em;">Frente a +0.6% (+3 milésimas) en Validación</p>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>16 candidatos (4 loss-functions):</strong> modelos base optimizados con <span style="font-size: 0.83rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.08rem 0.4rem; border-radius: 6px;">Log-Loss</span>, <span style="font-size: 0.83rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.08rem 0.4rem; border-radius: 6px;">Weighted</span>, <span style="font-size: 0.83rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.08rem 0.4rem; border-radius: 6px;">Focal-Loss</span> y <span style="font-size: 0.83rem; font-weight: 500; color: #174ea6; background: #eef4fc; border: 1px solid #c2e7ff; padding: 0.08rem 0.4rem; border-radius: 6px;">Reranker</span>.</p>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>Forward Selection + regularización:</strong> solo retiene XGBoost y LightGBM (Log-Loss y Focal-Loss) y CatBoost (Reranker Loss), sin mejorar Test.</p>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">Ablación en Validación y Test OOT (22.500 transacciones); modelo de 16 candidatos omitido por parsimonia al no generalizar en Test.</p>
+</section>
+
+<!-- SLIDE 12: THE ASK (DECISIÓN Y CIERRE) -->
 <section class="slide">
   <h2>Proponemos activar la Curva S en backend y desplegar 2FA en checkout</h2>
   <div class="split">
