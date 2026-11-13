@@ -364,9 +364,9 @@
   <p class="footnote">Priors bayesianos y normalizaciones ajustados estrictamente en Train para evitar cualquier data leakage.</p>
 </section>
 
-<!-- SLIDE 4: DETECCIÓN DE ANOMALÍAS -->
+<!-- SLIDE 4: DETECCIÓN DE ANOMALÍAS Y REGLAS DE ASOCIACIÓN -->
 <section class="slide" data-steps="2">
-  <h2>El Isolation Forest con hiperplanos rotados triplica la discriminación sobre el azar</h2>
+  <h2>Modelos no supervisados y reglas de asociación aportan señales ortogonales</h2>
   <div class="split">
     <div class="artefact-container">
       <div class="focal-artefact-stack">
@@ -381,14 +381,14 @@
         <p class="metric-delta" style="color: var(--ink-secondary); font-weight: 700; font-size: 0.95em;">3.4x sobre la prevalencia base (4.5%)</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Blindaje anti-leakage:</strong> modelos One-Class ajustados exclusivamente sobre legítimos de Train.</p>
+        <p><strong>Isolation Forest One-Class:</strong> entrenado solo sobre legítimos para aislar anomalías sin data leakage.</p>
       </div>
       <div class="takeaway-bullet step-bullet-focus">
-        <p><strong>Insumo para ensamble:</strong> generación de 11 scores de anomalía no supervisada para la etapa de stacking.</p>
+        <p><strong>Reglas de asociación (WRAcc):</strong> panel de 10 reglas de alto impacto que resumen patrones de riesgo en Nivel 2.</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Evaluación univariada en validación OOT con preprocesamiento híbrido y 256 muestras por partición.</p>
+  <p class="footnote">Panel de 11 scores de anomalía y 10 reglas CARs evaluadas con Weighted Relative Accuracy (WRAcc).</p>
 </section>
 
 <!-- SLIDE 5: AUDITORÍA DE RESIDUOS Y SOLUCIÓN SEMÁNTICA (FRAUDE HORMIGA) -->
