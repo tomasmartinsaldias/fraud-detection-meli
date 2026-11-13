@@ -898,12 +898,26 @@
   </div>
 </section>
 
+<!-- PANEL LATERAL DE NOTAS (TECLA N) -->
+<aside id="notes-drawer" style="display: none; position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 40vw); background: #ffffff; border-left: 2px solid #dadce0; z-index: 9999; padding: 3vh 2vw; flex-direction: column; gap: 1.5vh;">
+  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8eaed; padding-bottom: 1vh;">
+    <span id="drawer-speaker" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 0.05em;">NOTAS DEL ORADOR</span>
+    <button onclick="toggleNotesDrawer()" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--ink-muted); line-height: 1;">&times;</button>
+  </div>
+  <div id="drawer-content" style="font-size: 0.95rem; line-height: 1.6; color: #202124; flex: 1;"></div>
+  <p class="footnote" style="margin-top: auto; font-size: 0.78rem; color: var(--ink-muted); border-top: 1px solid #f1f3f4; padding-top: 1.2vh;">
+    Atajos: <strong>N</strong> cerrar panel &bull; <strong>P</strong> ventana externa de orador &bull; <strong>&larr; / &rarr;</strong> navegar
+  </p>
+</aside>
+
 <div id="progress"></div>
 
 <script>
   const slides = [...document.querySelectorAll('.slide')];
   let i = 0;
   let step = 0;
+  let presenterWin = null;
+  const syncChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('meli_deck_sync') : null;
 
   function getSteps(slide) {
     return parseInt(slide.dataset.steps || '1', 10);
@@ -914,14 +928,111 @@
     slide.classList.add(`step-${s}`);
   }
 
+  function getSlideNotesData(idx) {
+    const s = slides[idx];
+    if (!s) return { speaker: 'Fin', title: 'Fin de la presentación', content: '' };
+    const h = s.querySelector('h1, h2');
+    const title = h ? h.textContent.trim() : '';
+
+    let prev = s.previousSibling;
+    let rawNotes = '';
+    while (prev) {
+      if (prev.nodeType === Node.COMMENT_NODE && prev.nodeValue.includes('NOTAS')) {
+        rawNotes = prev.nodeValue.trim();
+        break;
+      }
+      prev = prev.previousSibling;
+    }
+
+    let speaker = 'Equipo';
+    let content = rawNotes;
+    const m = rawNotes.match(/NOTAS\s+([^:]+):([\s\S]*)/);
+    if (m) {
+      speaker = m[1].trim();
+      content = m[2].trim();
+    }
+    return { speaker, title, content, rawNotes };
+  }
+
+  function formatNotesHTML(text) {
+    if (!text) return '<p style="color: #5f6368; font-style: italic;">Sin notas registradas para esta diapositiva.</p>';
+    const items = text.split(/(?=\b\d+\.\s+)/g);
+    return items.map(item => {
+      const trimmed = item.trim();
+      if (!trimmed) return '';
+      const m = trimmed.match(/^(\d+\.\s+[^:]+:)([\s\S]*)$/);
+      if (m) {
+        return `<p style="margin-bottom: 1em; font-size: 0.98rem; line-height: 1.6;"><strong>${m[1]}</strong>${m[2]}</p>`;
+      }
+      return `<p style="margin-bottom: 1em; font-size: 0.98rem; line-height: 1.6;">${trimmed}</p>`;
+    }).join('');
+  }
+
+  function updateNotesDrawer() {
+    const drawer = document.getElementById('notes-drawer');
+    if (!drawer || drawer.style.display === 'none') return;
+    const data = getSlideNotesData(i);
+    document.getElementById('drawer-speaker').textContent = `ORADOR: ${data.speaker}`;
+    document.getElementById('drawer-content').innerHTML = `
+      <h4 style="font-size: 1.05rem; margin-bottom: 1.2vh; color: var(--ink-secondary); line-height: 1.3;">${data.title}</h4>
+      ${formatNotesHTML(data.content)}
+    `;
+  }
+
+  function toggleNotesDrawer() {
+    const drawer = document.getElementById('notes-drawer');
+    if (!drawer) return;
+    const isHidden = (drawer.style.display === 'none');
+    drawer.style.display = isHidden ? 'flex' : 'none';
+    if (isHidden) updateNotesDrawer();
+  }
+
+  window.getPresenterState = () => {
+    const data = getSlideNotesData(i);
+    const nextData = getSlideNotesData(i + 1);
+    const totalSteps = getSteps(slides[i]);
+    return {
+      type: 'state',
+      slideIndex: i,
+      totalSlides: slides.length,
+      step: step,
+      totalSteps: totalSteps,
+      speaker: data.speaker,
+      title: data.title,
+      nextTitle: (i + 1 < slides.length) ? (nextData.title || `Slide ${i + 2}`) : 'Fin de la presentación',
+      notesHTML: formatNotesHTML(data.content)
+    };
+  };
+
+  function broadcastState() {
+    const state = window.getPresenterState();
+    if (syncChannel) syncChannel.postMessage(state);
+    if (presenterWin && !presenterWin.closed && presenterWin.updateState) {
+      try { presenterWin.updateState(state); } catch (e) {}
+    }
+  }
+
+  function openPresenterWindow() {
+    if (presenterWin && !presenterWin.closed) {
+      presenterWin.focus();
+      return;
+    }
+    presenterWin = window.open('presenter.html', 'meli_presenter_view', 'width=1120,height=760,menubar=no,toolbar=no,location=no');
+    if (!presenterWin) {
+      alert('Por favor habilitá las ventanas emergentes (pop-ups) en tu navegador para ver el Modo Presentador.');
+      return;
+    }
+    setTimeout(broadcastState, 200);
+  }
+
   function show(n, targetStep = 0) {
-    const next = Math.max(0, Math.min(slides.length - 1, n));
-    const isNewSlide = (next !== i);
+    const nextIdx = Math.max(0, Math.min(slides.length - 1, n));
+    const isNewSlide = (nextIdx !== i);
 
     const render = () => {
       if (isNewSlide) {
         slides[i].classList.remove('active', 'step-0', 'step-1', 'step-2');
-        i = next;
+        i = nextIdx;
         step = targetStep;
         slides[i].classList.add('active');
         applyStep(slides[i], step);
@@ -930,6 +1041,8 @@
         applyStep(slides[i], step);
       }
       document.getElementById('progress').style.width = ((i + 1) / slides.length * 100) + '%';
+      updateNotesDrawer();
+      broadcastState();
     };
 
     if (!document.startViewTransition || !isNewSlide) {
@@ -957,11 +1070,31 @@
     }
   }
 
+  if (syncChannel) {
+    syncChannel.onmessage = (e) => {
+      if (!e.data) return;
+      if (e.data.type === 'nav') {
+        if (e.data.action === 'next') next();
+        if (e.data.action === 'prev') prev();
+      } else if (e.data.type === 'request_state') {
+        broadcastState();
+      }
+    };
+  }
+
   document.addEventListener('keydown', e => {
     if (['ArrowRight', 'PageDown', ' '].includes(e.key)) next();
     if (['ArrowLeft', 'PageUp'].includes(e.key)) prev();
+    if (e.key === 'p' || e.key === 'P') openPresenterWindow();
+    if (e.key === 'n' || e.key === 'N') toggleNotesDrawer();
+    if (e.key === 'Escape') {
+      const drawer = document.getElementById('notes-drawer');
+      if (drawer) drawer.style.display = 'none';
+    }
   });
+
   document.addEventListener('click', e => {
+    if (e.target.closest('#notes-drawer')) return;
     if (e.clientX > innerWidth / 2) next();
     else prev();
   });

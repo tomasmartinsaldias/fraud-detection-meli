@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modo Presentador &bull; Detección de Fraude MELI</title>
+  <style>
+    :root {
+      --bg: #1e1e24;
+      --surface: #2b2b36;
+      --surface-hover: #363644;
+      --ink: #f8f9fa;
+      --ink-muted: #9aa0a6;
+      --accent: #FFD100;
+      --accent-blue: #4a90e2;
+      --navy: #2D3277;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      background: #141418;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #333340;
+    }
+    .timer-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: monospace;
+    }
+    #timer {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .btn-sm {
+      background: var(--surface);
+      border: 1px solid #444455;
+      color: var(--ink);
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.82rem;
+    }
+    .btn-sm:hover { background: var(--surface-hover); }
+    .main-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+      padding: 20px;
+      overflow: hidden;
+    }
+    .left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid #3b3b4a;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .card-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink-muted);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .notes-col {
+      background: var(--surface);
+      border: 1px solid #3b3b4a;
+      border-radius: 8px;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .notes-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #444455;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .speaker-tag {
+      background: var(--accent);
+      color: #141418;
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 4px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+    #p-notes {
+      font-size: 1.15rem;
+      line-height: 1.65;
+      color: #e8eaed;
+    }
+    #p-notes p { margin-bottom: 14px; }
+    #p-notes strong { color: var(--accent); }
+    footer {
+      background: #141418;
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #333340;
+      font-size: 0.82rem;
+      color: var(--ink-muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <span style="font-weight: 700; color: #fff; font-size: 1rem;">MODO PRESENTADOR &bull; MELI</span>
+      <span style="background: #333344; padding: 3px 8px; border-radius: 4px; font-size: 0.82rem;" id="p-slide-num">1 / 11</span>
+      <span style="color: var(--ink-muted); font-size: 0.85rem;" id="p-step-num">Diapositiva Simple</span>
+    </div>
+    <div class="timer-box">
+      <span id="timer">00:00</span>
+      <button class="btn-sm" id="btn-timer-toggle">Pausa</button>
+      <button class="btn-sm" id="btn-timer-reset">Reset</button>
+    </div>
+  </header>
+
+  <div class="main-grid">
+    <div class="left-col">
+      <div class="card">
+        <div class="card-title">Diapositiva Actual</div>
+        <h3 id="p-title" style="font-size: 1.05rem; line-height: 1.35; color: #fff;"></h3>
+      </div>
+      <div class="card" style="border-left: 3px solid var(--accent-blue);">
+        <div class="card-title" style="color: var(--accent-blue);">Siguiente Diapositiva (Puente)</div>
+        <p id="p-next-title" style="font-size: 0.95rem; line-height: 1.4; color: var(--ink-muted);"></p>
+      </div>
+      <div class="card" style="display: flex; gap: 10px;">
+        <button class="btn-sm" id="btn-prev" style="flex: 1; padding: 10px; font-weight: 700;">&larr; Anterior</button>
+        <button class="btn-sm" id="btn-next" style="flex: 1; padding: 10px; font-weight: 700; background: var(--accent); color: #000; border: none;">Siguiente &rarr;</button>
+      </div>
+    </div>
+
+    <div class="notes-col">
+      <div class="notes-header">
+        <span class="speaker-tag" id="p-speaker">ORADOR</span>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-sm" id="btn-font-dec">A-</button>
+          <button class="btn-sm" id="btn-font-inc">A+</button>
+        </div>
+      </div>
+      <div id="p-notes"></div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Navegar: Flechas &larr; &rarr; o Espacio en cualquier ventana &bull; [P] Enfocar</span>
+    <span id="p-sync-status" style="color: #81c995;">&bull; Sincronización en vivo activa</span>
+  </footer>
+
+  <script>
+    const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('meli_deck_sync') : null;
+
+    // Timer
+    let seconds = 0;
+    let timerRunning = true;
+    const timerEl = document.getElementById('timer');
+    setInterval(() => {
+      if (!timerRunning) return;
+      seconds++;
+      const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const s = String(seconds % 60).padStart(2, '0');
+      timerEl.textContent = `${m}:${s}`;
+    }, 1000);
+
+    document.getElementById('btn-timer-toggle').onclick = (e) => {
+      timerRunning = !timerRunning;
+      e.target.textContent = timerRunning ? 'Pausa' : 'Reanudar';
+    };
+    document.getElementById('btn-timer-reset').onclick = () => {
+      seconds = 0;
+      timerEl.textContent = '00:00';
+    };
+
+    // Font size controls
+    let currentFontSize = 1.15;
+    document.getElementById('btn-font-inc').onclick = () => {
+      currentFontSize = Math.min(1.8, currentFontSize + 0.1);
+      document.getElementById('p-notes').style.fontSize = currentFontSize + 'rem';
+    };
+    document.getElementById('btn-font-dec').onclick = () => {
+      currentFontSize = Math.max(0.85, currentFontSize - 0.1);
+      document.getElementById('p-notes').style.fontSize = currentFontSize + 'rem';
+    };
+
+    // Navigation
+    function sendNav(action) {
+      if (channel) channel.postMessage({ type: 'nav', action });
+      if (window.opener) {
+        if (action === 'next' && window.opener.next) window.opener.next();
+        if (action === 'prev' && window.opener.prev) window.opener.prev();
+      }
+    }
+
+    document.getElementById('btn-next').onclick = () => sendNav('next');
+    document.getElementById('btn-prev').onclick = () => sendNav('prev');
+
+    window.addEventListener('keydown', e => {
+      if (['ArrowRight', 'PageDown', ' '].includes(e.key)) {
+        e.preventDefault();
+        sendNav('next');
+      }
+      if (['ArrowLeft', 'PageUp'].includes(e.key)) {
+        e.preventDefault();
+        sendNav('prev');
+      }
+    });
+
+    // Receive state from main window
+    function updateState(data) {
+      if (!data) return;
+      document.getElementById('p-slide-num').textContent = `${data.slideIndex + 1} / ${data.totalSlides}`;
+      document.getElementById('p-step-num').textContent = data.totalSteps > 1 ? `Paso ${data.step + 1} de ${data.totalSteps}` : 'Diapositiva Simple';
+      document.getElementById('p-speaker').textContent = data.speaker || 'EQUIPO';
+      document.getElementById('p-title').textContent = data.title || '';
+      document.getElementById('p-next-title').textContent = data.nextTitle || 'Fin de la presentación';
+      document.getElementById('p-notes').innerHTML = data.notesHTML || '<p style="color:#9aa0a6;">Sin notas para esta slide.</p>';
+    }
+
+    if (channel) {
+      channel.onmessage = (e) => {
+        if (e.data && e.data.type === 'state') {
+          updateState(e.data);
+        }
+      };
+      // Request initial state on load
+      channel.postMessage({ type: 'request_state' });
+    }
+
+    // Direct window.opener fallback
+    if (window.opener && window.opener.getPresenterState) {
+      updateState(window.opener.getPresenterState());
+    }
+  </script>
+</body>
+</html>
