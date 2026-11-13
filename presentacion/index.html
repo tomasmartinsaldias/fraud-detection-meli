@@ -756,7 +756,7 @@
 <!-- SLIDE 8: LA DECISIÓN DEL UMBRAL (CURVA S) -->
 <section class="slide">
   <div>
-    <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">8. CURVA S (BACKEND)</p>
+    <p class="footnote" style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">8. CURVA S (BACKEND)</p>
     <h2>Adaptar el umbral al ticket rescata +$6.7k de capital sin elevar rechazos</h2>
   </div>
   <div class="split">
@@ -764,7 +764,7 @@
       <img src="figures/fig3_curva_s_umbral.svg" alt="Función Curva S Sigmoidea">
     </div>
     <div class="context-pane">
-      <div style="display: flex; gap: 2.5vw; align-items: baseline; border-bottom: 1px solid #e8eaed; padding-bottom: 0.8vh; margin-bottom: 0.8vh;">
+      <div style="display: flex; gap: 2.5vw; align-items: baseline; border-bottom: 1px solid #e8eaed; padding-bottom: 1vh; margin-bottom: 1.5vh;">
         <div>
           <p class="footnote" style="text-transform: uppercase;">Recupero de Capital</p>
           <div class="hero-metric" style="font-size: clamp(1.8rem, 2.6vw, 2.2rem);"><span style="background: linear-gradient(180deg, transparent 65%, #FFE600 65%);">55.6% &rarr; 64.1%</span></div>
@@ -776,32 +776,14 @@
           <p class="footnote" style="color: #5f6368; font-weight: 600;">Cero fricción extra (FP &le; 100)</p>
         </div>
       </div>
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 1vh;">
-        <thead>
-          <tr style="border-bottom: 1px solid #dadce0; color: var(--ink-muted); text-align: left;">
-            <th style="padding: 0.2rem 0.3rem;">Segmento</th>
-            <th style="padding: 0.2rem 0.3rem; text-align: center;">Umbral &tau;</th>
-            <th style="padding: 0.2rem 0.3rem;">Lógica Financiera</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style="border-bottom: 1px solid #f1f3f4;">
-            <td style="padding: 0.2rem 0.3rem; font-weight: 600;">Tickets altos (&gt;$100)</td>
-            <td style="padding: 0.2rem 0.3rem; text-align: center; font-weight: 700; color: #d93025;">0.18</td>
-            <td style="padding: 0.2rem 0.3rem; color: #5f6368;">Cerrojo estricto para capital</td>
-          </tr>
-          <tr>
-            <td style="padding: 0.2rem 0.3rem; font-weight: 600;">Tickets bajos (&lt;$15)</td>
-            <td style="padding: 0.2rem 0.3rem; text-align: center; font-weight: 700; color: #137333;">0.40</td>
-            <td style="padding: 0.2rem 0.3rem; color: #5f6368;">No quemar cupo en compras chicas</td>
-          </tr>
-        </tbody>
-      </table>
       <div class="takeaway-bullet">
-        <p><strong>Costo cero en backend:</strong> reasigna cupo hacia tickets altos sin alterar la experiencia de checkout.</p>
+        <p><strong>Costo cero en backend:</strong> reasigna cupo hacia tickets altos sin alterar el checkout.</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>El dilema pendiente:</strong> para atrapar fraudes chicos a umbral 0.40 sin subir bloqueos, se requiere 2FA.</p>
+        <p><strong>Cerrojo patrimonial:</strong> umbral estricto 0.18 en compras altas donde el FN es crítico.</p>
+      </div>
+      <div class="takeaway-bullet">
+        <p><strong>Dilema pendiente:</strong> para frenar fraudes chicos sin elevar bloqueos, se requiere 2FA.</p>
       </div>
     </div>
   </div>
