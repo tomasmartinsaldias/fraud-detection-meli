@@ -260,7 +260,7 @@
 
   **4. Blindaje ante fallos operativos: Stress Test (Cierre)**
 
-  * Evaluamos 5 escenarios adversos (caída de conversión de usuarios, *SIM swapping* o ataques bot/phishing). Incluso con solo 50% de efectividad en el canal 2FA, el recupero se sostiene en **71.6% ($56.9k)**.
+  * Evaluamos 5 escenarios adversos (caída en la tasa de respuesta o técnicas avanzadas de evasión). Incluso si se burla el 50% de los retos de 2FA, el recupero se sostiene en **71.6% ($56.9k)**.
   * **Peor caso absoluto (caída del 100% del servicio 2FA):** El Carril Rojo gobernado por la Curva S actúa como *fallback* automático, garantizando un piso de **63.3% ($50.2k)** —siempre por encima del 55.6% del umbral estático.
 
 
