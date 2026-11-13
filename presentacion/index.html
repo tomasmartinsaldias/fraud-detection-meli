@@ -518,17 +518,17 @@
             <td style="padding: 0.2rem 0.3rem; text-align: right; color: var(--ink-muted);">1.0x</td>
           </tr>
           <tr style="background: #fef7e0;">
-            <td style="padding: 0.2rem 0.3rem; font-weight: 700; color: #b06000;">b &gt; 0.8 &amp; c &lt; 1000</td>
+            <td style="padding: 0.2rem 0.3rem; font-weight: 700; color: #b06000;">b &gt; 0.8 &amp; c &lt; 1000 (+91 bps)</td>
             <td style="padding: 0.2rem 0.3rem; text-align: right; font-weight: 700; color: #b06000;">12.8%</td>
             <td style="padding: 0.2rem 0.3rem; text-align: right; font-weight: 700; color: #b06000;">3.1x</td>
           </tr>
         </tbody>
       </table>
       <div class="takeaway-bullet">
-        <p><strong>Ventana circadiana (es_madrugada):</strong> fraude trepa a 17.2% a las 02:00 UTC (3.8x prevalencia diurna).</p>
+        <p><strong>Ventana circadiana (es_madrugada):</strong> fraude trepa a 17.2% a las 02:00 UTC (3.8x prevalencia).</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>NLP Bayesiano (score_texto_nb):</strong> 5.000 términos con Dirichlet en 5 particiones OOF sin leakage.</p>
+        <p><strong>NLP Bayesiano (score_texto_nb):</strong> 5.000 términos Dirichlet OOF; alcanza 24.5% fraude en top 1% (5.4x).</p>
       </div>
     </div>
   </div>
@@ -550,7 +550,7 @@
       <div>
         <span class="footnote" style="text-transform: uppercase;">Ensamble No Supervisado</span>
         <div class="hero-metric"><span>0.1970</span></div>
-        <p class="footnote" style="color: var(--accent); font-weight: 700; font-size: 0.95em;">+337 bps sobre Isolation Forest puro (0.1557)</p>
+        <p class="footnote" style="color: var(--accent); font-weight: 700; font-size: 0.95em;">+413 bps sobre Isolation Forest puro (0.1557) &bull; 4.3x azar</p>
       </div>
       <div class="takeaway-bullet">
         <p><strong>One-Class puro:</strong> Isolation Forest, PCA y LOF entrenados sobre legítimos detectan anomalías sin etiquetas.</p>
@@ -615,10 +615,10 @@
         </tbody>
       </table>
       <div class="takeaway-bullet">
-        <p><strong>Punto ciego:</strong> fraudes detectados promediaban $98, pero los escapados tenían mediana de $22.76.</p>
+        <p><strong>Punto ciego:</strong> fraudes detectados promediaban $98 (mediana $75); los escapados tenían mediana de $22.76.</p>
       </div>
       <div class="takeaway-bullet step-bullet-focus">
-        <p><strong>Solución semántica:</strong> clustering (k=50) fija precios y deficit_piso rescata +26 bps.</p>
+        <p><strong>Solución semántica:</strong> clustering (k=50) fija precios de referencia (+44 bps Val, +61 bps Test).</p>
       </div>
     </div>
   </div>
