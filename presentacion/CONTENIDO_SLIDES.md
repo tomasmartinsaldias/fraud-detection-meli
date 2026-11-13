@@ -72,7 +72,7 @@
   * **Quiebre de colinealidad `d` vs `m` (`ratio_d_m`):**
     * En el EDA $d$ y $m$ crecen fuertemente juntas (**Spearman $r_s = 0.735$**).
     * `ratio_d_m` (+132 bps) atrapa las operaciones atípicas donde esa relación se rompe ($d \gg m$), donde la probabilidad de fraude salta de 4.2% a 11.0% y hasta **28.8% en quiebre extremo (multiplica el fraude x5 a x7)**.
-* **Visual:** `figures/fig_ratio_d_m.svg` (Panel 1: Scatter y diagonal de colinealidad Spearman 0.735; Panel 2: Explosión de tasa de fraude a 28.8% al romperse la relación).
+* **Visual:** `figures/fig_ratio_d_m.svg` (Explosión de tasa de fraude de 4.2% a 11.0% y 28.8% al romperse la correlación de Spearman de 0.735).
 * **Notas / Qué decir:**
   * **Rigor y Poda:** Destacar que en vez de dos gráficos de barras genéricos, los números hablan por sí solos: podar 78% del ruido llevó el PR-AUC a 0.4443 (+130 bps).
   * **Monto relativo:** Mostrar la tabla en pantalla de las 11 variables y remarcar que `ratio_monto_l` es la variable #1 creada del modelo (Gain 9.330).
