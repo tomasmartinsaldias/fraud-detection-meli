@@ -753,7 +753,19 @@
       <img src="figures/fig3_curva_s_umbral.svg" alt="Función Curva S Sigmoidea">
     </div>
     <div class="context-pane">
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.83rem; margin-bottom: 1.2vh;">
+      <div style="display: flex; gap: 2.5vw; align-items: baseline; border-bottom: 1px solid #e8eaed; padding-bottom: 0.8vh; margin-bottom: 0.8vh;">
+        <div>
+          <p class="footnote" style="text-transform: uppercase;">Recupero de Capital</p>
+          <div class="hero-metric" style="font-size: clamp(1.8rem, 2.6vw, 2.2rem);"><span style="background: linear-gradient(180deg, transparent 65%, #FFE600 65%);">55.6% &rarr; 64.1%</span></div>
+          <p class="footnote" style="color: var(--accent); font-weight: 700;">+$6.744 netos ($50.9k rescatados)</p>
+        </div>
+        <div>
+          <p class="footnote" style="text-transform: uppercase;">Bloqueos Duros</p>
+          <div class="hero-metric" style="font-size: clamp(1.8rem, 2.6vw, 2.2rem); color: #5f6368;">504</div>
+          <p class="footnote" style="color: #5f6368; font-weight: 600;">Cero fricción extra (FP &le; 100)</p>
+        </div>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 1vh;">
         <thead>
           <tr style="border-bottom: 1px solid #dadce0; color: var(--ink-muted); text-align: left;">
             <th style="padding: 0.2rem 0.3rem;">Segmento</th>
@@ -775,10 +787,10 @@
         </tbody>
       </table>
       <div class="takeaway-bullet">
-        <p><strong>Elasticidad al ticket:</strong> modula tau en sigmoide decreciente centrada en M0=$23 con sigma=35.</p>
+        <p><strong>Costo cero en backend:</strong> reasigna cupo hacia tickets altos sin alterar la experiencia de checkout.</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>+$6.744 netos rescatados:</strong> sube recupero al 64.1% respetando el cupo estricto de 504 bloqueos.</p>
+        <p><strong>El dilema pendiente:</strong> para atrapar fraudes chicos a umbral 0.40 sin subir bloqueos, se requiere 2FA.</p>
       </div>
     </div>
   </div>
