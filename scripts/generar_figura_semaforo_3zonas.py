@@ -37,21 +37,27 @@ ax.fill_between(m, tau_block, 0.55, color='#FCE8E6', alpha=0.85, label='Carril R
 ax.plot(m, tau_block, color='#d93025', lw=2.2)
 ax.plot(m, tau_chal, color='#b06000', lw=2.0, linestyle='--')
 
+# Fórmulas explícitas de cálculo sobre las fronteras
+ax.text(196, tau_block[-1] + 0.012, r'$\tau_{\mathrm{block}}(\mathrm{monto}) = \tau_S - \alpha \cdot \mathrm{déficit}$', 
+        fontsize=8.0, fontweight='700', color='#d93025', ha='right')
+ax.text(196, tau_chal[-1] - 0.018, r'$\tau_{\mathrm{challenge}} = 0.40 \cdot \tau_{\mathrm{block}}$', 
+        fontsize=8.0, fontweight='700', color='#b06000', ha='right')
+
 # Rótulos directos dentro de las zonas
-ax.text(125, 0.04, 'CARRIL VERDE (94.2%)\nPaso limpio en 200 ms (Fricción cero)', 
-        fontsize=8.8, fontweight='700', color='#137333', ha='center', va='center')
-ax.text(125, 0.138, 'CARRIL AMARILLO (4.8%)\nReto suave WhatsApp / Push (~$0.05)', 
-        fontsize=8.5, fontweight='700', color='#b06000', ha='center', va='center')
-ax.text(125, 0.35, 'CARRIL ROJO (1.0%)\nBloqueo duro patrimonial ($25)', 
-        fontsize=8.8, fontweight='700', color='#c5221f', ha='center', va='center')
+ax.text(105, 0.035, 'CARRIL VERDE (94.2%)\nPaso limpio en 200 ms (Fricción cero)', 
+        fontsize=8.5, fontweight='700', color='#137333', ha='center', va='center')
+ax.text(105, 0.138, 'CARRIL AMARILLO (4.8%)\nReto suave WhatsApp / Push (~$0.05)', 
+        fontsize=8.2, fontweight='700', color='#b06000', ha='center', va='center')
+ax.text(105, 0.35, 'CARRIL ROJO (1.0%)\nBloqueo duro patrimonial ($25)', 
+        fontsize=8.5, fontweight='700', color='#c5221f', ha='center', va='center')
 
 # Punto emblemático de fraude chico rescatado por 2FA
 ax.scatter([15], [0.22], color='#d93025', s=50, zorder=5, edgecolor=NAVY, lw=1.5)
-ax.annotate('Fraude chico ($15, score p=0.22)\nCurva S lo dejaba pasar; 2FA lo frena', 
+ax.annotate('Fraude chico ($15, p=0.22)\nCurva S lo dejaba pasar; 2FA lo frena', 
             xy=(15, 0.22), xytext=(24, 0.25),
             arrowprops=dict(arrowstyle='->', color=NAVY, lw=1.4),
-            fontsize=8.2, fontweight='700', color=NAVY,
-            bbox=dict(boxstyle='round,pad=0.25', facecolor='#FFF8D6', edgecolor=NAVY, lw=0.8))
+            fontsize=8.0, fontweight='700', color=NAVY,
+            bbox=dict(boxstyle='round,pad=0.2', facecolor='#FFF8D6', edgecolor=NAVY, lw=0.8))
 
 # Rótulos en los ejes
 ax.set_xlim(0, 200)
@@ -72,4 +78,4 @@ plt.tight_layout()
 out_file = out_dir / "fig4_semaforo_3zonas.svg"
 plt.savefig(out_file, format='svg', bbox_inches='tight', transparent=True)
 plt.close()
-print(f"Gráfico 2D de 3 zonas guardado en: {out_file}")
+print(f"Gráfico 2D con fórmulas explícitas guardado en: {out_file}")
