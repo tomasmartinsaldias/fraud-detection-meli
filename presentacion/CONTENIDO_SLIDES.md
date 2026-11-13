@@ -221,7 +221,7 @@
       * **Rojo (1.0%):** Bloqueo directo fraudulento ($\hat{p} \ge \tau_S$).
     * Resultado: **79.9% de capital recuperado ($63.4k protegidos)** y 33% menos costo formal.
     * **Resiliencia:** Si el servicio de 2FA se cae, degrada automáticamente a la Curva S (piso garantizado del 63.3%).
-* **Visual:** Gráfico de la Curva S sigmoidea y transición al diagrama de 3 carriles del Semáforo.
+* **Visual:** Gráfico 2D del Espacio de Decisión con 3 zonas sombreadas (`figures/fig4_semaforo_3zonas.svg`: verde, amarillo y rojo) mostrando las fronteras de corte $\tau_{\text{block}}$ y $\tau_{\text{challenge}}$ y cómo el 2FA rescata los tickets chicos.
 * **Notas / Qué decir:**
   * [Tomi: explicar cómo la combinación de ambas cosas protege al negocio de fraudes grandes sin generar fricción en compras chicas].
   

@@ -806,9 +806,21 @@
   </div>
   <div class="split">
     <div class="artefact-container">
-      <img src="figures/fig4_arquitectura_tripartita.svg" alt="Arquitectura Tripartita 2FA">
+      <img src="figures/fig4_semaforo_3zonas.svg" alt="Espacio 2D de Decisión: Semáforo Tripartito y Curva S">
     </div>
     <div class="context-pane">
+      <div style="display: flex; gap: 2.5vw; align-items: baseline; border-bottom: 1px solid #e8eaed; padding-bottom: 0.8vh; margin-bottom: 0.8vh;">
+        <div>
+          <p class="footnote" style="text-transform: uppercase;">Recupero Total</p>
+          <div class="hero-metric" style="font-size: clamp(1.8rem, 2.6vw, 2.2rem);"><span style="background: linear-gradient(180deg, transparent 65%, #FFE600 65%);">79.9%</span></div>
+          <p class="footnote" style="color: var(--accent); font-weight: 700;">$63.4k salvados (+199 fraudes)</p>
+        </div>
+        <div>
+          <p class="footnote" style="text-transform: uppercase;">Piso Garantizado</p>
+          <div class="hero-metric" style="font-size: clamp(1.8rem, 2.6vw, 2.2rem); color: #5f6368;">63.3%</div>
+          <p class="footnote" style="color: #5f6368; font-weight: 600;">Fallback Curva S si 2FA colapsa</p>
+        </div>
+      </div>
       <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 1vh;">
         <thead>
           <tr style="border-bottom: 1px solid #dadce0; color: var(--ink-muted); text-align: left;">
@@ -826,7 +838,7 @@
           <tr style="border-bottom: 1px solid #f1f3f4; background: #fef7e0;">
             <td style="padding: 0.2rem 0.3rem; font-weight: 700; color: #b06000;">Amarillo</td>
             <td style="padding: 0.2rem 0.3rem; text-align: center; font-weight: 700; color: #b06000;">4.8%</td>
-            <td style="padding: 0.2rem 0.3rem; color: #5f6368;">Reto WhatsApp/Push (~$0.05) beta=0.40</td>
+            <td style="padding: 0.2rem 0.3rem; color: #5f6368;">Reto WhatsApp/Push (~$0.05) &beta;=0.40</td>
           </tr>
           <tr>
             <td style="padding: 0.2rem 0.3rem; font-weight: 700; color: #d93025;">Rojo</td>
@@ -835,15 +847,11 @@
           </tr>
         </tbody>
       </table>
-      <div>
-        <div class="hero-metric"><span style="background: linear-gradient(180deg, transparent 65%, #FFE600 65%);">63.3%</span></div>
-        <p class="footnote" style="font-weight: 700; color: var(--ink-secondary); font-size: 0.95em; margin-top: 0.3vh;">Piso garantizado ($50.2k) ante colapso total del 2FA</p>
+      <div class="takeaway-bullet">
+        <p><strong>Fricción controlada:</strong> 94.2% pasa sin fricción; reto 2FA acotado estrictamente a 4.8% de compras dudosas.</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Salto a 79.9%:</strong> rescata 199 fraudes extra ($63.4k) con reto WhatsApp acotado a 4.8%.</p>
-      </div>
-      <div class="takeaway-bullet">
-        <p><strong>Resiliencia probada:</strong> soporta fallas en 5 escenarios y garantiza piso de 63.3% ante colapso.</p>
+        <p><strong>Resiliencia probada:</strong> tolera caídas y asegura piso del 63.3% ante falla total del canal WhatsApp.</p>
       </div>
     </div>
   </div>
