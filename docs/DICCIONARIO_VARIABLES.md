@@ -33,24 +33,24 @@ Provenientes de la ingesta y desanonimización de `data/raw/fraud_dataset_v2.csv
 | `score` | `float64` | $[0.0, 100.0]$ | Score probabilístico interno de scoring de riesgo transaccional provisto por la pasarela de pagos. Es el predictor crudo individual más potente (Gain: 47.140). |
 | `fraude` | `int8` | $\{0, 1\}$ | Target binario. $1 = \text{Fraude confirmado}$ (tasa general $\approx 6.0\%$), $0 = \text{Legítima}$. |
 | `split` | `category` | `train` (70%), `val` (15%), `test` (15%) | Partición temporal estricta Out-Of-Time (OOT) basada en percentiles cronológicos de `fecha`. |
-| `a` | `category` | 5 categorías (`0.0`, `1.0`, etc.) | Dispositivo / canal de origen de la transacción. |
-| `b` | `float64` | $[0.0, 1.0]$ | Tasa o ratio de comportamiento continuo del usuario/dispositivo. |
-| `c` | `float64` | Continuo positivo con NAs | Variable sintética con jittering decimal. La parte entera $\lfloor c \rfloor$ corresponde al ID de usuario real (`r`), mientras que los NAs corresponden al checkout como invitado ($r = 260445$). |
-| `is_na_bc` | `int8` | $\{0, 1\}$ | Flag indicador de valor faltante en `c` (equivalente a compra sin sesión iniciada / Guest Checkout). |
-| `d` | `float64` | Continuo positivo | Magnitud operativa o antigüedad de cuenta. Fuertemente correlacionada con `m`. |
-| `e` | `float64` | Continuo ($\ge 0$) | Métrica transaccional con masa puntual en 0 (el 44% de las transacciones tiene $e = 0$). |
-| `f` | `float64` | $[ -15, \dots ]$ | Métrica continua con masa puntual en valores negativos/cero (el 12% es $\le 0$, con tasa de fraude elevada). |
-| `g` | `category` | 20+ países | País de emisión/origen (predominio de Brasil `BR` 71.4%, Argentina `AR` 24.5%, Uruguay `UY` 2.0%). |
-| `h` | `float64` | Continuo ($\ge 0$) | Madurez o historial del comprador. Masa puntual en 0 (9.6% de fraude cuando $h = 0$). |
+| `a` | `category` | 5 categorías (`0.0`, `1.0`, etc.) | Variable nativa anónima categórica. |
+| `b` | `float64` | $[0.0, 1.0]$ | Variable nativa anónima numérica continua acotada. |
+| `c` | `float64` | Continuo positivo con NAs | Variable nativa anónima continua con valores faltantes. |
+| `is_na_bc` | `int8` | $\{0, 1\}$ | Flag indicador de valor faltante en `c`. |
+| `d` | `float64` | Continuo positivo | Variable nativa anónima continua. Presenta alta correlación lineal con `m`. |
+| `e` | `float64` | Continuo ($\ge 0$) | Variable nativa anónima con masa puntual en 0 (el 44% de los casos tiene $e = 0$). |
+| `f` | `float64` | $[ -15, \dots ]$ | Variable nativa anónima continua con masa puntual en valores negativos/cero. |
+| `g` | `category` | 20+ países | País de emisión / geolocalización de la IP (predominio de Brasil `BR` 71.4%, Argentina `AR` 24.5%, Uruguay `UY` 2.0%). |
+| `h` | `float64` | Continuo ($\ge 0$) | Variable nativa anónima con masa puntual en 0 (tasa de fraude del 9.6% cuando $h = 0$). |
 | `i` | `string` | Texto libre | Título o descripción del producto publicado en el marketplace. |
-| `j` | `category` | Categórica de alta cardinalidad | Identificador de vertical o categoría de catálogo del producto. |
-| `k` | `float64` | $[0.0, 1.0]$ | Variable sintética de ruido uniforme ($U(0, 1)$), ortogonal al target. Descartable. |
-| `l` | `float64` | Continuo ($\ge 0$) | Tiempo transcurrido o antigüedad acumulada de la relación con la plataforma. |
-| `m` | `float64` | Continuo ($\ge 0$) | Escala acumulada de volumen transaccional histórico del usuario. |
-| `n` | `category` | Categórica binaria/ternaria | Flag de perfil de seguridad del medio de pago. |
-| `o` | `category` | Categórica con 72% NAs | Nivel de autenticación de dos factores o validación de identidad adicional. |
-| `p` | `category` | Categórica binaria/ternaria | Método o tipo de tarjeta/pasarela utilizada. |
-| `q` | `float64` | Continuo ($\ge 0$) | Factor continuo de fricción o límite crediticio del comprador. |
+| `j` | `category` | Categórica de alta cardinalidad | Vertical o categoría de catálogo del producto. |
+| `k` | `float64` | $[0.0, 1.0]$ | Variable nativa anónima numérica continua (distribución uniforme sin señal predictiva). |
+| `l` | `float64` | Continuo ($\ge 0$) | Variable nativa anónima continua positiva. |
+| `m` | `float64` | Continuo ($\ge 0$) | Variable nativa anónima continua positiva. |
+| `n` | `category` | Categórica binaria/ternaria | Variable nativa anónima categórica. |
+| `o` | `category` | Categórica con 72% NAs | Variable nativa anónima categórica con alta presencia de nulos y fuerte poder discriminativo. |
+| `p` | `category` | Categórica binaria/ternaria | Variable nativa anónima categórica. |
+| `q` | `float64` | Continuo ($\ge 0$) | Variable nativa anónima continua positiva. |
 
 ---
 
@@ -206,17 +206,17 @@ Selección competitiva abierta entre **67 variables candidatas** (17 crudas + 50
 * **Cantidad de variables:** **11 variables** (4 base + 7 ingenierizadas).
 * **PR-AUC alcanzado:** **`0.462206`** (+0.0335 vs baseline de 17 variables crudas).
 * **Columnas incluidas:**
-  1. `score` (Base - Scoring interno de la pasarela)
-  2. `o` (Base - Tipo de autenticación adicional)
+  1. `score` (Base - Scoring interno - 1 a 100)
+  2. `o` (Base - Desconocida. Dicotómica)
   3. `g` (Base - País emisor)
   4. `es_madrugada` (Ingenierizada - Ventana nocturna crítica UTC)
-  5. `ratio_d_m` (Ingenierizada - Tensión de balances históricos)
-  6. `ratio_monto_l` (Ingenierizada - Ticket normalizado por antigüedad)
-  7. `prod_b_log_c` (Ingenierizada - Interacción perfil / usuario)
+  5. `ratio_d_m` (Ingenierizada - Desconocido)
+  6. `ratio_monto_l` (Ingenierizada - Desconocido)
+  7. `prod_b_log_c` (Ingenierizada - Desconocido)
   8. `score_texto_nb` (Ingenierizada - Probabilidad bayesiana del título)
   9. `ratio_monto_e` (Ingenierizada - Ticket sobre escala `e`)
-  10. `is_h_cero` (Ingenierizada - Flag de masa puntual en madurez 0)
-  11. `a` (Base - Canal o dispositivo de origen)
+  10. `is_h_cero` (Ingenierizada - Flag de h == 0)
+  11. `a` (Base - Desconocida. Del 1 al 4)
 
 *Metadatos y traza del algoritmo:* [data/features/selected_features_end_to_end_report.json](file:///C:/Users/tomas/Desktop/universidad/Ciencia%20de%20Datos/Taller%20de%20Resolución%20de%20Problemas%20II/fraud-detection-meli/data/features/selected_features_end_to_end_report.json).
 

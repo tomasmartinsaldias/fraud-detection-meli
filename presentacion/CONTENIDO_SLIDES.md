@@ -10,19 +10,20 @@
 
 ## Slide 0: Portada & Presentación del Equipo
 * **Quién expone:** Apertura conjunta (10-15 segundos).
-* **Título en pantalla:** Detección de Fraude Transaccional y Optimización de Políticas de Umbral.
+* **Título en pantalla:** Detección de Fraude Transaccional y Optimización de Umbral.
 * **Subtítulo:** De probabilidades continuas a decisiones financieras en pasarelas de pago.
+> Comentario de Tomi: Demasiado formar el subtitulo. Pensaba que podiamos poner algo mas informal como hace el profe. "Moonshot Thinking" en una presentacion. 
 * **Integrantes y roles definidos:**
-  * **Tomás Saldías:** Feature Engineering & Políticas de Decisión (Curva S).
-  * **Franco Esterellas:** Detección de Anomalías (Isolation Forest), Reglas de Asociación (WRAcc) & Ensambles.
-  * **Ian Connon:** Modelado Supervisado, Optimización de Hiperparámetros & MLOps.
+  * **Tomás Saldías:** Feature Engineering & Umbrales de Decisión.
+  * **Franco Esterellas:** Detección de Anomalías, Reglas de Asociación & Ensambles.
+  * **Ian Connon:** Modelado Supervisado & MLOps.
 * **Notas / Qué decir:**
   * [Completar aquí o dejar como presentación institucional rápida]
 
 ---
 
 ## Slide 1: El Punto de Partida (El Problema de los $140k)
-* **Quién expone:** [Ian / Franco / Tomi]
+* **Quién expone:** [Ian]
 * **Título propuesto:** *El problema inicial: la logística costaba $140.000 y el LightGBM crudo $123.000.*
 * **Eyebrow (ceja):** `1. EL PUNTO DE PARTIDA`
 * **Datos y evidencia oficial:**
@@ -51,6 +52,7 @@
 * **Visual sugerida:** Diagrama de 2 bloques: Fase 1 (Maximizar PR-AUC sin mirar umbrales) $\to$ Fase 2 (Optimizar decisiones financieras con el modelo congelado).
 * **Notas / Qué decir:**
   * [Explicar por qué no mezclamos el umbral con el entrenamiento del modelo].
+  > Comeentario de Tomi: Podemos dejar en claro que el split se hizo temporal.
 
 ---
 
@@ -76,7 +78,7 @@
 * **Datos y evidencia oficial:**
   * **1. Ventana circadiana (`es_madrugada`):** La tasa de fraude promedio del dataset es 4.5%, pero a las 02:00 UTC trepa abruptamente al **17.2%** (3.8x la prevalencia diurna).
   * **2. NLP bayesiano (`score_texto_nb`):** Modelado probabilístico Naive Bayes con priors Dirichlet sobre tokens de títulos de publicaciones, entrenado estrictamente en Train para evitar fuga.
-  * **3. Interacción no lineal (`prod_b_log_c`):** Captura comportamientos coordinados de cuenta combinando señales de navegación y monto.
+  * **3. Interacción no lineal (`prod_b_log_c`):** Interacción multiplicativa no lineal entre la variable anónima continua $b$ y la escala logarítmica $\log(c + 1)$, permitiendo capturar dependencias conjuntas complejas que a un árbol le cuesta partir con cortes ortogonales.
 * **Visual:** `figures/fig_fe_complejidad.svg` (Gráfico de barras de tasa de fraude por hora UTC + fórmulas de Dirichlet).
 * **Notas / Qué decir:**
   * [Contar brevemente cómo los estafadores operan en horarios desatendidos y cómo el texto del producto aportó señal predictiva].
