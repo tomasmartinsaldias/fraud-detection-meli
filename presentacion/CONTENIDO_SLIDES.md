@@ -52,12 +52,12 @@
 * **Visual sugerida:** Diagrama de 2 bloques: Fase 1 (Maximizar PR-AUC sin mirar umbrales) $\to$ Fase 2 (Optimizar decisiones financieras con el modelo congelado).
 * **Notas / Qué decir:**
   * [Explicar por qué no mezclamos el umbral con el entrenamiento del modelo].
-  > Comeentario de Tomi: Podemos dejar en claro que el split se hizo temporal.
+  > Comentario de Tomi: Podemos dejar en claro que el split se hizo temporal.
 
 ---
 
 ## Slide 3: Poda y Selección de Variables (Feature Engineering 1)
-* **Quién expone:** Tomás Saldías
+* **Quién expone:** Tomi
 * **Título propuesto:** *Feature Engineering: de 51 variables candidatas a un núcleo limpio de 11.*
 * **Eyebrow (ceja):** `3. SELECCIÓN DE VARIABLES`
 * **Datos y evidencia oficial:**
@@ -68,11 +68,14 @@
 * **Visual:** `figures/fig1_embudo_seleccion.svg` (Embudo del algoritmo de Forward Selection).
 * **Notas / Qué decir:**
   * [Mencionar el rigor: cada variable tuvo que ganarse su lugar compitiendo individualmente].
+  * **La tabla en pantalla:** Mostrar la lista de las 11 variables seleccionadas (4 nativas y 7 ingenierizadas) para que el profesor vea la transparencia total del proceso.
+  * **Por qué descartamos el 78%:** Explicar que el Forward Selection con paciencia k=2 actuó como un filtro anti-ruido implacable.
+  * **El monto crudo quedó afuera:** Remarcar que el algoritmo descartó la variable `monto` cruda porque de forma aislada no predecía; lo que predecía era el monto relativo a otras variables (los ratios). Mostrar cómo `ratio_monto_l` (monto relativo a la escala l) y `ratio_monto_e` reemplazaron al monto plano. De hecho, `ratio_monto_l` se convirtió en la variable creada más importante de todo el modelo (Gain de 9.330). También sumamos `ratio_d_m` (+132 bps) para desarmar la colinealidad entre d y m. Vimos en el EDA que d y m crecen fuertemente juntas (Spearman 0.735). Por eso creamos ratio_d_m: para atrapar las operaciones atípicas donde esa correlación se quiebra, donde la probabilidad de fraude se multiplica por 5. (Mostrarlo en un grafico)
 
 ---
 
 ## Slide 4: Variables Clave y Complejidad Técnica (Feature Engineering 2)
-* **Quién expone:** Tomás Saldías
+* **Quién expone:** Tomi
 * **Título propuesto:** *Las variables más potentes: ventana de madrugada, text-mining y ratios no lineales.*
 * **Eyebrow (ceja):** `4. VARIABLES CLAVE`
 * **Datos y evidencia oficial:**
@@ -82,6 +85,12 @@
 * **Visual:** `figures/fig_fe_complejidad.svg` (Gráfico de barras de tasa de fraude por hora UTC + fórmulas de Dirichlet).
 * **Notas / Qué decir:**
   * [Contar brevemente cómo los estafadores operan en horarios desatendidos y cómo el texto del producto aportó señal predictiva].
+  * **El Reloj Circadiano (es_madrugada):** Señalar el gráfico circular tipo reloj de 24 hs. De día el fraude está controlado en ~4.1%, pero de madrugada (01:00 a 05:00 UTC) se dispara hasta el 17.2% a las 02:00 UTC (3.8x más). Los estafadores aprovechan los horarios nocturnos desatendidos.
+  * **Text-Mining Bayesiano (score_texto_nb):** Explicar cómo minamos los títulos de las publicaciones (`i`) con Naive Bayes y priors Dirichlet ajustados 100% en Train. 
+    1. El problema y la solución: El título de la publicación (i) contiene señales críticas de riesgo. Construimos score_texto_nb: un método que condensa un vocabulario de 5.000 términos en una única probabilidad continua entre 0 y 1.
+    2. Cómo: TF-IDF con ngram_range=(1, 2). No miramos solo palabras sueltas; capturamos bigramas porque el contexto local cambia el riesgo (ej. "digital" es común, pero "gift card" o "código digital" concentran altísima tasa de fraude). Poda (min_df=30): Eliminamos términos poco frecuentes para que el modelo no memorice palabras únicas de estafas aisladas.Multinomial Naive Bayes con suavizado $\alpha = 2.0$. Si aparece una palabra nueva en Test nunca vista en fraudes previos, evita que la verosimilitud colapse a cero y empuja la estimación hacia la media base.
+    3. Blindaje Anti-Leakage: Como usamos el target $fraude$ para crear la feature, calcularla sobre el mismo set de entrenamiento causaría target leakage inmediato. Usamos Out-Of-Fold temporal (TimeSeriesSplit en 5 particiones): entrenamos tanto el TF-IDF como el Naive Bayes exclusivamente con bloques pasados para puntuar el bloque siguiente. Recién al final reentrenamos con el 100% de Train para proyectar a Validación y Test.
+  * **Interacción no lineal (prod_b_log_c):** Contar que al multiplicar `b` con el logaritmo de `c`, le dimos al modelo una curvatura directa (+91 bps) que a los árboles de decisión les costaría decenas de particiones ortogonales aproximar. Con b alto y c bajo que tenían un 12.8% de fraude, casi el triple que el resto de los clientes. Esto lo ponemos como una una mini-tarjeta comparativa de 2 datos
 
 ---
 
@@ -102,8 +111,8 @@
 ---
 
 ## Slide 6: Auditoría de Residuos y Fraude Hormiga
-* **Quién expone:** Tomás Saldías / Franco Esterellas
-* **Título propuesto:** *El fraude hormiga: se nos escapaban las compras chicas de menos de $20.*
+* **Quién expone:** Tomi
+* **Título propuesto:** *Auditoría de Residuos: cómo cerramos la fuga en compras menores a $50.*
 * **Eyebrow (ceja):** `6. AUDITORÍA DE RESIDUOS`
 * **Datos y evidencia oficial:**
   * **El punto ciego:** Al auditar los errores del modelo en validación, descubrimos que detectaba muy bien compras grandes (mediana $75), pero se le fugaban sistemáticamente transacciones chicas (mediana **$22**).
@@ -114,6 +123,49 @@
 * **Visual:** `figures/fig2_residuos_fraude_hormiga.svg` (Distribución de montos de fraude detectado vs fraude escapado).
 * **Notas / Qué decir:**
   * [Explicar cómo analizar los errores nos permitió diseñar variables quirúrgicas en vez de tirar modelos a ciegas].
+  * **1. Auditoría de Residuos (El Diagnóstico):**
+  * No nos quedamos solo con la métrica global del modelo de 11 variables; abrimos los errores en Validación
+  para ver *qué* se nos estaba escapando. * Descubrimos un patrón clarísimo: los fraudes que el modelo detectaba promediaban casi $100 ($97.96), pero los fraudes que lograban evadirlo tenían una **mediana de apenas $22.76** (y un promedio de $47.50).
+  * El modelo tenía un sesgo natural hacia montos altos y dejaba pasar compras de menor cuantía.
+  * **2. La Causa Raíz Técnica:**
+    * ¿Por qué el modelo se comía los fraudes de mediana de $22? Porque todas las variables de la primera ola
+    tenían al monto en el numerador (`ratio_monto_l`, `ratio_monto_e`).
+    * Esos ratios estaban matemáticamente diseñados para explotar cuando el monto era alto. Los árboles
+    aprendieron a cazar fraudes caros, pero los fraudes de montos moderados o bajos generaban ratios chicos y
+    pasaban totalmente desapercibidos.
+
+  * **3. La Solución (Invertir la lógica con 'deficit_piso_cluster'):**
+    * Agrupamos los títulos en 50 clusters semánticos para calcular la mediana de precio esperada de cada
+    producto (usando TF-IDF + SVD con d=30 y k-means, fiteado 100% en Train)
+    * Esto nos permitió calcular la **mediana bayesiana de precio de cada cluster de productos**, y creamos dos variables aprobadas por Forward Selection:
+    * `distancia_log_cluster`: desvío logarítmico del precio respecto a su categoría (+25 bps). Difiere de lo habitual?
+    * `deficit_piso_cluster`: penalización directa cuando el precio cae muy por debajo del piso de ese cluster específico (+19 bps). Está por debajo de la mediana?
+\
+
+* **4. El Resultado Empírico:**
+  * El PR-AUC subió de inmediato: **+44 bps en Validación y +61 bps en Test**.
+  * Logró rescatar transacciones que antes no se detectaban como fraudes:
+    1. Suscripción de PlayStation Plus vendida a $0.40
+        • Publicación: "Psn Plus Playstation 14 Dias Para Ps4"
+        • Monto: $0.40 | Mediana de su cluster: $14.41 | Déficit: 0.97 (97% de descuento anómalo).
+    2. Cuentas de Spotify Premium ofuscadas con asteriscos a $2.22
+        • Publicación: "\*\*spoti\*\*fy 1 Mes Pr\*\*miüm\*\*\*personal Oficial!"
+        • Monto: $2.22 | Mediana de su cluster: $25.61 | Déficit: 0.91 (91% de descuento).
+    3. Videojuegos digitales completos a $2.30 - $2.80
+        • Publicaciones: "The Sims 4 Deluxe Party Edition Xbox One Midia Digital" ($2.36) y "Gta 5 Pc - Dinero 250 M
+        Personaje Chetado" ($2.62).
+        • Monto: ~$2.50 | Mediana del cluster: ~$15 - $20 | Déficit: 0.85 a 0.87.
+    4. Códigos de desbloqueo de estéreos de auto a $1.89
+        • Publicación: "Code De Desbloqueio Do Rádio Mp3 Da Fiat Palio Com Garantia"
+        • Monto: $1.89 | Mediana de su cluster: $19.55 | Déficit: 0.90.
+
+* **5. La Gran Conclusión (Puente hacia la Slide de Umbrales):**
+  * Pero acá nos topamos con la lección más importante del proyecto: **con un umbral plano estático, la mediana
+  de los fraudes cazados apenas bajó de $27.52 a $27.00.**
+  * El Machine Learning solo no alcanza si la regla de corte del negocio sigue siendo una línea recta. Si bajás
+  un umbral plano para atrapar las compras de $22, arruinás el negocio llenándote de falsos positivos
+  * Para resolverlo de verdad en el bolsillo de la empresa, entendimos que la solución final requería cambiar la
+  política de corte: **hacer el umbral elástico al ticket (la Curva S).**
 
 ---
 
