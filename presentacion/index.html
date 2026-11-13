@@ -416,32 +416,43 @@
   </div>
 </section>
 
-<!-- SLIDE 1: EL GRAN RESULTADO -->
-<section class="slide" data-steps="2">
-  <h2>El ensamble cuatri-modelo alcanza 0.4509 de PR-AUC y rescata el 80% del capital</h2>
+<!-- NOTAS IAN CONNON & TOMÁS SALDÍAS: 1. Diagnóstico del baseline: La regresión logística de la consigna costaba $140.435 con un PR-AUC de 0.3150. El problema crítico no eran los falsos positivos (487 FP a $5 = $2.4k), sino la fuga masiva de 690 fraudes que se escapaban (690 FN a $200 = $138.000). Un LightGBM crudo con variables nativas apenas bajaba el costo a $123.215 (PR-AUC 0.4313). 2. Nuestra estrategia: Decidimos desacoplar estrictamente el problema en dos etapas: primero, maximizar la capacidad pura de ordenamiento (PR-AUC) mediante Feature Engineering y Stacking sobre un split temporal Out-of-Time estricto; segundo, una vez congelado el metamodelo, diseñar la política de decisión y umbrales dinámicos adaptados a las pérdidas financieras reales. -->
+<!-- SLIDE 1: PUNTO DE PARTIDA Y ESTRATEGIA -->
+<section class="slide">
+  <div>
+    <p class="footnote" style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">1. PUNTO DE PARTIDA &amp; ESTRATEGIA</p>
+    <h2>El baseline costaba $140k por fuga masiva: separamos PR-AUC de la política de corte</h2>
+  </div>
   <div class="split">
-    <div style="display: flex; gap: 4vw; align-items: center;">
-      <div>
-        <span class="footnote" style="text-transform: uppercase;">Récord Test OOT</span>
-        <div class="hero-metric"><span>0.4509</span></div>
-        <p class="metric-delta" style="color: var(--accent); font-weight: 700; font-size: 0.95em;">+195.8 bps</p>
+    <div class="context-pane" style="gap: 1.5vh;">
+      <p class="footnote" style="text-transform: uppercase; font-weight: 700; color: #d93025;">Punto de Partida (Baseline Consigna)</p>
+      <div style="display: flex; gap: 2.5vw; align-items: baseline;">
+        <div>
+          <div class="hero-metric" style="font-size: clamp(2rem, 3.2vw, 2.8rem); color: #d93025;"><span style="background: linear-gradient(180deg, transparent 65%, #FCE8E6 65%);">$140.4k</span></div>
+          <p class="footnote" style="color: #d93025; font-weight: 700;">Costo log&iacute;stico base (PR-AUC 0.3150)</p>
+        </div>
+        <div>
+          <div class="hero-metric" style="font-size: clamp(2rem, 3.2vw, 2.8rem); color: var(--ink-muted);">$123.2k</div>
+          <p class="footnote" style="color: var(--ink-muted); font-weight: 600;">LightGBM crudo (PR-AUC 0.4313)</p>
+        </div>
       </div>
-      <div>
-        <span class="footnote" style="text-transform: uppercase;">Recupero Financiero</span>
-        <div class="hero-metric"><span>79.9%</span></div>
-        <p class="metric-delta" style="color: var(--ink-muted); font-size: 0.95em;">$63.4k salvados</p>
+      <div class="takeaway-bullet" style="border-left-color: #d93025;">
+        <p><strong>Fuga cr&iacute;tica (690 fraudes):</strong> el 98% del costo ($138k) proven&iacute;a de fraudes no detectados.</p>
       </div>
     </div>
-    <div class="context-pane">
-      <div class="takeaway-bullet">
-        <p><strong>Récord OOT:</strong> supera la barrera de 0.4500 sin sobreajuste.</p>
+    <div class="context-pane" style="border-left: 2px solid #e8eaed; padding-left: 2.5vw; gap: 2vh;">
+      <p class="footnote" style="text-transform: uppercase; font-weight: 700; color: var(--accent);">Estrategia Metodol&oacute;gica en 2 Etapas</p>
+      <div style="border-left: 3.5px solid var(--accent); padding-left: 0.8vw;">
+        <p style="font-size: 0.95rem; font-weight: 700; color: var(--ink); margin-bottom: 0.2vh;">1. Maximizar Ranking Puro (PR-AUC)</p>
+        <p class="footnote" style="color: #5f6368;">Capacidad de ordenamiento temporal OOT con cero filtraci&oacute;n.</p>
       </div>
-      <div class="takeaway-bullet">
-        <p><strong>Impacto:</strong> rescata $19.2k adicionales frente al corte estático.</p>
+      <div style="border-left: 3.5px solid #137333; padding-left: 0.8vw;">
+        <p style="font-size: 0.95rem; font-weight: 700; color: var(--ink); margin-bottom: 0.2vh;">2. Optimizar Decisiones Financieras</p>
+        <p class="footnote" style="color: #5f6368;">Con modelo congelado, calibrar umbrales por ticket y costo real.</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Evaluación fuera de muestra out-of-time (OOT) sobre 22.500 casos de Test (16 a 21 de abril).</p>
+  <p class="footnote">Evaluaci&oacute;n temporal OOT; baseline consigna (logistic_raw): tau=0.25132, 487 FP ($2.4k) y 690 FN ($138k).</p>
 </section>
 
 <!-- NOTAS TOMÁS SALDÍAS: 1. Poda y Rigor: Formular más de 50 hipótesis de negocio y pasar por Forward Stepwise Selection con paciencia k=2 y tolerancia de delta PR-AUC > 0.0003 en validación temporal. Poda el 78% de ruido (51 -> 11 variables) y salta a 0.4443 (+130 bps). 2. Monto crudo descartado: El monto plano de forma aislada no predecía; lo que predecía era el monto relativo a otras variables. ratio_monto_l (monto relativo a la escala l) se convirtió en la variable más potente de todo el modelo (Gain de 9.330) y ratio_monto_e reemplazó al monto plano. 3. Desarme de colinealidad (ratio_d_m): Vimos en el EDA que d y m crecen fuertemente juntas (Spearman 0.735). Por eso creamos ratio_d_m (+132 bps): para atrapar las operaciones atípicas donde esa correlación se quiebra, donde la probabilidad de fraude se multiplica por 5 a casi 7 veces (28.8%). -->

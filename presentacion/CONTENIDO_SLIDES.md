@@ -22,10 +22,10 @@
 
 ---
 
-## Slide 1: El Punto de Partida (El Problema de los $140k)
-* **Quién expone:** [Ian]
-* **Título propuesto:** *El problema inicial: la logística costaba $140.000 y el LightGBM crudo $123.000.*
-* **Eyebrow (ceja):** `1. EL PUNTO DE PARTIDA`
+## Slide 1: Punto de Partida & Estrategia (El Problema de los $140k)
+* **Quién expone:** Ian & Tomi
+* **Título en pantalla:** *El baseline costaba $140k por fuga masiva: separamos PR-AUC de la política de corte.*
+* **Ceja (tracker):** `1. PUNTO DE PARTIDA & ESTRATEGIA`
 * **Datos y evidencia oficial:**
   * **Modelo de la consigna (`logistic_raw`):** Regresión Logística con variables nativas.
   * **Umbral inicial congelado en validación:** $\tau = 0.25132$ (regla de no superar 100 FP en validación).
@@ -33,33 +33,19 @@
     * 487 Falsos Positivos $\times \$5 = \$2.435$
     * **690 Falsos Negativos $\times \$200 = \$138.000$** (fuga masiva de fraudes no detectados).
     * **Costo total:** **$140.435** | **PR-AUC:** `0.3150`.
-  * **LightGBM de referencia con variables nativas (`lgb_reference_raw`):** PR-AUC `0.4313` | Costo: **$123.215**.
-* **Visual sugerida:** Comparativa de números grandes (Hero Metric): $140k vs $123k y la alerta de los 690 fraudes no vistos.
+  * **LightGBM de referencia nativo (`lgb_reference_raw`):** PR-AUC `0.4313` | Costo: **$123.215**.
+* **Estrategia Metodológica en 2 Etapas:**
+  1. **Etapa 1 (Data Science):** Maximizar capacidad pura de ordenamiento (**PR-AUC**) sobre split temporal Out-of-Time estricto, con cero filtración de datos (*data leakage*).
+  2. **Etapa 2 (Decisiones de Negocio):** Con el modelo congelado a ciegas, optimizar los umbrales operativos según costos asimétricos ($5 vs $200) y pérdida financiera real del ticket.
 * **Notas / Qué decir:**
-  * [Poner acá el énfasis: el negocio sangraba plata no por falsos positivos, sino porque el modelo dejaba escapar casi 700 fraudes].
+  * El negocio sangraba plata no por falsos positivos, sino porque el modelo dejaba escapar casi 700 fraudes (98% del costo). Decidimos no mezclar el score con la regla de corte: primero construimos el mejor rankeador del mercado y luego diseñamos la política de decisión.
 
 ---
 
-## Slide 2: La Estrategia del Equipo (Objetivos y Método)
-* **Quién expone:** [Tomi / Ian]
-* **Título propuesto:** *Nuestro objetivo: maximizar PR-AUC y adaptar los umbrales a las pérdidas reales.*
-* **Eyebrow (ceja):** `2. LA ESTRATEGIA`
-* **Puntos clave y metodología:**
-  * **Separación estricta de dos problemas:**
-    1. **Fase de Data Science (Modelado):** Maximizar la capacidad pura de ordenamiento y discriminación (`PR-AUC`), completamente independiente del umbral de decisión.
-    2. **Fase de Negocio (Toma de Decisiones):** Diseñar reglas de corte basadas en el costo asimétrico ($5 vs $200) y en el importe monetario de cada compra.
-  * **Blindaje metodológico:** Validación temporal Out-of-Time (OOT) estricta: todo feature, normalización o prior bayesiano se entrena solo en Train para evitar cualquier data leakage.
-* **Visual sugerida:** Diagrama de 2 bloques: Fase 1 (Maximizar PR-AUC sin mirar umbrales) $\to$ Fase 2 (Optimizar decisiones financieras con el modelo congelado).
-* **Notas / Qué decir:**
-  * [Explicar por qué no mezclamos el umbral con el entrenamiento del modelo].
-  > Comentario de Tomi: Podemos dejar en claro que el split se hizo temporal.
-
----
-
-## Slide 3: Poda y Selección de Variables (Feature Engineering 1)
+## Slide 2: Poda y Selección de Variables (Feature Engineering 1)
 * **Quién expone:** Tomi
 * **Título propuesto:** *De 51 variables a 11: ratios de monto y quiebre de colinealidad.*
-* **Eyebrow (ceja):** `3. SELECCIÓN DE VARIABLES & RATIOS`
+* **Ceja (tracker):** `2. SELECCIÓN DE VARIABLES & RATIOS`
 * **Datos y evidencia oficial:**
   * Se formularon más de 50 hipótesis de negocio (temporales, agregadas, ratios, interacciones).
   * **Algoritmo:** Forward Stepwise Selection con paciencia $k=2$ y tolerancia mínima de $\Delta\text{PR-AUC} > 0.0003$ sobre validación temporal.
@@ -80,10 +66,10 @@
 
 ---
 
-## Slide 4: Variables Clave y Complejidad Técnica (Feature Engineering 2)
+## Slide 3: Variables Clave y Complejidad Técnica (Feature Engineering 2)
 * **Quién expone:** Tomi
 * **Título propuesto:** *Las variables más potentes: ventana de madrugada, text-mining y ratios no lineales.*
-* **Eyebrow (ceja):** `4. VARIABLES CLAVE`
+* **Ceja (tracker):** `3. VARIABLES CLAVE`
 * **Datos y evidencia oficial:**
   * **1. Ventana circadiana (`es_madrugada`):** Ventana de 23:00 a 05:00 UTC. La tasa de fraude promedio del dataset es 4.5%, pero a las 02:00 UTC trepa abruptamente al **17.2%** (3.8x la prevalencia diurna).
   * **2. NLP bayesiano (`score_texto_nb`):** Modelado probabilístico Naive Bayes sobre tokens de títulos de publicaciones, entrenado estrictamente en Train para evitar fuga.
@@ -100,10 +86,10 @@
 
 ---
 
-## Slide 5: Detección de Anomalías y Reglas de Asociación
+## Slide 4: Detección de Anomalías y Reglas de Asociación
 * **Quién expone:** Franco Esterellas
 * **Título propuesto:** *Anomaly Detection y Reglas de Asociación aportan señales ortogonales al ensamble.*
-* **Eyebrow (ceja):** `5. ANOMALÍAS & REGLAS`
+* **Ceja (tracker):** `4. ANOMALÍAS & REGLAS`
 * **Datos y evidencia oficial:**
   * **Ensamble No Supervisado One-Class:** Entrenado exclusivamente sobre transacciones legítimas (`fraude == 0`) de Train utilizando variables crudas. Detecta anomalías geométricas sin haber visto etiquetas de fraude.
     * Combina **Isolation Forest, PCA y LOF** (*Local Outlier Factor*) mediante una meta-regresión logística.
@@ -119,10 +105,10 @@
 
 ---
 
-## Slide 6: Auditoría de Residuos y Fraude Hormiga
+## Slide 5: Auditoría de Residuos y Fraude Hormiga
 * **Quién expone:** Tomi
 * **Título propuesto:** *Auditoría de residuos: compras de $22 evadían el modelo por sesgo a montos altos.*
-* **Eyebrow (ceja):** `6. AUDITORÍA DE RESIDUOS`
+* **Ceja (tracker):** `5. AUDITORÍA DE RESIDUOS`
 * **Datos y evidencia oficial:**
   * **El punto ciego:** Al auditar los errores del modelo en validación, descubrimos que detectaba muy bien compras grandes (mediana $75, media $98), pero se le fugaban sistemáticamente transacciones chicas (mediana **$22.76**, media $47.50).
   * **Solución semántica de precios:**
@@ -179,10 +165,10 @@
 
 ---
 
-## Slide 7: Arquitectura de Stacking y el Récord
-* **Quién expone:** Ian Connon / Franco Esterellas / Tomás Saldías
+## Slide 6: Arquitectura de Stacking y el Récord
+* **Quién expone:** Ian Connon / Franco Esterellas
 * **Título propuesto:** *Stacking de 4 modelos: 0.4922 en validación y récord de 0.4509 en Test.*
-* **Eyebrow (ceja):** `7. STACKING & RÉCORD`
+* **Ceja (tracker):** `6. STACKING & RÉCORD`
 * **Datos y evidencia oficial (Interactivo en 2 pasos):**
   * **Paso 0 (Champion Oficial de Protocolo):**
     * Metamodelo: Regresión Lasso ($C=0.20$) combinando LightGBM, CatBoost, Random Forest y XGBoost con optimización CMA-ES.
