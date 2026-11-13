@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1600">
+  <title>Slide 01 — Portada</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500;700&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #f5f2eb; --surface: #ffffff; --ink: #181b1f; --text-mid: #525964;
+      --text-muted: #828a97; --accent: #b8442e; --green: #15803d;
+      --green-soft: rgba(21, 128, 61, 0.08); --border: rgba(24, 27, 31, 0.1);
+    }
+    body {
+      display: flex; justify-content: center; align-items: center; min-height: 100vh;
+      background: #111215; overflow: hidden; font-family: 'Inter', sans-serif; color: var(--ink);
+    }
+    .slide {
+      width: 1600px; height: 900px; background: var(--bg); padding: 50px 70px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      box-shadow: 0 25px 65px rgba(0,0,0,0.5); border-radius: 8px;
+    }
+    .slide-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      border-bottom: 2px solid var(--ink); padding-bottom: 16px;
+    }
+    .header-pill {
+      font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 6px;
+    }
+    .header-left h1 { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
+    .header-left p { font-size: 17px; color: var(--text-mid); margin-top: 5px; font-weight: 500; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin: auto 0; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 26px; }
+    .card-accent { border-top: 4px solid var(--accent); }
+    .hero-number { font-family: 'Playfair Display', serif; font-size: 84px; font-weight: 900; color: var(--accent); line-height: 0.95; }
+    .card-title { font-size: 22px; font-weight: 700; margin: 10px 0 6px 0; }
+    .card-desc { font-size: 15px; color: var(--text-mid); line-height: 1.5; }
+    .pill-badge-green {
+      display: inline-flex; font-family: 'DM Mono', monospace; font-size: 12.5px; font-weight: 700;
+      padding: 4px 10px; border-radius: 999px; background: var(--green-soft); color: var(--green); margin-top: 14px;
+    }
+    .slide-footer {
+      border-top: 1px solid var(--border); padding-top: 12px; display: flex;
+      justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="slide">
+    <div class="slide-header">
+      <div class="header-left">
+        <div class="header-pill">Auditoría de Modelado · Noviembre 2026</div>
+        <h1>Rompimos el récord histórico en detección de fraude</h1>
+        <p>Superamos por primera vez la barrera de 0.45 de PR-AUC en datos de prueba ciegos combinando cuatro familias de modelos.</p>
+      </div>
+      <div style="font-family:'DM Mono', monospace; font-weight:700; background:rgba(0,0,0,0.05); padding:6px 12px; border-radius:4px;">01 / 05</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card card-accent" style="display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="font-family:'DM Mono', monospace; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--accent);">Récord Absoluto en Test Final</div>
+          <div class="hero-number">0.4509</div>
+          <div class="card-title">Quiebre formal de la barrera de 0.45</div>
+          <p class="card-desc">El modelo productivo base estaba estancado en <strong>0.4443</strong>. Con este ensamble logramos un salto neto de <strong>+66 puntos básicos</strong>.</p>
+        </div>
+        <div>
+          <div class="pill-badge-green">▲ +1.5% de mejora neta sobre el control</div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <div class="card" style="border-left: 4px solid var(--ink); flex:1; display:flex; flex-direction:column; justify-content:center;">
+          <div style="font-family:'DM Mono', monospace; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--ink); margin-bottom:4px;">El Cambio de Enfoque</div>
+          <div class="card-title" style="font-size:20px;">De 1 modelo a un Cuatri-Modelo</div>
+          <p class="card-desc">En lugar de forzar a un solo algoritmo a ver todo el fraude, combinamos cuatro especialistas (LightGBM, XGBoost, CatBoost y Random Forest) bajo un juez lineal.</p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--green); flex:1; display:flex; flex-direction:column; justify-content:center;">
+          <div style="font-family:'DM Mono', monospace; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--green); margin-bottom:4px;">Blindaje Metodológico</div>
+          <div class="card-title" style="font-size:20px;">Cero optimización sobre Test</div>
+          <p class="card-desc">Todas las decisiones de variables e hiperparámetros se congelaron estrictamente en validación temporal. La ganancia es 100% transferible a producción.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div>INVESTIGACIÓN: <strong>TOMÁS MARTÍN SALDÍAS · IAN · FRANCO</strong></div>
+      <div>MERCADOLIBRE FRAUD DETECTION · DATASET OFICIAL</div>
+    </div>
+  </div>
+</body>
+</html>

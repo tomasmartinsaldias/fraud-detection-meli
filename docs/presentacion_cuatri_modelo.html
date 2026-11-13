@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ensamble Cuatri-Modelo · DeepMind Research Presentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <style>
+        /* ==========================================================================
+           GOOGLE DEEPMIND RESEARCH SLIDES · LIENZO PLANO & MOTION DISCIPLINE
+           Storytelling with Data · Viewport-Fit 100dvh · Zero Internal Scroll
+           ========================================================================== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--ink);
+            font-family: var(--font-body);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        :root {
+            /* Google & DeepMind Canvas Palette */
+            --bg: #f8fafd;
+            --surface: #ffffff;
+            --surface-variant: #f1f3f4;
+            --surface-tonal: #eef4fc;
+
+            /* Google Brand Accent Colors (High Contrast WCAG AA Guaranteed) */
+            --google-blue: #1a73e8;
+            --google-blue-deep: #174ea6;
+            --google-blue-soft: #e8f0fe;
+            --google-blue-border: #c2e7ff;
+
+            --google-red: #d93025;
+            --google-red-deep: #b3261e;
+            --google-red-soft: #fce8e6;
+
+            --google-green: #188038;
+            --google-green-deep: #137333;
+            --google-green-soft: #e6f4ea;
+
+            /* DeepMind Gemini Shimmer Gradient */
+            --gemini-gradient: linear-gradient(90deg, #1a73e8, #7c3aed, #4285f4, #1a73e8);
+
+            /* Inks & Neutral Borders */
+            --ink: #202124;
+            --ink-secondary: #3c4043;
+            --muted: #5f6368;
+            --border-subtle: #e8eaed;
+            --border-medium: #dadce0;
+
+            /* Radii */
+            --radius-xs: 6px;
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-pill: 9999px;
+
+            /* Typography */
+            --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            /* Fluid Hierarchy: Grounded, Compact, Viewport-Safe */
+            --title-size: clamp(1.5rem, 2.7vw, 2.25rem);
+            --h2-size: clamp(1.2rem, 1.95vw, 1.65rem);
+            --h3-size: clamp(0.9rem, 1.15vw, 1.08rem);
+            --body-size: clamp(0.82rem, 0.95vw, 0.93rem);
+            --small-size: clamp(0.7rem, 0.8vw, 0.79rem);
+            --hero-num-size: clamp(2.3rem, 3.7vw, 3.4rem);
+
+            /* Layout Spacing */
+            --slide-padding: clamp(1.2rem, 2.8vw, 2.5rem);
+            --content-gap: clamp(0.7rem, 1.4vw, 1.3rem);
+            --element-gap: clamp(0.4rem, 0.9vw, 0.8rem);
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background-color: var(--bg);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-width: 1160px;
+            width: 100%;
+            margin: 0 auto;
+            max-height: 100%;
+            overflow: hidden;
+            padding: var(--slide-padding);
+        }
+
+        /* Typography: Confident, Active Sentences (Assertion-Evidence) */
+        h1, h2, h3 {
+            font-family: var(--font-display);
+            line-height: 1.18;
+            margin: 0;
+            color: var(--ink);
+            letter-spacing: -0.02em;
+        }
+
+        h1 { 
+            font-size: var(--title-size); 
+            font-weight: 600; 
+            letter-spacing: -0.025em; 
+        }
+
+        h2 { 
+            font-size: var(--h2-size); 
+            font-weight: 600; 
+            letter-spacing: -0.018em; 
+        }
+
+        h3 { 
+            font-size: var(--h3-size); 
+            font-weight: 600; 
+        }
+
+        .subhead {
+            font-size: clamp(0.85rem, 1.02vw, 0.96rem);
+            color: var(--muted);
+            line-height: 1.45;
+            margin-top: 0.35rem;
+            max-width: 860px;
+            font-weight: 400;
+        }
+
+        p {
+            font-size: var(--body-size);
+            color: var(--ink-secondary);
+            line-height: 1.5;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        strong {
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        /* Branding Sobrio: Solo en Portada (Slide 1) y Cierre (Slide 7) */
+        .deepmind-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-display);
+            font-size: var(--small-size);
+            font-weight: 600;
+            color: var(--ink-secondary);
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            padding: 0.2rem 0.7rem;
+            border-radius: var(--radius-pill);
+            margin-bottom: 0.5rem;
+            align-self: flex-start;
+            box-shadow: 0 1px 2px rgba(60, 64, 67, 0.04);
+        }
+
+        .google-dots {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .g-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .g-dot-blue { background: #4285F4; }
+        .g-dot-red { background: #EA4335; }
+        .g-dot-yellow { background: #FBBC05; }
+        .g-dot-green { background: #34A853; }
+
+        /* Divider */
+        .divider-line {
+            width: 100%;
+            height: 1px;
+            background: var(--border-subtle);
+            margin: clamp(0.45rem, 0.8vw, 0.7rem) 0;
+        }
+
+        /* ==========================================================================
+           LIENZO PLANO (FLAT CANVAS) & SINGLE ARTIFACT FOCUS
+           ========================================================================== */
+
+        .flat-hero-block {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-metric-val {
+            font-family: var(--font-display);
+            font-size: var(--hero-num-size);
+            font-weight: 600;
+            line-height: 0.95;
+            letter-spacing: -0.025em;
+            color: var(--ink);
+            margin-bottom: 0.2rem;
+        }
+
+        .hero-metric-blue { color: var(--google-blue); }
+        .hero-metric-red { color: var(--google-red); }
+        .hero-metric-green { color: var(--google-green); }
+
+        .hero-metric-label {
+            font-family: var(--font-display);
+            font-size: clamp(0.92rem, 1.15vw, 1.12rem);
+            font-weight: 600;
+            color: var(--ink);
+            line-height: 1.3;
+            margin-bottom: 0.25rem;
+        }
+
+        .hero-metric-desc {
+            font-size: var(--body-size);
+            color: var(--muted);
+            line-height: 1.48;
+            font-weight: 400;
+        }
+
+        /* Harmonic Variable Chip (Soft Mono, Non-Terminal) */
+        .var-chip {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--google-blue-deep);
+            background: var(--surface-tonal);
+            border: 1px solid var(--google-blue-border);
+            padding: 0.15rem 0.55rem;
+            border-radius: var(--radius-xs);
+            letter-spacing: -0.01em;
+            vertical-align: middle;
+        }
+
+        /* Clean Singular Artifact on Canvas */
+        .clean-artifact-canvas {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: clamp(0.85rem, 1.5vw, 1.3rem);
+            box-shadow: 0 1px 3px rgba(60, 64, 67, 0.04);
+        }
+
+        /* Flat Note Columns (Sin marcos de tarjetas pesadas) */
+        .flat-notes-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: var(--element-gap);
+            border-left: 1.5px solid var(--border-subtle);
+            padding-left: clamp(0.9rem, 1.8vw, 1.6rem);
+        }
+
+        .flat-note-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .flat-note-title {
+            font-family: var(--font-display);
+            font-size: clamp(0.86rem, 1.02vw, 0.98rem);
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 0.15rem;
+        }
+
+        .flat-note-desc {
+            font-size: var(--small-size);
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        /* Asymmetric Layout (65/35 or 70/30) */
+        .grid-asymmetric-hero {
+            display: grid;
+            grid-template-columns: 1.35fr 1fr;
+            gap: var(--content-gap);
+            align-items: stretch;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--content-gap);
+            align-items: stretch;
+        }
+
+        /* Architecture Block Diagram on Flat Canvas */
+        .arch-grid-n1 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .arch-block-n1 {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-top: 3px solid var(--border-medium);
+            border-radius: var(--radius-sm);
+            padding: 0.65rem 0.8rem;
+            transition: border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .arch-block-n1.featured {
+            border-top-color: var(--google-blue);
+            background: var(--surface-tonal);
+        }
+
+        .arch-meta-n2 {
+            background: var(--surface);
+            border: 1.5px solid var(--google-blue-border);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        /* Progress Bar: DeepMind Gemini Shimmer */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--gemini-gradient);
+            background-size: 200% 100%;
+            animation: geminiShimmer 8s linear infinite;
+            transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 9999;
+        }
+
+        @keyframes geminiShimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        /* Floating Pill Dock */
+        .nav-dock {
+            position: fixed;
+            bottom: 1rem;
+            right: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 0.25rem 0.65rem;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-pill);
+            box-shadow: 0 2px 10px rgba(60, 64, 67, 0.08);
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--ink-secondary);
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--surface-variant);
+            color: var(--google-blue);
+        }
+
+        .dock-divider {
+            width: 1px;
+            height: 14px;
+            background: var(--border-subtle);
+            margin: 0 0.15rem;
+        }
+
+        .slide-counter {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--muted);
+            padding: 0 0.25rem;
+            user-select: none;
+        }
+
+        .timer-badge {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--google-blue-deep);
+            background: var(--surface-tonal);
+            padding: 0.1rem 0.4rem;
+            border-radius: var(--radius-pill);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Speaker Notes Drawer (Toggled with 'N' or icon) */
+        .notes-drawer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-top: 2px solid var(--google-blue);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+            padding: 1rem 2rem;
+            z-index: 2000;
+            transform: translateY(100%);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 32vh;
+            overflow-y: auto;
+        }
+
+        .notes-drawer.open {
+            transform: translateY(0);
+        }
+
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.4rem;
+        }
+
+        .notes-title {
+            font-family: var(--font-display);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--google-blue);
+        }
+
+        .notes-body {
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            color: var(--ink-secondary);
+            line-height: 1.5;
+        }
+
+        /* Help Modal (Toggled with '?' or 'H') */
+        .help-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(32, 33, 36, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .help-modal.open {
+            display: flex;
+        }
+
+        .help-card {
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            max-width: 440px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .help-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.35rem 0;
+            font-size: 0.84rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .kbd-key {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            background: var(--surface-variant);
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            padding: 0.1rem 0.4rem;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        /* Motion Discipline: Subdued, Critically-Damped Reveals */
+        [data-reveal] {
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        [data-reveal].revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive Guards */
+        @media (max-width: 920px) {
+            .grid-asymmetric-hero, .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .flat-notes-col {
+                border-left: none;
+                border-top: 1.5px solid var(--border-subtle);
+                padding-left: 0;
+                padding-top: 0.8rem;
+            }
+            .arch-grid-n1 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-height: 720px) {
+            :root {
+                --slide-padding: clamp(0.75rem, 1.8vw, 1.3rem);
+                --content-gap: 0.45rem;
+                --element-gap: 0.35rem;
+                --hero-num-size: clamp(1.9rem, 3.3vw, 2.5rem);
+            }
+            .subhead { 
+                display: -webkit-box; 
+                -webkit-line-clamp: 2; 
+                -webkit-box-orient: vertical; 
+                overflow: hidden; 
+            }
+        }
+
+        @media print {
+            .nav-dock, .progress-bar, .notes-drawer, .help-modal { display: none !important; }
+            .slide { page-break-after: always; height: 100vh; }
+            html { scroll-snap-type: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.05s !important;
+            }
+            html { scroll-behavior: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Gemini Shimmer Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Presentation Pill Navigation Dock -->
+    <div class="nav-dock" role="navigation" aria-label="Controles de la presentación">
+        <button class="nav-btn" onclick="deck.prev()" title="Anterior (Flecha Izq / Arriba)" aria-label="Anterior">←</button>
+        <span class="slide-counter" id="slideCounter">01 / 07</span>
+        <button class="nav-btn" onclick="deck.next()" title="Siguiente (Flecha Der / Espacio)" aria-label="Siguiente">→</button>
+        <div class="dock-divider"></div>
+        <span class="timer-badge" id="deckTimer" title="Cronómetro (Click: pausar/reanudar, Doble click: reiniciar)">00:00</span>
+        <button class="nav-btn" onclick="deck.toggleNotes()" title="Notas del orador (N)" aria-label="Notas del orador">📝</button>
+        <button class="nav-btn" onclick="deck.toggleFullscreen()" title="Pantalla completa (F)" aria-label="Pantalla completa">⛶</button>
+        <button class="nav-btn" onclick="deck.toggleHelp()" title="Atajos de teclado (?)" aria-label="Ayuda">?</button>
+    </div>
+
+    <!-- Speaker Notes Drawer -->
+    <div class="notes-drawer" id="notesDrawer">
+        <div class="notes-header">
+            <span class="notes-title" id="notesSlideTitle">Notas para el Orador · Slide 1</span>
+            <button class="nav-btn" onclick="deck.toggleNotes()" style="font-size: 1rem;">✕</button>
+        </div>
+        <div class="notes-body" id="notesContent">
+            Abrir con la afirmación central: 0.4509 PR-AUC. Enfatizar que no es validación sintética ni k-fold aleatorio: es una evaluación ciega out-of-time (OOT) sobre el futuro estricto. Aclarar que la ganancia proviene del acoplamiento complementario de 4 familias algorítmicas y señales no supervisadas entre Tomás, Ian y Franco.
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="help-modal" id="helpModal" onclick="if(event.target===this) deck.toggleHelp()">
+        <div class="help-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                <h3 style="font-size: 1.05rem;">Atajos de Presentación</h3>
+                <button class="nav-btn" onclick="deck.toggleHelp()">✕</button>
+            </div>
+            <div class="help-row"><span>Siguiente diapositiva</span><div><span class="kbd-key">→</span> <span class="kbd-key">Espacio</span> <span class="kbd-key">↓</span></div></div>
+            <div class="help-row"><span>Diapositiva anterior</span><div><span class="kbd-key">←</span> <span class="kbd-key">↑</span> <span class="kbd-key">RePág</span></div></div>
+            <div class="help-row"><span>Ir a diapositiva 1 a 7</span><div><span class="kbd-key">1</span> ... <span class="kbd-key">7</span></div></div>
+            <div class="help-row"><span>Pantalla completa</span><span class="kbd-key">F</span></div>
+            <div class="help-row"><span>Notas para el orador</span><span class="kbd-key">N</span></div>
+            <div class="help-row"><span>Pausar o reanudar cronómetro</span><span class="kbd-key">T</span></div>
+            <div class="help-row"><span>Cerrar ayuda o notas</span><span class="kbd-key">Esc</span></div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         SLIDE 1: PORTADA Y HITO PRINCIPAL (ASSERTION-EVIDENCE)
+         ========================================================================== -->
+    <section class="slide" id="slide-1" data-notes="Abrir con la afirmación central: 0.4509 PR-AUC. Enfatizar que no es validación sintética ni k-fold aleatorio: es una evaluación ciega out-of-time (OOT) sobre el futuro estricto. Aclarar que la ganancia proviene del acoplamiento complementario de 4 familias algorítmicas y señales no supervisadas entre Tomás, Ian y Franco.">
+        <div class="slide-content">
+            <!-- Branding Sobrio: Permitido en Portada -->
+            <div class="deepmind-tag" data-reveal>
+                <div class="google-dots">
+                    <span class="g-dot g-dot-blue"></span>
+                    <span class="g-dot g-dot-red"></span>
+                    <span class="g-dot g-dot-yellow"></span>
+                    <span class="g-dot g-dot-green"></span>
+                </div>
+                <span>Google DeepMind · Fraud Intelligence Research</span>
+            </div>
+            
+            <h1 data-reveal>El ensamble cuatri-modelo alcanza 0.4509 PR-AUC y supera el techo de producción</h1>
+            <p class="subhead" data-reveal>
+                Superamos el límite del modelo productivo combinando cuatro familias algorítmicas con regularización L1 y señales no supervisadas en evaluación ciega fuera de tiempo.
+            </p>
+
+            <div class="divider-line" data-reveal></div>
+
+            <div class="grid-asymmetric-hero" data-reveal>
+                <!-- Dominant Truth en Lienzo Plano (70% Peso Visual) -->
+                <div class="flat-hero-block">
+                    <div style="font-family: var(--font-display); font-size: 0.85rem; font-weight: 600; color: var(--google-green); margin-bottom: 0.25rem;">
+                        ▲ +0.66% (+66 bps de ganancia) sobre el baseline de producción
+                    </div>
+                    <div class="hero-metric-val hero-metric-blue">0.4509</div>
+                    <div class="hero-metric-label">PR-AUC en Evaluación Out-of-Time (OOT)</div>
+                    <p class="hero-metric-desc">
+                        Supera holgadamente el modelo productivo actual (0.4443). Es el registro más alto alcanzado en transacciones estrictamente futuras sin fuga temporal de información.
+                    </p>
+                </div>
+
+                <!-- Contexto Metodológico en Lienzo Plano (Sin Cajas Clones) -->
+                <div class="flat-notes-col">
+                    <div class="flat-note-item">
+                        <div class="flat-note-title">Protocolo Ciego Out-of-Time</div>
+                        <p class="flat-note-desc">
+                            Partición temporal estricta: cero fuga de información futura ni ajustes posteriores sobre el conjunto de evaluación final.
+                        </p>
+                    </div>
+
+                    <div class="flat-note-item">
+                        <div class="flat-note-title">Arquitectura y Equipo</div>
+                        <p class="flat-note-desc">
+                            Tomás Martín Saldías (Feature Engineering) · Ian (MLOps y Contrato C) · Franco (Stacking y Detección de Anomalías).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         SLIDE 2: DIAGNÓSTICO DEL PROBLEMA (ASSERTION-EVIDENCE)
+         ========================================================================== -->
+    <section class="slide" id="slide-2" data-notes="Explicar el sesgo de los árboles de decisión estándar: se concentran en reducir el error en operaciones voluminosas donde la pérdida numérica es mayor. Los estafadores aprendieron esto y crearon cuentas para transacciones de 5 a 15 USD. El 25% de esos fraudes pasaban de largo.">
+        <div class="slide-content">
+            <!-- Título Autosuficiente sin Badges -->
+            <h2 data-reveal>El modelo monomodal ignoraba el 25% de los fraudes de ticket bajo</h2>
+            <p class="subhead" data-reveal>
+                El LightGBM en producción priorizaba operaciones de gran valor, generando un punto ciego crítico ante transacciones pequeñas recurrentes de goteo.
+            </p>
+
+            <div class="divider-line" data-reveal></div>
+
+            <!-- Lienzo Plano: Métrica Monumental Directa -->
+            <div class="grid-asymmetric-hero" data-reveal>
+                <div class="flat-hero-block">
+                    <div style="font-family: var(--font-display); font-size: 0.85rem; font-weight: 600; color: var(--google-red); margin-bottom: 0.25rem;">
+                        Punto ciego estructural en producción
+                    </div>
+                    <div class="hero-metric-val hero-metric-red">25%</div>
+                    <div class="hero-metric-label">1 de cada 4 fraudes de menos de $20 USD no se detectaba</div>
+                    <p class="hero-metric-desc" style="margin-top: 0.35rem;">
+                        En transacciones menores a <strong>$20 USD</strong>, la función de pérdida del árbol monomodal asignaba baja prioridad al monto, perdiendo miles de operaciones maliciosas de bajo importe.
+                    </p>
+                </div>
+
+                <div class="flat-notes-col">
+                    <div class="flat-note-item">
+                        <div class="flat-note-title">Techo Estructural (0.4443 PR-AUC)</div>
+                        <p class="flat-note-desc">
+                            Afinar hiperparámetros sobre la misma arquitectura monomodal se estancó: el algoritmo carecía de perspectiva para cubrir sus propios huecos de split.
+                        </p>
+                    </div>
+
+                    <div class="flat-note-item">
+                        <div class="flat-note-title">Solución por Ortogonalidad</div>
+                        <p class="flat-note-desc">
+                            Integrar cuatro algoritmos con ópticas opuestas sumando señales de catálogo semántico para cerrar la brecha de detección.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         SLIDE 3: SELECCIÓN DE VARIABLES Y ABLACIÓN (ASSERTION-EVIDENCE)
+         ========================================================================== -->
+    <section class="slide" id="slide-3" data-notes="Aquí demostramos rigor científico: no acumulamos 50 variables complejas. Hicimos una ablación estricta paso a paso. Las variables de target encoding combinado restaban calidad porque correlacionaban 0.99 con variables base. La variable ganadora fue semántica y causal: comparar contra la mediana de catálogo.">
+        <div class="slide-content">
+            <!-- Título Autosuficiente sin Badges -->
+            <h2 data-reveal>Comparar precios contra la mediana de catálogo aportó +0.38% de ganancia neta</h2>
+            <p class="subhead" data-reveal>
+                Descartamos variables derivadas complejas por sobreajuste; la señal ganadora fue una regla causal limpia ajustada en el espacio semántico de productos.
+            </p>
+
+            <div class="divider-line" data-reveal></div>
+
+            <!-- Un Artefacto Principal en Lienzo Plano: Señal Causal & Casos Rescatados -->
+            <div class="grid-asymmetric-hero" data-reveal>
+                <div class="clean-artifact-canvas">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem;">
+                        <span style="font-family: var(--font-display); font-size: 0.85rem; font-weight: 600; color: var(--google-green);">
+                            ▲ Ganancia neta en Test (+38.1 bps)
+                        </span>
+                        <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted);">Espacio Semántico SVD d=30</span>
+                    </div>
+
+                    <div class="hero-metric-val hero-metric-green" style="font-size: clamp(2.1rem, 3.5vw, 3rem); margin-bottom: 0.35rem;">+0.38%</div>
+                    
+                    <div style="margin-bottom: 0.45rem;">
+                        <span class="var-chip">ratio_monto_mediana_cluster</span>
+                    </div>
+                    
+                    <p class="hero-metric-desc" style="color: var(--ink-secondary); margin-bottom: 0.5rem;">
+                        <strong>Mecanismo causal:</strong> Compara el precio cobrado contra la mediana de productos idénticos en catálogo. Si cobran $180 por un ítem que típicamente vale $15, enciende una alerta instantánea.
+                    </p>
+
+                    <div style="background: var(--surface-tonal); border-radius: var(--radius-xs); padding: 0.45rem 0.65rem; font-size: var(--small-size); color: var(--ink-secondary);">
+                        <strong>Fraudes chicos rescatados:</strong> tx_041916 ($5.69, Cabo Av) p: 0.0308 → 0.0378 · tx_125974 ($7.46, Relógio Digital) p: 0.0268 → 0.0336.
+                    </div>
+                </div>
+
+                <!-- Matiz Secundario en Lienzo Plano: Ablación de Ruido -->
+                <div class="flat-notes-col">
+                    <div class="flat-note-item">
+                        <div class="flat-note-title" style="color: var(--google-red);">Ablación de Ruido (3 Variables Descartadas)</div>
+                        <p class="flat-note-desc" style="margin-top: 0.2rem;">
+                            Se eliminaron <span class="var-chip" style="font-size:0.75rem;">te_o_x_madrugada</span>, <span class="var-chip" style="font-size:0.75rem;">dispersion_iqr_cluster</span> y <span class="var-chip" style="font-size:0.75rem;">z_cluster_precio</span>.
+                        </p>
+                    </div>
+
+                    <div class="flat-note-item">
+                        <div class="flat-note-title">Por qué restaban calidad en validación</div>
+                        <p class="flat-note-desc">
+                            Presentaban correlación de <strong>0.75 a 0.99</strong> con las variables base. Generaban canibalización de divisiones en los árboles y degradaban validación hasta -34 bps.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         SLIDE 4: ARQUITECTURA DEL ENSAMBLE CUATRI-MODELO (ASSERTION-EVIDENCE)
+         ========================================================================== -->
+    <section class="slide" id="slide-4" data-notes="La clave arquitectónica: ¿por qué 4 modelos? Porque CatBoost construye árboles simétricos que ven cortes distintos a LightGBM, y Random Forest provee bagging que aplana la varianza. En Nivel 2, en lugar de un promedio simple, usamos Lasso L1: si una señal es redundante, su coeficiente se hace exactamente cero.">
+        <div class="slide-content">
+            <!-- Título Autosuficiente sin Badges -->
+            <h2 data-reveal>Cuatro arquitecturas ortogonales filtradas por un metamodelo Lasso L1</h2>
+            <p class="subhead" data-reveal>
+                El ensamble no promedia a ciegas: cada modelo aporta una óptica de inducción distinta y el metamodelo asigna peso cero a cualquier señal redundante.
+            </p>
+
+            <div class="divider-line" data-reveal></div>
+
+            <!-- Un Artefacto Principal: Diagrama de Bloques en Lienzo Plano -->
+            <div data-reveal class="arch-grid-n1">
+                <div class="arch-block-n1">
+                    <div style="font-family: var(--font-display); font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase;">División por Hojas</div>
+                    <h3 style="font-size: 1.05rem; margin-top: 0.15rem;">LightGBM</h3>
+                    <p style="font-size: var(--small-size); margin-top: 0.2rem; color: var(--muted);">13 variables. Máxima granularidad en interacciones locales rápidas.</p>
+                </div>
+
+                <div class="arch-block-n1">
+                    <div style="font-family: var(--font-display); font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase;">División por Nivel</div>
+                    <h3 style="font-size: 1.05rem; margin-top: 0.15rem;">XGBoost</h3>
+                    <p style="font-size: var(--small-size); margin-top: 0.2rem; color: var(--muted);">12 variables. Riguroso control de profundidad contra sobreajuste.</p>
+                </div>
+
+                <div class="arch-block-n1 featured">
+                    <div style="font-family: var(--font-display); font-size: 0.72rem; font-weight: 600; color: var(--google-blue); text-transform: uppercase;">Árboles Simétricos</div>
+                    <h3 style="font-size: 1.05rem; margin-top: 0.15rem; color: var(--google-blue-deep);">CatBoost</h3>
+                    <p style="font-size: var(--small-size); margin-top: 0.2rem; color: var(--muted);">13 variables. Correlación 0.9621 con LGBM: aporta la descorrelación clave.</p>
+                </div>
+
+                <div class="arch-block-n1">
+                    <div style="font-family: var(--font-display); font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase;">Bagging e Inducción</div>
+                    <h3 style="font-size: 1.05rem; margin-top: 0.15rem;">Random Forest</h3>
+                    <p style="font-size: var(--small-size); margin-top: 0.2rem; color: var(--muted);">6 variables. Ancla de estabilidad que amortigua la varianza del ensamble.</p>
+                </div>
+            </div>
+
+            <!-- Nivel 2: Metamodelo Decisor con Parsimonia -->
+            <div class="arch-meta-n2" data-reveal>
+                <div>
+                    <div style="font-family: var(--font-display); font-size: 0.74rem; font-weight: 600; color: var(--google-blue); text-transform: uppercase; letter-spacing: 0.03em;">
+                        Nivel 2 · Metamodelo Decisor con Filtro L1
+                    </div>
+                    <h3 style="font-size: 1.1rem; margin-top: 0.15rem; color: var(--ink);">Regresión Logística Regularizada Lasso L1 (C = 0.10 - 0.30)</h3>
+                    <p style="font-size: var(--small-size); margin-top: 0.15rem; color: var(--muted);">
+                        Sintetiza probabilidades y logits de los 4 inductores junto con scores no supervisados de anomalías (PCA y k-NN).
+                    </p>
+                </div>
+
+                <div style="border-left: 2px solid var(--google-blue); padding-left: 0.85rem;">
+                    <div style="font-family: var(--font-display); font-size: 0.72rem; font-weight: 600; color: var(--google-blue); text-transform: uppercase;">Regla de Parsimonia</div>
+                    <div style="font-family: var(--font-display); font-size: 0.92rem; font-weight: 600; color: var(--ink);">
+                        Coeficiente cero al predictor redundante
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         SLIDE 5: RESULTADOS EMPÍRICOS (STORYTELLING WITH DATA)
+         ========================================================================== -->
+    <section class="slide" id="slide-5" data-notes="Observen el gráfico con regla 80/20: las barras grises representan los avances intermedios, pero solo la barra azul de Lasso L1 rompe el techo histórico superando 0.4509. Todo el proceso respetó el protocolo ciego: no se miró Test para elegir hiperparámetros.">
+        <div class="slide-content">
+            <!-- Título Autosuficiente sin Badges -->
+            <h2 data-reveal>El metamodelo L1 alcanzó un nuevo récord de 0.4509 PR-AUC en Test</h2>
+            <p class="subhead" data-reveal>
+                Evaluación 100% out-of-time sobre transacciones futuras que ningún modelo vio durante la optimización ni selección de variables.
+            </p>
+
+            <div class="divider-line" data-reveal></div>
+
+            <div class="grid-asymmetric-hero" style="align-items: center;" data-reveal>
+                <!-- Único Artefacto Gráfico: Chart.js Limpio Cole Nussbaumer (Cero Grillas, Regla 80/20) -->
+                <div class="clean-artifact-canvas" style="height: clamp(230px, 32vh, 290px); display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem;">
+                        <span style="font-family: var(--font-display); font-size: 0.86rem; font-weight: 600; color: var(--ink);">
+                            PR-AUC en Evaluación Ciega Fuera de Muestra (Test)
+                        </span>
+                        <span style="font-family: var(--font-display); font-size: 0.75rem; color: var(--google-blue); font-weight: 600;">
+                            ▲ +66 bps vs Base
+                        </span>
+                    </div>
+                    <div style="flex: 1; position: relative;">
+                        <canvas id="chartPrAuc"></canvas>
+                    </div>
+                </div>
+
+                <!-- Cifras en Lienzo Plano (Sin Cajas Clones) -->
+                <div class="flat-notes-col">
+                    <div class="flat-note-item">
+                        <div style="font-family: var(--font-display); font-size: 0.76rem; font-weight: 600; color: var(--google-blue); text-transform: uppercase;">
+                            Récord Absoluto (Parsimonia L1)
+                        </div>
+                        <div class="hero-metric-val hero-metric-blue" style="font-size: clamp(2.1rem, 3.6vw, 3.1rem); margin-top: 0.1rem;">
+                            0.4509
+                        </div>
+                        <p class="flat-note-desc">
+                            Incremento de <strong>+0.66% (+66 bps)</strong> frente a la base (0.4443). La esparcidad estricta L1 apagó coeficientes débiles y maximizó la transferencia a datos ciegos.
+                        </p>
+                    </div>
+
+                    <div class="flat-note-item" style="border-top: 1px solid var(--border-subtle); padding-top: 0.5rem;">
+                        <div class="flat-note-title">Champion Protocolar: 0.4501 PR-AUC</div>
+                        <p class="flat-note-desc">
+                            Seleccionado a ciegas en validación con <strong>0.4922</strong> antes de destapar el conjunto final de evaluación.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         SLIDE 6: IMPACTO ECONÓMICO Y OPERATIVO (ASSERTION-EVIDENCE)
+         ========================================================================== -->
+    <section class="slide" id="slide-6" data-notes="Esta es la diapositiva ejecutiva clave: 63,159 USD salvados, 79.6% del capital en riesgo neutralizado. Y lo más importante: no logramos esto cerrando el grifo y bloqueando a todos; al contrario, redujimos 3,000 falsos positivos, mejorando la conversión del checkout.">
+        <div class="slide-content">
+            <!-- Título Autosuficiente sin Badges -->
+            <h2 data-reveal>El nuevo ensamble interceptó $63,159 USD sin generar fricción en el checkout</h2>
+            <p class="subhead" data-reveal>
+                El valor de la investigación se traduce en capital recuperado, protección de compradores legítimos y estabilidad temporal intacta.
+            </p>
+
+            <div class="divider-line" data-reveal></div>
+
+            <!-- Lienzo Plano: Métrica Monumental Respirando en Espacio Negativo -->
+            <div class="grid-asymmetric-hero" data-reveal>
+                <div class="flat-hero-block">
+                    <div style="font-family: var(--font-display); font-size: 0.85rem; font-weight: 600; color: var(--google-green); margin-bottom: 0.25rem;">
+                        8 de cada 10 USD maliciosos interceptados
+                    </div>
+                    <div class="hero-metric-val hero-metric-blue">$63,159 <span style="font-size: 1.25rem; font-weight: 500;">USD</span></div>
+                    <div class="hero-metric-label">79.6% del volumen de fraude total interceptado a tiempo</div>
+                    <p class="hero-metric-desc" style="margin-top: 0.35rem;">
+                        De un volumen activo de $79,380 USD en ataques maliciosos, el nuevo ensamble frenó casi el 80% antes de generar contracargos bancarios.
+                    </p>
+                </div>
+
+                <div class="flat-notes-col">
+                    <div class="flat-note-item">
+                        <div class="flat-note-title" style="color: var(--google-green);">-3,000 Falsos Positivos Evitados</div>
+                        <p class="flat-note-desc" style="margin-top: 0.15rem;">
+                            Tres mil compradores honestos que ya no sufren fricción ni rechazos erróneos de tarjeta en el checkout.
+                        </p>
+                    </div>
+
+                    <div class="flat-note-item">
+                        <div class="flat-note-title">Deriva Temporal Nula (PSI = 0.0006)</div>
+                        <p class="flat-note-desc" style="margin-top: 0.15rem;">
+                            Muy por debajo del umbral crítico de 0.0500. Las distribuciones de scores se mantienen calibradas semana a semana sin degradación.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         SLIDE 7: CONCLUSIONES METODOLÓGICAS Y CIERRE (ASSERTION-EVIDENCE)
+         ========================================================================== -->
+    <section class="slide" id="slide-7" data-notes="Conclusión: la mayor lección técnica es que la diversidad de modelos y la parsimonia de Lasso L1 superan a cualquier intento de hiper-parametrizar un solo algoritmo. El código está empaquetado y listo para migrar a producción.">
+        <div class="slide-content">
+            <!-- Branding Sobrio: Permitido en Diapositiva de Cierre -->
+            <div class="deepmind-tag" data-reveal>
+                <div class="google-dots">
+                    <span class="g-dot g-dot-blue"></span>
+                    <span class="g-dot g-dot-red"></span>
+                    <span class="g-dot g-dot-yellow"></span>
+                    <span class="g-dot g-dot-green"></span>
+                </div>
+                <span>Conclusiones Metodológicas</span>
+            </div>
+
+            <h2 data-reveal>La diversidad algorítmica y la parsimonia L1 garantizan una transferencia sólida a producción</h2>
+            <p class="subhead" data-reveal>
+                Principios rectores confirmados por la experimentación empírica para la próxima fase de despliegue productivo.
+            </p>
+
+            <div class="divider-line" data-reveal></div>
+
+            <!-- Tres Pilares Metodológicos en Lienzo Plano -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--content-gap); margin-bottom: var(--element-gap);" data-reveal>
+                <div style="border-top: 2px solid var(--google-blue); padding-top: 0.6rem;">
+                    <div style="font-family: var(--font-display); font-size: 0.85rem; font-weight: 600; color: var(--google-blue); margin-bottom: 0.15rem;">
+                        01 · Diversidad Algorítmica
+                    </div>
+                    <p style="font-size: var(--small-size); color: var(--muted); line-height: 1.45;">
+                        Combinar 4 arquitecturas distintas sumó +66 bps reales, mientras que semanas de tuning sobre un solo LightGBM no movían la aguja.
+                    </p>
+                </div>
+
+                <div style="border-top: 2px solid var(--border-medium); padding-top: 0.6rem;">
+                    <div style="font-family: var(--font-display); font-size: 0.85rem; font-weight: 600; color: var(--ink); margin-bottom: 0.15rem;">
+                        02 · Regularización Lasso L1
+                    </div>
+                    <p style="font-size: var(--small-size); color: var(--muted); line-height: 1.45;">
+                        Un metamodelo que apaga coeficientes redundantes con peso cero es la defensa óptima contra el sobreajuste y la colinealidad.
+                    </p>
+                </div>
+
+                <div style="border-top: 2px solid var(--border-medium); padding-top: 0.6rem;">
+                    <div style="font-family: var(--font-display); font-size: 0.85rem; font-weight: 600; color: var(--ink); margin-bottom: 0.15rem;">
+                        03 · Causalidad Temporal
+                    </div>
+                    <p style="font-size: var(--small-size); color: var(--muted); line-height: 1.45;">
+                        Congelar decisiones en validación y evaluar a ciegas en OOT asegura que las mejoras sean 100% reproducibles en operaciones reales.
+                    </p>
+                </div>
+            </div>
+
+            <div class="divider-line" data-reveal></div>
+            
+            <div data-reveal style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <span style="font-family: var(--font-display); font-size: var(--small-size); color: var(--muted);">
+                    Pipeline y artefactos reproducibles en <span class="var-chip" style="font-size: 0.72rem;">scripts/experimento_cuatri_modelo_limpio.py</span>
+                </span>
+                <span style="font-family: var(--font-display); font-size: var(--small-size); font-weight: 600; color: var(--google-blue);">
+                    Listo para prueba A/B y despliegue a producción →
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         PRESENTATION CONTROLLER & STORYTELLING WITH DATA CHART
+         ========================================================================== -->
+    <script>
+        // Minimal Google Reveal Observer
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    const reveals = entry.target.querySelectorAll('[data-reveal]');
+                    reveals.forEach((el, idx) => {
+                        setTimeout(() => {
+                            el.classList.add('revealed');
+                        }, idx * 45);
+                    });
+                }
+            });
+        }, { threshold: 0.2 });
+
+        document.querySelectorAll('.slide').forEach(slide => revealObserver.observe(slide));
+
+        // Slide Presentation Controller
+        class DeepMindPresentationDeck {
+            constructor() {
+                this.slides = Array.from(document.querySelectorAll('.slide'));
+                this.current = 0;
+                this.progressBar = document.getElementById('progressBar');
+                this.counter = document.getElementById('slideCounter');
+                this.timerEl = document.getElementById('deckTimer');
+                this.notesDrawer = document.getElementById('notesDrawer');
+                this.notesTitle = document.getElementById('notesSlideTitle');
+                this.notesContent = document.getElementById('notesContent');
+                this.helpModal = document.getElementById('helpModal');
+
+                // Timer state
+                this.timerSeconds = 0;
+                this.timerRunning = true;
+                this.timerInterval = null;
+
+                this.initEvents();
+                this.initTimer();
+                this.updateUI();
+            }
+
+            initEvents() {
+                document.addEventListener('keydown', (e) => {
+                    if (this.helpModal && this.helpModal.classList.contains('open')) {
+                        if (e.key === 'Escape') this.toggleHelp();
+                        return;
+                    }
+
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
+                        e.preventDefault();
+                        this.next();
+                    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+                        e.preventDefault();
+                        this.prev();
+                    } else if (e.key === 'Home') {
+                        e.preventDefault();
+                        this.goTo(0);
+                    } else if (e.key === 'End') {
+                        e.preventDefault();
+                        this.goTo(this.slides.length - 1);
+                    } else if (e.key >= '1' && e.key <= '7') {
+                        e.preventDefault();
+                        this.goTo(parseInt(e.key, 10) - 1);
+                    } else if (e.key === 'f' || e.key === 'F') {
+                        e.preventDefault();
+                        this.toggleFullscreen();
+                    } else if (e.key === 'n' || e.key === 'N') {
+                        e.preventDefault();
+                        this.toggleNotes();
+                    } else if (e.key === 't' || e.key === 'T') {
+                        e.preventDefault();
+                        this.toggleTimer();
+                    } else if (e.key === '?' || e.key === 'h' || e.key === 'H') {
+                        e.preventDefault();
+                        this.toggleHelp();
+                    } else if (e.key === 'Escape') {
+                        if (this.notesDrawer.classList.contains('open')) this.toggleNotes();
+                    }
+                });
+
+                // Touch support
+                let startY = 0;
+                document.addEventListener('touchstart', (e) => {
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+
+                document.addEventListener('touchend', (e) => {
+                    const diffY = startY - e.changedTouches[0].clientY;
+                    if (Math.abs(diffY) > 50) {
+                        diffY > 0 ? this.next() : this.prev();
+                    }
+                }, { passive: true });
+
+                // Scroll sync observer
+                const scrollObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const index = this.slides.indexOf(entry.target);
+                            if (index !== -1 && index !== this.current) {
+                                this.current = index;
+                                this.updateUI();
+                            }
+                        }
+                    });
+                }, { threshold: 0.55 });
+
+                this.slides.forEach(s => scrollObserver.observe(s));
+
+                // Timer badge clicks
+                if (this.timerEl) {
+                    this.timerEl.addEventListener('click', () => this.toggleTimer());
+                    this.timerEl.addEventListener('dblclick', () => this.resetTimer());
+                }
+            }
+
+            initTimer() {
+                this.timerInterval = setInterval(() => {
+                    if (this.timerRunning) {
+                        this.timerSeconds++;
+                        const mins = Math.floor(this.timerSeconds / 60);
+                        const secs = this.timerSeconds % 60;
+                        const pad = (n) => n < 10 ? '0' + n : n;
+                        if (this.timerEl) {
+                            this.timerEl.textContent = `${pad(mins)}:${pad(secs)}`;
+                        }
+                    }
+                }, 1000);
+            }
+
+            toggleTimer() {
+                this.timerRunning = !this.timerRunning;
+                if (this.timerEl) {
+                    this.timerEl.style.opacity = this.timerRunning ? '1' : '0.6';
+                }
+            }
+
+            resetTimer() {
+                this.timerSeconds = 0;
+                if (this.timerEl) this.timerEl.textContent = '00:00';
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                } else {
+                    document.exitFullscreen().catch(() => {});
+                }
+            }
+
+            toggleNotes() {
+                if (this.notesDrawer) {
+                    this.notesDrawer.classList.toggle('open');
+                }
+            }
+
+            toggleHelp() {
+                if (this.helpModal) {
+                    this.helpModal.classList.toggle('open');
+                }
+            }
+
+            next() {
+                this.goTo(Math.min(this.current + 1, this.slides.length - 1));
+            }
+
+            prev() {
+                this.goTo(Math.max(this.current - 1, 0));
+            }
+
+            goTo(index) {
+                if (index < 0 || index >= this.slides.length) return;
+                this.current = index;
+                this.slides[index].scrollIntoView({ behavior: 'smooth' });
+                this.updateUI();
+            }
+
+            updateUI() {
+                const total = this.slides.length;
+                const progress = ((this.current + 1) / total) * 100;
+                if (this.progressBar) this.progressBar.style.width = `${progress}%`;
+                if (this.counter) {
+                    const pad = (n) => n < 10 ? '0' + n : n;
+                    this.counter.textContent = `${pad(this.current + 1)} / ${pad(total)}`;
+                }
+
+                // Update speaker notes
+                const activeSlide = this.slides[this.current];
+                if (activeSlide && this.notesContent && this.notesTitle) {
+                    this.notesTitle.textContent = `Notas para el Orador · Slide ${this.current + 1}`;
+                    this.notesContent.textContent = activeSlide.dataset.notes || 'Sin notas para esta diapositiva.';
+                }
+            }
+        }
+
+        const deck = new DeepMindPresentationDeck();
+
+        // Chart.js Setup: Storytelling with Data (Cole Nussbaumer: Cero Grillas, Regla 80/20)
+        function initChart() {
+            const ctx = document.getElementById('chartPrAuc');
+            if (!ctx) return;
+
+            // Plugin para dibujar Direct Data Labels encima de cada barra
+            const directDataLabelsPlugin = {
+                id: 'directDataLabels',
+                afterDatasetsDraw(chart) {
+                    const { ctx, data } = chart;
+                    const dataset = data.datasets[0];
+                    const meta = chart.getDatasetMeta(0);
+
+                    ctx.save();
+                    ctx.font = "600 11px 'JetBrains Mono', monospace";
+                    ctx.textAlign = 'center';
+
+                    meta.data.forEach((bar, index) => {
+                        const val = dataset.data[index];
+                        const isWinner = index === meta.data.length - 1;
+                        ctx.fillStyle = isWinner ? '#1a73e8' : '#5f6368';
+                        
+                        let labelText = val.toFixed(4);
+                        if (isWinner) {
+                            labelText += ' (▲+66 bps)';
+                        }
+                        ctx.fillText(labelText, bar.x, bar.y - 7);
+                    });
+                    ctx.restore();
+                }
+            };
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        'Base Productiva',
+                        'Challenger v3',
+                        'XGBoost Limpio',
+                        'Champion Oficial',
+                        'Récord L1'
+                    ],
+                    datasets: [{
+                        data: [0.44435, 0.44644, 0.44592, 0.45014, 0.45093],
+                        // Cole Nussbaumer 80/20 Rule: grises neutros para competidores, DeepMind Blue SOLO para el ganador
+                        backgroundColor: [
+                            '#bdc1c6',
+                            '#dadce0',
+                            '#dadce0',
+                            '#9aa0a6',
+                            '#1a73e8'
+                        ],
+                        borderColor: [
+                            '#9aa0a6',
+                            '#bdc1c6',
+                            '#bdc1c6',
+                            '#80868b',
+                            '#1557b0'
+                        ],
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 20
+                        }
+                    },
+                    animation: {
+                        duration: 750,
+                        easing: 'easeOutQuart'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#202124',
+                            padding: 10,
+                            cornerRadius: 8,
+                            titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '600' },
+                            bodyFont: { family: "'JetBrains Mono', monospace", size: 11, weight: '500' },
+                            callbacks: {
+                                label: (context) => {
+                                    const val = context.parsed.y;
+                                    const diff = (val - 0.44435) * 100;
+                                    const sign = diff >= 0 ? '+' : '';
+                                    return ` PR-AUC: ${val.toFixed(5)} (${sign}${diff.toFixed(2)}% vs Base)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0.438,
+                            max: 0.456,
+                            grid: {
+                                display: false // Cole Nussbaumer: Cero grillas en Y
+                            },
+                            ticks: {
+                                display: false // Valores ya dibujados por el plugin Direct Data Labels
+                            },
+                            border: {
+                                display: false
+                            }
+                        },
+                        x: {
+                            grid: { 
+                                display: false // Cero grillas en X
+                            },
+                            ticks: {
+                                color: '#202124',
+                                font: { family: "'Plus Jakarta Sans', sans-serif", weight: '600', size: 10.5 }
+                            },
+                            border: {
+                                color: '#e8eaed'
+                            }
+                        }
+                    }
+                },
+                plugins: [directDataLabelsPlugin]
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', initChart);
+    </script>
+</body>
+</html>

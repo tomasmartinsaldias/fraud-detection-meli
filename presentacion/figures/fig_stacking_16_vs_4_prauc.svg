@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 356" width="100%" height="100%" role="img" aria-label="Comparativa PR-AUC entre Stacking de 4 modelos y Stacking de 16 modelos en Validación OOT y Test OOT">
+  <style>
+    .title { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: 700; fill: #1f2328; }
+    .subtitle { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 10.5px; font-weight: 400; fill: #5f6368; }
+    .legend { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 11px; font-weight: 500; fill: #3c4043; }
+    .group-label { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 12.5px; font-weight: 700; fill: #1f2328; }
+    .val { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 600; fill: #5f6368; }
+    .val-accent { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 700; fill: #2D3277; }
+    .delta-pos { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 11.5px; font-weight: 700; fill: #137333; }
+    .delta-zero { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 11.5px; font-weight: 700; fill: #b3261e; }
+  </style>
+
+  <!-- Chart Header -->
+  <text x="20" y="18" class="title">PR-AUC: Stacking 4 modelos vs. Stacking 16 modelos (4 Loss Functions)</text>
+  <text x="20" y="35" class="subtitle">Una ganancia marginal, para un sustancial sacrificio computacional</text>
+
+  <!-- Inline Legend (top left, no box) -->
+  <rect x="20" y="62" width="12" height="12" rx="2" fill="#cfd4dc" />
+  <text x="38" y="72" class="legend">Stacking 4 modelos (Log-Loss)</text>
+  <rect x="230" y="62" width="12" height="12" rx="2" fill="#2D3277" />
+  <text x="248" y="72" class="legend">Stacking 16 modelos (Forward Selection)</text>
+
+  <!-- Baseline X-Axis (y = 312 corresponds to 0.4200; y = 112 corresponds to 0.5100 -> 200px for 0.0900 = 2222.22 px/unit) -->
+  <line x1="40" y1="312" x2="600" y2="312" stroke="#dadce0" stroke-width="1.2" />
+
+  <!-- GROUP 1: VALIDACIÓN OOT -->
+  <!-- 0.4922 -> height = (0.4922 - 0.42) * 2222.22 = 160.4 -> y = 151.6 -->
+  <!-- 0.4950 -> height = (0.4950 - 0.42) * 2222.22 = 166.7 -> y = 145.3 -->
+  <text x="175" y="112" text-anchor="middle" class="delta-pos">+0.6% (+0.0028)</text>
+  <path d="M 130 128 L 130 120 L 220 120 L 220 128" fill="none" stroke="#137333" stroke-width="1.2" />
+
+  <rect x="95" y="151.6" width="70" height="160.4" rx="4" fill="#cfd4dc" />
+  <text x="130" y="144" text-anchor="middle" class="val">0.4922</text>
+
+  <rect x="185" y="145.3" width="70" height="166.7" rx="4" fill="#2D3277" />
+  <text x="220" y="138" text-anchor="middle" class="val-accent">0.4950</text>
+
+  <text x="175" y="334" text-anchor="middle" class="group-label">Validación OOT</text>
+
+  <!-- GROUP 2: TEST OOT -->
+  <!-- 0.4501 -> height = (0.4501 - 0.42) * 2222.22 = 66.9 -> y = 245.1 -->
+  <text x="465" y="206" text-anchor="middle" class="delta-zero">0.0% (sin ganancia en Test)</text>
+  <path d="M 420 222 L 420 214 L 510 214 L 510 222" fill="none" stroke="#b3261e" stroke-width="1.2" />
+
+  <rect x="385" y="245.1" width="70" height="66.9" rx="4" fill="#cfd4dc" />
+  <text x="420" y="238" text-anchor="middle" class="val">0.4501</text>
+
+  <rect x="475" y="245.1" width="70" height="66.9" rx="4" fill="#2D3277" />
+  <text x="510" y="238" text-anchor="middle" class="val-accent">0.4501</text>
+
+  <text x="465" y="334" text-anchor="middle" class="group-label">Test OOT</text>
+</svg>
