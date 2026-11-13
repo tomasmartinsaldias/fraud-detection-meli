@@ -525,14 +525,14 @@
         </tbody>
       </table>
       <div class="takeaway-bullet">
-        <p><strong>Ventana circadiana (es_madrugada):</strong> reloj de 24h muestra el pico de 17.2% a las 02:00 UTC (3.8x prevalencia).</p>
+        <p><strong>Ventana circadiana (es_madrugada):</strong> ventana 01:00 a 05:00 UTC con pico de 17.2% a las 02:00 (3.8x lift).</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>NLP Bayesiano (score_texto_nb):</strong> 5.000 términos Dirichlet OOF; alcanza 24.5% fraude en top 1% (5.4x).</p>
+        <p><strong>NLP Bayesiano (score_texto_nb):</strong> minería de 5.000 términos OOF; alcanza 24.5% fraude en top 1% (5.4x).</p>
       </div>
     </div>
   </div>
-  <p class="footnote">Priors bayesianos y normalizaciones ajustados estrictamente en Train para evitar cualquier data leakage.</p>
+  <p class="footnote">Modelos de texto y normalizaciones ajustados estrictamente en Train para evitar cualquier data leakage.</p>
 </section>
 
 <!-- NOTAS FRANCO ESTERELLAS: Detallar cómo estas señales no supervisadas (entrenadas exclusivamente sobre fraude == 0 con variables crudas) y las 10 reglas ortogonales WRAcc aportan información geométrica y combinatoria complementaria a la que ven los árboles supervisados, alimentando al Stacking con señales ortogonales. -->
