@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from scipy.stats import spearmanr
 
 NAVY = '#2D3277'
 MELI_YELLOW = '#FFD100'
@@ -11,9 +10,6 @@ GRAY_TEXT = '#5f6368'
 
 out_dir = Path(__file__).resolve().parent.parent / "presentacion" / "figures"
 out_dir.mkdir(parents=True, exist_ok=True)
-
-df = pd.read_parquet(Path(__file__).resolve().parent.parent / "data" / "processed" / "dataset_base.parquet")
-corr, _ = spearmanr(df['d'].dropna(), df['m'].dropna())
 
 fig, ax = plt.subplots(figsize=(6.8, 3.8), dpi=150)
 fig.patch.set_facecolor('none')
@@ -26,18 +22,23 @@ edge_colors = ['none', 'none', NAVY]
 
 bars = ax.bar(categories, fraud_rates, color=bar_colors, edgecolor=edge_colors, lw=2, width=0.48)
 
-ax.text(0, 4.20 + 0.8, "4.2%", ha='center', va='bottom', fontsize=11, fontweight='600', color=GRAY_TEXT)
-ax.text(1, 11.04 + 0.8, "11.0% (2.6x)", ha='center', va='bottom', fontsize=11.5, fontweight='700', color=NAVY)
-ax.text(2, 28.75 + 0.8, "28.8% (Casi 7x)", ha='center', va='bottom', fontsize=13, fontweight='800', color=NAVY)
+# Direct labels without arrows crossing text
+# Bar 0: Normal
+ax.text(0, 4.20 + 1.0, "4.2%", ha='center', va='bottom', fontsize=12, fontweight='600', color=GRAY_TEXT)
+ax.text(0, 4.20 + 3.4, "Línea base", ha='center', va='bottom', fontsize=8.5, color=GRAY_MUTED)
 
-ax.set_ylim(0, 36)
+# Bar 1: Atipico
+ax.text(1, 11.04 + 1.0, "11.0%", ha='center', va='bottom', fontsize=12.5, fontweight='700', color=NAVY)
+ax.text(1, 11.04 + 3.4, "2.6x lift", ha='center', va='bottom', fontsize=9.0, fontweight='600', color=NAVY)
+
+# Bar 2: Quiebre Extremo (Hero)
+ax.text(2, 28.75 + 1.0, "28.8%", ha='center', va='bottom', fontsize=14, fontweight='800', color=NAVY)
+ax.text(2, 28.75 + 3.7, "¡Casi 7x lift! (+132 bps)", ha='center', va='bottom', fontsize=9.5, fontweight='700', color=NAVY,
+        bbox=dict(boxstyle='round,pad=0.25', facecolor='#FFF8D6', edgecolor=NAVY, lw=1))
+
+ax.set_ylim(0, 38)
 ax.set_ylabel("Tasa de Fraude (%)", fontsize=10.5, fontweight='600', color=GRAY_TEXT)
 ax.set_title("Quiebre de Colinealidad d vs m: Salto de Fraude x5 a x7", fontsize=12, fontweight='700', loc='left', color=NAVY, pad=12)
-
-ax.annotate('Multiplica el fraude hasta casi 7x\n(+132 bps en el modelo)', 
-             xy=(2, 29), xytext=(1.05, 32.5),
-             arrowprops=dict(arrowstyle="->", color=NAVY, lw=1.5, connectionstyle="arc3,rad=-0.12"),
-             fontsize=9.5, fontweight='700', color=NAVY)
 
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
@@ -49,4 +50,4 @@ plt.tight_layout()
 out_path = out_dir / "fig_ratio_d_m.svg"
 plt.savefig(out_path, format='svg', bbox_inches='tight', transparent=True)
 plt.close()
-print(f"Figura simplificada guardada en: {out_path}")
+print(f"Figura corregida sin flecha guardada en: {out_path}")
