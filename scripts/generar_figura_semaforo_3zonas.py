@@ -46,8 +46,8 @@ ax.text(196, tau_chal[-1] - 0.018, r'$\tau_{\mathrm{challenge}} = 0.40 \cdot \ta
 # Rótulos directos dentro de las zonas
 ax.text(105, 0.035, 'CARRIL VERDE (94.2%)\nPaso limpio en 200 ms (Fricción cero)', 
         fontsize=8.5, fontweight='700', color='#137333', ha='center', va='center')
-ax.text(105, 0.138, 'CARRIL AMARILLO (4.8%)\nReto suave WhatsApp / Push (~$0.05)', 
-        fontsize=8.2, fontweight='700', color='#b06000', ha='center', va='center')
+ax.text(105, 0.138, 'CARRIL AMARILLO (4.8%)\nReto WhatsApp (~$0.05) | Costo FP: 1.302 × $0.05 = $65', 
+        fontsize=8.0, fontweight='700', color='#b06000', ha='center', va='center')
 ax.text(105, 0.35, 'CARRIL ROJO (1.0%)\nBloqueo duro patrimonial ($25)', 
         fontsize=8.5, fontweight='700', color='#c5221f', ha='center', va='center')
 

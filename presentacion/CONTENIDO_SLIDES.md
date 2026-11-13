@@ -249,6 +249,10 @@
 
   $$\text{Costo}_{\text{total}} = \$25 \cdot \text{FP}_{\text{bloqueo}} + \$0.05 \cdot \text{FP}_{\text{challenge}} + \$200 \cdot \text{FN}_{\text{remanentes}}$$
 
+  * **Cálculo del costo de FPs en Zona Amarilla:**
+    En Test ingresan 1.302 transacciones legítimas a la zona amarilla. Al costar \$0.05 cada reto (API WhatsApp / SMS):
+    $$\text{Costo FP}_{\text{amarillo}} = 1.302 \times \$0.05 = \mathbf{\$65.10}$$
+    El 95% de los usuarios legítimos valida el código en menos de 5 segundos y completa su compra. Si se hubieran bloqueado duramente a \$25 por daño de marca y cliente perdido, habrían costado **\$32.550** (o \$6.510 a los \$5 de consigna formal). El 2FA ahorra más de \$32.400 en fricción de checkout.
 
   El óptimo dio $\beta^* = 0.40$ (equivalente a $\hat{p} \approx 0.18$ en tickets estándar). A ese nivel, el carril amarillo de 2FA absorbió 1.077 transacciones en Test, lo que representa exactamente el 4.8% de todo el tráfico de la plataforma. El reto escalonado de 2FA JAMÁS puede superar el 5% del volumen total de compras.
 

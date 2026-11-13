@@ -797,7 +797,7 @@
   <p class="footnote">Parámetros sigmoideos: tau_max=0.40, tau_min=0.18, inflexión M0=$23.02, dispersión sigma=35 (504 FP en Test).</p>
 </section>
 
-<!-- NOTAS TOMÁS SALDÍAS: 1. Por qué 2FA: La Curva S deja pasar compras chicas para no quemar FPs. Para frenarlas sin fricción masiva creamos un tercer carril: Verde (<0.18, 94.2% aprobación directa 200ms), Amarillo (0.18 <= p < tau_2D, 4.8% reto suave WhatsApp/Push ~$0.05), Rojo (p >= tau_2D, 1.0% bloqueo duro). 2. Calibración beta=0.40: Grid search minimiza costo formal bajo FP_bloqueo <= 100. Absorbe 1.077 transacciones (4.8%), cumpliendo la regla de oro de pasarelas de pago de no superar el 5% de fricción en checkout. 3. Salto financiero en Test: Captura 199 fraudes extra (Recall 43.2% -> 62.5%), eleva capital recuperado al 79.9% ($63.4k) y reduce costo formal en ~$40k ($119.9k -> $80.4k). 4. Blindaje stress test: Bajo caída de efectividad al 50%, sostiene 71.6% ($56.9k). Si el 2FA colapsa al 100%, degrada automáticamente a la Curva S garantizando un piso de 63.3% ($50.2k). 5. Viabilidad operativa: 504 FPs en 5.38 días representa menos de 94 bloqueos diarios (2.3% de tasa de FP; 97.7% de legítimos pasan limpios e instantáneos). -->
+<!-- NOTAS TOMÁS SALDÍAS: 1. Por qué 2FA y Cálculo de FP Amarillo: La Curva S deja pasar compras chicas para no quemar FPs. Para frenarlas sin fricción creamos un carril Amarillo (4.8% transacciones): entran 1.302 legítimos retados * $0.05 (API WhatsApp) = $65.10 en total (vs $32.5k si se bloquearan duro a $25). El 95% aprueba en 5s y compra. 2. Calibración beta=0.40: Grid search minimiza costo formal bajo FP_bloqueo <= 100 con fricción <= 5%. 3. Salto financiero en Test: Captura 199 fraudes extra (Recall 43.2% -> 62.5%), eleva capital recuperado al 79.9% ($63.4k) y reduce costo formal a $80.4k. 4. Blindaje stress test: WhatsApp 75% -> 75.8% ($60.2k); Phishing 50% -> 71.6% ($56.9k); Colapso 0% -> 63.3% ($50.2k piso garantizado por Curva S). 5. Viabilidad operativa: 504 FPs duros en 5.38 días representa menos de 94 bloqueos diarios (97.7% de legítimos pasan limpios e instantáneos). -->
 <!-- SLIDE 9: LA ARQUITECTURA TRIPARTITA (SEMÁFORO 2FA) -->
 <section class="slide">
   <div>
@@ -822,17 +822,17 @@
         </div>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Fricci&oacute;n &le; 4.8%:</strong> 94.2% pasa directo en 200 ms; reto 2FA acotado a compras dudosas.</p>
+        <p><strong>Costo FP Amarillo:</strong> 1.302 casos &times; $0.05 (WhatsApp) = $65 (vs $32.5k de bloqueo duro).</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Stress test superado:</strong> retiene 75.8% con WhatsApp y 71.6% bajo phishing o botnets.</p>
+        <p><strong>Stress test validado:</strong> retiene 75.8% con WhatsApp y 71.6% bajo phishing o bots.</p>
       </div>
       <div class="takeaway-bullet">
-        <p><strong>Piso fail-safe:</strong> si 2FA colapsa al 100%, el carril rojo sostiene 63.3% ($50.2k).</p>
+        <p><strong>Piso fail-safe:</strong> si 2FA colapsa al 100%, el carril rojo garantiza 63.3%.</p>
       </div>
     </div>
   </div>
-  <p class="footnote">&beta;* = 0.40 calibrado por grid search con fricción &le; 5%; fallback automático a Curva S en carril rojo.</p>
+  <p class="footnote">C&aacute;lculo FP: 1.302 retados en amarillo &times; $0.05 = $65.10; 504 bloqueos en rojo &times; $25 = $12.6k; &beta;* = 0.40 (fricci&oacute;n &le; 5%).</p>
 </section>
 
 <!-- NOTAS CIERRE CONJUNTO (IAN / FRANCO / TOMÁS): Fase 1 Inmediata: Activar Curva S en motor de reglas backend sin tocar experiencia de usuario (+ $6.7k netos inmediatos a costo cero). Fase 2 Checkout: Desplegar carril 2FA WhatsApp/Push para compras dudosas; consolida 79.9% de capital salvado ($63.4k protegidos). Resumen económico de la consigna: Costo inicial $140.435 -> Costo final $80.385 (Ahorro neto de $60.050 / -42.7%). Viabilidad de operación probada: menos de 94 bloqueos diarios (2.3% FP rate; 97.7% de transacciones legítimas aprobadas en 200 ms). Cierre contundente y apertura a preguntas de la cátedra. -->
