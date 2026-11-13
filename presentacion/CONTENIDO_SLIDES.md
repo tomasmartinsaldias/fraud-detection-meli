@@ -85,14 +85,14 @@
 * **Título propuesto:** *Las variables más potentes: ventana de madrugada, text-mining y ratios no lineales.*
 * **Eyebrow (ceja):** `4. VARIABLES CLAVE`
 * **Datos y evidencia oficial:**
-  * **1. Ventana circadiana (`es_madrugada`):** La tasa de fraude promedio del dataset es 4.5%, pero a las 02:00 UTC trepa abruptamente al **17.2%** (3.8x la prevalencia diurna).
-  * **2. NLP bayesiano (`score_texto_nb`):** Modelado probabilístico Naive Bayes con priors Dirichlet sobre tokens de títulos de publicaciones, entrenado estrictamente en Train para evitar fuga.
+  * **1. Ventana circadiana (`es_madrugada`):** Ventana de 23:00 a 05:00 UTC. La tasa de fraude promedio del dataset es 4.5%, pero a las 02:00 UTC trepa abruptamente al **17.2%** (3.8x la prevalencia diurna).
+  * **2. NLP bayesiano (`score_texto_nb`):** Modelado probabilístico Naive Bayes sobre tokens de títulos de publicaciones, entrenado estrictamente en Train para evitar fuga.
   * **3. Interacción no lineal (`prod_b_log_c`):** Interacción multiplicativa no lineal entre la variable anónima continua $b$ y la escala logarítmica $\log(c + 1)$, permitiendo capturar dependencias conjuntas complejas que a un árbol le cuesta partir con cortes ortogonales.
-* **Visual:** `figures/fig_fe_complejidad.svg` (Gráfico de barras de tasa de fraude por hora UTC + fórmulas de Dirichlet).
+* **Visual:** `figures/fig_fe_complejidad.svg` (Reloj circadiano polar de 24h UTC y comparativa de lifts de las variables complejas).
 * **Notas / Qué decir:**
   * [Contar brevemente cómo los estafadores operan en horarios desatendidos y cómo el texto del producto aportó señal predictiva].
-  * **El Reloj Circadiano (es_madrugada):** Señalar el gráfico circular tipo reloj de 24 hs. De día el fraude está controlado en ~4.1%, pero de madrugada (01:00 a 05:00 UTC) se dispara hasta el 17.2% a las 02:00 UTC (3.8x más). Los estafadores aprovechan los horarios nocturnos desatendidos.
-  * **Text-Mining Bayesiano (score_texto_nb):** Explicar cómo minamos los títulos de las publicaciones (`i`) con Naive Bayes y priors Dirichlet ajustados 100% en Train. 
+  * **El Reloj Circadiano (es_madrugada):** Señalar el gráfico circular tipo reloj de 24 hs. De día el fraude está controlado en ~4.1%, pero de madrugada (23:00 a 05:00 UTC) se dispara hasta el 17.2% a las 02:00 UTC (3.8x más). Los estafadores aprovechan los horarios nocturnos desatendidos.
+  * **Text-Mining Bayesiano (score_texto_nb):** Explicar cómo minamos los títulos de las publicaciones (`i`) con Naive Bayes ajustados 100% en Train. 
     1. El problema y la solución: El título de la publicación (i) contiene señales críticas de riesgo. Construimos score_texto_nb: un método que condensa un vocabulario de 5.000 términos en una única probabilidad continua entre 0 y 1.
     2. Cómo: TF-IDF con ngram_range=(1, 2). No miramos solo palabras sueltas; capturamos bigramas porque el contexto local cambia el riesgo (ej. "digital" es común, pero "gift card" o "código digital" concentran altísima tasa de fraude). Poda (min_df=30): Eliminamos términos poco frecuentes para que el modelo no memorice palabras únicas de estafas aisladas.Multinomial Naive Bayes con suavizado $\alpha = 2.0$. Si aparece una palabra nueva en Test nunca vista en fraudes previos, evita que la verosimilitud colapse a cero y empuja la estimación hacia la media base.
     3. Blindaje Anti-Leakage: Como usamos el target $fraude$ para crear la feature, calcularla sobre el mismo set de entrenamiento causaría target leakage inmediato. Usamos Out-Of-Fold temporal (TimeSeriesSplit en 5 particiones): entrenamos tanto el TF-IDF como el Naive Bayes exclusivamente con bloques pasados para puntuar el bloque siguiente. Recién al final reentrenamos con el 100% de Train para proyectar a Validación y Test.

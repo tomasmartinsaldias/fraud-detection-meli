@@ -491,7 +491,7 @@
   <p class="footnote">Forward Selection con paciencia k=2; correlación d vs m (Spearman 0.735) y explosión atípica evaluada en 150.000 transacciones.</p>
 </section>
 
-<!-- NOTAS TOMÁS SALDÍAS: 1. Reloj Circadiano: De día el fraude está en 4.1%, pero de madrugada (01:00 a 05:00 UTC) se dispara a 17.2% a las 02:00 UTC (3.8x prevalencia). Los estafadores aprovechan la baja supervisión nocturna. 2. Text-Mining Bayesiano (score_texto_nb): Condensamos 5.000 términos (unigramas y bigramas) en una probabilidad continua entre 0 y 1. TF-IDF con min_df=30 y prior Dirichlet alpha=2.0. Blindaje anti-leakage: TimeSeriesSplit en 5 particiones temporales OOF; recién al final reentrena en 100% Train para Test. 3. Interacción no lineal (prod_b_log_c): Multiplicar b por log(c+1) aporta curvatura (+91 bps). Clientes con b alto y c bajo exhiben 12.8% de fraude frente a 4.1% de la plataforma (3.1x lift). -->
+<!-- NOTAS TOMÁS SALDÍAS: 1. Reloj Circadiano: De día el fraude está en 4.1%, pero de madrugada (23:00 a 05:00 UTC) se dispara a 17.2% a las 02:00 UTC (3.8x prevalencia). Los estafadores aprovechan la baja supervisión nocturna. 2. Text-Mining Bayesiano (score_texto_nb): Condensamos 5.000 términos (unigramas y bigramas) en una probabilidad continua entre 0 y 1. Minería de texto con min_df=30. Blindaje anti-leakage: TimeSeriesSplit en 5 particiones temporales OOF; recién al final reentrena en 100% Train para Test. 3. Interacción no lineal (prod_b_log_c): Multiplicar b por log(c+1) aporta curvatura (+91 bps). Clientes con b alto y c bajo exhiben 12.8% de fraude frente a 4.1% de la plataforma (3.1x lift). -->
 <!-- SLIDE 3: FEATURE ENGINEERING 2 (COMPLEJIDAD MATEMÁTICA Y CIRCADIANA) -->
 <section class="slide">
   <div>
@@ -525,7 +525,7 @@
         </tbody>
       </table>
       <div class="takeaway-bullet">
-        <p><strong>Ventana circadiana (es_madrugada):</strong> ventana 01:00 a 05:00 UTC con pico de 17.2% a las 02:00 (3.8x lift).</p>
+        <p><strong>Ventana circadiana (es_madrugada):</strong> ventana 23:00 a 05:00 UTC con pico de 17.2% a las 02:00 (3.8x lift).</p>
       </div>
       <div class="takeaway-bullet">
         <p><strong>NLP Bayesiano (score_texto_nb):</strong> minería de 5.000 términos OOF; alcanza 24.5% fraude en top 1% (5.4x).</p>
