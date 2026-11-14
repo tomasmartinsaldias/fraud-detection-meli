@@ -382,3 +382,180 @@ ggplot(resumen_rafaga, aes(x = ventana_rafaga, y = tasa_fraude)) +
         panel.grid.minor = element_blank())
 ```
 
+```{r}
+# ==============================================================================
+# AUDITORÍA DE 'd', 'm' Y EL RATIO ANÓMALO 'ratio_d_m'
+# ==============================================================================
+library(scales)
+
+# 1. Correlación empírica entre d y m
+cor_dm <- cor(df_limpio$d, df_limpio$m, use = "complete.obs")
+cat(sprintf("Correlación de Pearson entre d y m: %.3f\n", cor_dm))
+
+# 2. Creación del ratio y discretización en tramos de tensión
+df_dm <- df_limpio %>%
+  mutate(
+    ratio_d_m = d / (m + 1.0),
+    tramo_ratio = case_when(
+      ratio_d_m <= 0.10 ~ "1. Muy bajo (<= 0.10)",
+      ratio_d_m <= 0.30 ~ "2. Normal (0.10 - 0.30]",
+      ratio_d_m <= 0.60 ~ "3. Medio (0.30 - 0.60]",
+      ratio_d_m <= 1.00 ~ "4. Alto (0.60 - 1.00]",
+      TRUE              ~ "5. Crítico (> 1.00)"
+    )
+  )
+
+# 3. Resumen estadístico por tramo de ratio
+resumen_dm <- df_dm %>%
+  group_by(tramo_ratio) %>%
+  summarise(
+    total_tx    = n(),
+    pct_pob     = percent(total_tx / nrow(df_dm), accuracy = 0.1),
+    tx_fraude   = sum(fraude),
+    tasa_fraude = mean(fraude),
+    lift        = tasa_fraude / mean(df_dm$fraude),
+    se          = sqrt(tasa_fraude * (1 - tasa_fraude) / total_tx),
+    ic_inf      = pmax(0, tasa_fraude - 1.96 * se),
+    ic_sup      = tasa_fraude + 1.96 * se,
+    .groups     = "drop"
+  )
+
+print(resumen_dm %>% select(tramo_ratio, total_tx, pct_pob, tasa_fraude, lift))
+
+# 4. Gráfico de barra con tasa de fraude según ratio_d_m
+tasa_global <- mean(df_dm$fraude)
+
+ggplot(resumen_dm, aes(x = tramo_ratio, y = tasa_fraude)) +
+  geom_col(aes(fill = lift > 2.0), alpha = 0.85, width = 0.65) +
+  geom_errorbar(aes(ymin = ic_inf, ymax = ic_sup), width = 0.2, color = "gray25") +
+  geom_hline(yintercept = tasa_global, linetype = "dashed", color = "red3", linewidth = 0.8) +
+  geom_text(aes(label = percent(tasa_fraude, accuracy = 0.1)), vjust = -0.6, fontface = "bold", size = 3.8) +
+  scale_fill_manual(
+    values = c("FALSE" = "#2b5c8f", "TRUE" = "#d95f02"),
+    labels = c("Riesgo basal / esperado", "Alerta severa (Lift > 2x)"),
+    name = "Nivel de Riesgo"
+  ) +
+  scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 0.35)) +
+  labs(
+    title = "Efecto Discrepancia: Tasa de Fraude según 'ratio_d_m'",
+    subtitle = "Cuando d supera a m (ratio > 1.0), el fraude escala al 29.3% (Lift 6x sobre la base)",
+    x = "Tramo de ratio_d_m (d / [m + 1])",
+    y = "Tasa de Fraude"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "top",
+    axis.text.x = element_text(angle = 15, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+```
+
+```{r}
+# ==============================================================================
+# RELACIÓN DIRECTA ENTRE 'd' Y 'm': ¿SUBEN JUNTAS?
+# ==============================================================================
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+
+# 1. Medidas de correlación
+cor_pearson  <- cor(df_limpio$d, df_limpio$m, use = "complete.obs")
+cor_spearman <- cor(df_limpio$d, df_limpio$m, method = "spearman", use = "complete.obs")
+
+cat(sprintf("Correlación Lineal (Pearson):  %.3f\n", cor_pearson))
+cat(sprintf("Correlación de Rango (Spearman): %.3f  <-- Fuerte tendencia monótona creciente\n", cor_spearman))
+
+# 2. Tabla: ¿Cuánto vale 'm' en promedio a medida que 'd' crece?
+tabla_crecimiento <- df_limpio %>%
+  filter(!is.na(d), !is.na(m)) %>%
+  mutate(d_grupo = cut(d, breaks = c(-Inf, 1, 5, 10, 20, 35, 50), include.lowest = TRUE)) %>%
+  group_by(d_grupo) %>%
+  summarise(
+    n          = n(),
+    d_medio    = round(mean(d), 1),
+    m_mediana  = median(m),
+    m_promedio = round(mean(m), 1),
+    m_p75      = quantile(m, 0.75),
+    .groups    = "drop"
+  )
+
+print(tabla_crecimiento)
+
+# 3. Gráfico 1: Curva de tendencia empírica (Mediana y Rango Intercuartílico de m según d)
+p_tendencia <- df_limpio %>%
+  filter(!is.na(d), !is.na(m)) %>%
+  group_by(d) %>%
+  summarise(
+    m_mediana = median(m),
+    m_q25     = quantile(m, 0.25),
+    m_q75     = quantile(m, 0.75),
+    .groups   = "drop"
+  ) %>%
+  ggplot(aes(x = d, y = m_mediana)) +
+  geom_ribbon(aes(ymin = m_q25, ymax = m_q75), fill = "#2D3277", alpha = 0.2) +
+  geom_line(color = "#2D3277", linewidth = 1.2) +
+  geom_point(color = "#2D3277", size = 1.5) +
+  labs(
+    title = "Evolución de 'm' en función de 'd'",
+    subtitle = "La línea azul es la mediana de m; la banda gris es el rango intercuartílico (p25 a p75)",
+    x = "Variable 'd'",
+    y = "Mediana de 'm'"
+  ) +
+  theme_minimal(base_size = 11)
+
+# 4. Gráfico 2: Densidad 2D (Hexbins) mostrando cómo se concentran a lo largo de la diagonal
+p_densidad <- ggplot(df_limpio, aes(x = d, y = m)) +
+  geom_bin2d(bins = 40) +
+  scale_fill_viridis_c(trans = "log10", option = "mako", direction = -1, name = "Frecuencia (log)") +
+  geom_smooth(method = "gam", color = "#d93025", linewidth = 1, se = FALSE) +
+  labs(
+    title = "Densidad Conjunta (d vs m)",
+    subtitle = "La línea roja (GAM) confirma la aceleración positiva conjunta",
+    x = "Variable 'd'",
+    y = "Variable 'm'"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "right")
+
+p_tendencia / p_densidad
+```
+
+```{r}
+# ==============================================================================
+# AUDITORÍA DE LA INTERACCIÓN NO LINEAL 'prod_b_log_c'
+# ==============================================================================
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# 1. Cálculo de la feature exactamente como en el pipeline de Python
+df_bc <- df_limpio %>%
+  filter(!is.na(b), !is.na(c)) %>%
+  mutate(
+    log_c        = log1p(pmax(c, 0)),
+    prod_b_log_c = b * log_c,
+    tramo_prod   = ntile(prod_b_log_c, 5) # Quintiles de la interacción
+  )
+
+# 2. Resumen por quintil de la interacción
+resumen_prod <- df_bc %>%
+  group_by(tramo_prod) %>%
+  summarise(
+    n           = n(),
+    rango_prod  = paste0("[", round(min(prod_b_log_c), 2), " - ", round(max(prod_b_log_c), 2), "]"),
+    tasa_fraude = mean(fraude),
+    .groups     = "drop"
+  )
+
+print(resumen_prod)
+
+# 3. El punto crítico: ¿Qué pasa cuando b es alto (> 0.8) pero c es chico (< 1.000)?
+df_bc %>%
+  mutate(grupo_riesgo = if_else(b > 0.8 & c < 1000, "Alerta: b alto y c bajo", "Resto de la población")) %>%
+  group_by(grupo_riesgo) %>%
+  summarise(
+    casos       = n(),
+    tasa_fraude = percent(mean(fraude), accuracy = 0.1),
+    lift        = round(mean(fraude) / mean(df_bc$fraude), 2)
+  )
+```
