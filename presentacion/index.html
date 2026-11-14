@@ -455,20 +455,20 @@
   <p class="footnote">Evaluaci&oacute;n temporal OOT; baseline consigna (logistic_raw): tau=0.25132, 487 FP ($2.4k) y 690 FN ($138k).</p>
 </section>
 
-<!-- NOTAS TOMÁS SALDÍAS: 1. Poda y Rigor: Formular más de 50 hipótesis de negocio y pasar por Forward Stepwise Selection con paciencia k=2 y tolerancia de delta PR-AUC > 0.0003 en validación temporal. Poda el 78% de ruido (51 -> 11 variables) y salta a 0.4443 (+130 bps). 2. Monto crudo descartado: El monto plano de forma aislada no predecía; lo que predecía era el monto relativo a otras variables. ratio_monto_l (monto relativo a la escala l) se convirtió en la variable más potente de todo el modelo (Gain de 9.330) y ratio_monto_e reemplazó al monto plano. 3. Desarme de colinealidad (ratio_d_m): Vimos en el EDA que d y m crecen fuertemente juntas (Spearman 0.735). Por eso creamos ratio_d_m (+132 bps): para atrapar las operaciones atípicas donde esa correlación se quiebra, donde la probabilidad de fraude se multiplica por 5 a casi 7 veces (28.8%). -->
+<!-- NOTAS TOMÁS SALDÍAS: 1. Poda y Rigor: Formular más de 50 hipótesis de negocio y pasar por Forward Stepwise Selection con paciencia k=2 y tolerancia de delta PR-AUC > 0.0003 en validación temporal. Poda el 83.6% de ruido (67 -> 11 variables) y salta a 0.4443 (+130 bps). 2. Monto crudo descartado: El monto plano de forma aislada no predecía; lo que predecía era el monto relativo a otras variables. ratio_monto_l (monto relativo a la escala l) se convirtió en la variable más potente de todo el modelo (Gain de 9.330) y ratio_monto_e reemplazó al monto plano. 3. Desarme de colinealidad (ratio_d_m): Vimos en el EDA que d y m crecen fuertemente juntas (Spearman 0.735). Por eso creamos ratio_d_m (+132 bps): para atrapar las operaciones atípicas donde esa correlación se quiebra, donde la probabilidad de fraude se multiplica por 5 a casi 7 veces (28.8%). -->
 <!-- SLIDE 2: FEATURE ENGINEERING 1 (FORWARD SELECTION & RATIOS) -->
 <section class="slide">
   <div>
     <p style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.8vh;">2. SELECCIÓN DE VARIABLES &amp; RATIOS</p>
-    <h2>De 51 variables a 11: ratios de monto y quiebre de colinealidad</h2>
+    <h2>De 67 variables a 11: ratios de monto y quiebre de colinealidad</h2>
   </div>
   <div class="split">
     <div class="artefact-container" style="flex-direction: column; gap: 1vh;">
       <div style="display: flex; gap: 3.5vw; width: 100%; justify-content: flex-start; align-items: baseline; border-bottom: 1px solid #e8eaed; padding-bottom: 0.8vh;">
         <div>
           <p class="footnote" style="text-transform: uppercase;">Poda de Ruido</p>
-          <div class="hero-metric" style="font-size: clamp(1.8rem, 2.8vw, 2.4rem);"><span style="background: linear-gradient(180deg, transparent 65%, #FFE600 65%);">51 &rarr; 11</span></div>
-          <p class="footnote" style="color: var(--ink-secondary); font-weight: 700;">-78% descartado (k=2)</p>
+          <div class="hero-metric" style="font-size: clamp(1.8rem, 2.8vw, 2.4rem);"><span style="background: linear-gradient(180deg, transparent 65%, #FFE600 65%);">67 &rarr; 11</span></div>
+          <p class="footnote" style="color: var(--ink-secondary); font-weight: 700;">-83.6% descartado (k=2)</p>
         </div>
         <div>
           <p class="footnote" style="text-transform: uppercase;">Salto en Validación</p>
@@ -490,8 +490,8 @@
         <tbody>
           <tr style="border-bottom: 1px solid #f1f3f4;">
             <td style="padding: 0.2rem 0.3rem; font-weight: 700; color: #174ea6;">Nativas (4)</td>
-            <td style="padding: 0.2rem 0.3rem; font-family: monospace;">b, c, d, m</td>
-            <td style="padding: 0.2rem 0.3rem; color: #5f6368;">Núcleo de comportamiento</td>
+            <td style="padding: 0.2rem 0.3rem; font-family: monospace;">score, o, g, a</td>
+            <td style="padding: 0.2rem 0.3rem; color: #5f6368;">Scoring interno, país y contexto</td>
           </tr>
           <tr style="border-bottom: 1px solid #f1f3f4; background: #eef4fc;">
             <td style="padding: 0.2rem 0.3rem; font-weight: 700; color: #174ea6;">Ratios (3)</td>
